@@ -20,6 +20,7 @@ import {
   resolveTodayHeading,
   type TodayTimelineBlock,
 } from "./timeline";
+import { TODAY_PLAN_HEADING_ID, todaySessionStatusDetail } from "./accessibility";
 
 export interface TodayScreenProps {
   onDirections?: (sessionId: string) => void;
@@ -126,7 +127,15 @@ export function TodayScreen({
   }, [heading]);
 
   return (
-    <Screen brand heading={screenHeading} headerEnd={<span>{headerDate}</span>}>
+    <Screen
+      brand
+      heading={screenHeading}
+      headerEnd={
+        <time dateTime={dayKey} className="font-semibold text-muted">
+          {headerDate}
+        </time>
+      }
+    >
       <Stack>
         {loading ? (
           <Notice tone="loading" title="Loading your plan">
@@ -167,10 +176,14 @@ export function TodayScreen({
         {!loading && !error && !stub && plan ? (
           <>
             {plan.source === "basic" ? (
-              <p className="text-sm text-muted">basic plan (AI unavailable)</p>
+              <p className="text-sm text-muted" role="status">
+                Plan source: basic plan (AI unavailable).
+              </p>
             ) : null}
             {agendaSource === "fixture" ? (
-              <p className="text-sm text-muted">Agenda fallback in use. Session details may be incomplete.</p>
+              <p className="text-sm text-muted" role="status">
+                Agenda source: fallback fixture. Session details may be incomplete.
+              </p>
             ) : null}
 
             {planUpdated ? (
@@ -202,7 +215,7 @@ export function TodayScreen({
             ) : null}
 
             {next ? (
-              <>
+              <section aria-label="Next session">
                 <SessionCard
                   title={next.block.session.title}
                   time={formatTimeRange(next.block.start, next.block.end)}
@@ -223,20 +236,27 @@ export function TodayScreen({
                     </Button>
                   </div>
                 ) : null}
-              </>
+              </section>
             ) : null}
 
             {highlightedBreak ? (
-              <SessionCard
-                kind="break"
-                title={breakTitle(highlightedBreak.planBreak.note)}
-                time={formatBreakTime(highlightedBreak.start, highlightedBreak.end)}
-                detail={breakDetail(highlightedBreak.planBreak.note)}
-              />
+              <section aria-label="Break on your plan">
+                <SessionCard
+                  kind="break"
+                  title={breakTitle(highlightedBreak.planBreak.note)}
+                  time={formatBreakTime(highlightedBreak.start, highlightedBreak.end)}
+                  detail={breakDetail(highlightedBreak.planBreak.note)}
+                />
+              </section>
             ) : null}
 
-            <div>
-              <h2 className="font-display text-lg font-semibold text-ink">Today&apos;s plan</h2>
+            <section aria-labelledby={TODAY_PLAN_HEADING_ID}>
+              <h2
+                id={TODAY_PLAN_HEADING_ID}
+                className="font-display text-lg font-semibold text-ink"
+              >
+                Today&apos;s plan
+              </h2>
               <Stack gap="sm">
                 {timeline.length === 0 ? (
                   <p className="text-sm text-muted">No sessions or breaks on this day.</p>
@@ -254,30 +274,26 @@ export function TodayScreen({
                       );
                     }
 
-                    const status =
-                      block.item.status === "done"
-                        ? "Done"
-                        : block.item.status === "skipped"
-                          ? "Skipped"
-                          : undefined;
+                    const statusDetail = todaySessionStatusDetail(block.item);
 
                     return (
                       <SessionCard
                         key={blockKey(block, index)}
+                        headingLevel={3}
                         title={block.session.title}
                         time={formatTimeRange(block.start, block.end)}
                         room={block.session.room}
-                        reasonLabel={status ? undefined : "Why it's on your plan"}
-                        reason={status ? undefined : block.item.reason}
-                        detail={status}
+                        reasonLabel={statusDetail ? undefined : "Why it's on your plan"}
+                        reason={statusDetail ? undefined : block.item.reason}
+                        detail={statusDetail}
                       />
                     );
                   })
                 )}
               </Stack>
-            </div>
+            </section>
 
-            <div className="flex flex-wrap items-center justify-between gap-2">
+            <nav aria-label="Today actions" className="flex flex-wrap items-center justify-between gap-2">
               {onBreak ? (
                 <Button variant="quiet" onClick={onBreak}>
                   I need a break
@@ -288,7 +304,7 @@ export function TodayScreen({
                   Ask Hallpass
                 </Button>
               ) : null}
-            </div>
+            </nav>
           </>
         ) : null}
       </Stack>
