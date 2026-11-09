@@ -2,7 +2,7 @@ import type { HealthResponse } from "../../shared/api";
 import type { Env } from "../env";
 import { claudeSmoke } from "../lib/claude";
 import { elasticSmoke } from "../lib/elastic";
-import { json } from "../lib/http";
+import { apiError, json } from "../lib/http";
 
 /** Reports which integrations are configured. Never returns key values or model text. */
 export async function health(request: Request, env: Env): Promise<Response> {
@@ -15,6 +15,8 @@ export async function health(request: Request, env: Env): Promise<Response> {
     },
   };
   if (new URL(request.url).searchParams.get("deep") === "1") {
+    const { success } = await env.API_LIMITER.limit({ key: "health-deep" });
+    if (!success) return apiError("rate_limited", "Too many requests. Try again in a minute.", 429);
     const [claude, elastic] = await Promise.all([claudeSmoke(env), elasticSmoke(env)]);
     Object.assign(body, claude, elastic);
   }

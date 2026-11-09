@@ -10,7 +10,8 @@ export interface LoadedAgenda {
   fallback?: string;
 }
 
-let cached: Promise<LoadedAgenda> | null = null;
+let cached: LoadedAgenda | null = null;
+let inflight: Promise<LoadedAgenda> | null = null;
 
 function sessionsFrom(value: unknown): Session[] | null {
   if (!value || typeof value !== "object") return null;
@@ -53,10 +54,18 @@ async function readAgenda(env: Env): Promise<LoadedAgenda> {
   return fixtureAgenda();
 }
 
-/** Loads public/agenda.json through the asset binding, or the illustrative fixture. Cached per isolate. */
+/** Loads public/agenda.json through the asset binding, or the fixture fallback. Only a successful agenda load is cached per isolate. */
 export function loadAgenda(env: Env): Promise<LoadedAgenda> {
-  if (!cached) cached = readAgenda(env);
-  return cached;
+  if (cached) return Promise.resolve(cached);
+  if (!inflight) {
+    inflight = readAgenda(env).finally(() => {
+      inflight = null;
+    });
+  }
+  return inflight.then((result) => {
+    if (result.source === "agenda") cached = result;
+    return result;
+  });
 }
 
 export async function getSession(env: Env, id: string): Promise<Session | null> {

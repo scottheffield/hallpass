@@ -6,7 +6,8 @@ export interface LoadedAgenda {
   source: "agenda" | "fixture";
 }
 
-let cached: Promise<LoadedAgenda> | null = null;
+let cached: LoadedAgenda | null = null;
+let inflight: Promise<LoadedAgenda> | null = null;
 
 function sessionsFrom(value: unknown): Session[] | null {
   if (!value || typeof value !== "object") return null;
@@ -24,26 +25,34 @@ function sessionsFrom(value: unknown): Session[] | null {
   return parsed;
 }
 
-/** Loads public/agenda.json, or the illustrative fixture until the data slice lands. */
-export async function loadAgenda(): Promise<LoadedAgenda> {
-  if (!cached) {
-    cached = (async () => {
-      try {
-        const response = await fetch("/agenda.json", { cache: "no-store" });
-        if (response.ok) {
-          const body: unknown = await response.json();
-          const sessions = sessionsFrom(body);
-          if (sessions) return { sessions, source: "agenda" };
-        } else {
-          await response.body?.cancel();
-        }
-      } catch {
-        // Offline or file missing.
-      }
-      return { sessions: sessionsFrom(sample) ?? [], source: "fixture" };
-    })();
+async function readAgenda(): Promise<LoadedAgenda> {
+  try {
+    const response = await fetch("/agenda.json", { cache: "no-store" });
+    if (response.ok) {
+      const body: unknown = await response.json();
+      const sessions = sessionsFrom(body);
+      if (sessions) return { sessions, source: "agenda" };
+    } else {
+      await response.body?.cancel();
+    }
+  } catch {
+    // Offline or file missing.
   }
-  return cached;
+  return { sessions: sessionsFrom(sample) ?? [], source: "fixture" };
+}
+
+/** Loads public/agenda.json, or the bundled sample. Only a successful agenda load is cached. */
+export function loadAgenda(): Promise<LoadedAgenda> {
+  if (cached) return Promise.resolve(cached);
+  if (!inflight) {
+    inflight = readAgenda().finally(() => {
+      inflight = null;
+    });
+  }
+  return inflight.then((result) => {
+    if (result.source === "agenda") cached = result;
+    return result;
+  });
 }
 
 export function getSession(sessions: Session[], id: string): Session | undefined {
