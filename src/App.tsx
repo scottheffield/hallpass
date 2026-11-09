@@ -66,23 +66,16 @@ export default function App() {
 
   const enterApp = useCallback(() => {
     void (async () => {
-      let nextProfile = profile;
       try {
         const res = await post<ProfileResponse>("/api/profile/get", {});
-        if (res.profile) {
-          nextProfile = res.profile;
-          setProfile(res.profile);
-        }
+        if (res.profile) setProfile(res.profile);
       } catch {
         /* Profile refresh is best-effort after intake. */
       }
-      const nowIso = demoNowForRequests();
-      const now = nowIso ? new Date(nowIso) : new Date();
-      const home = pickHomeShell(now, nextProfile);
-      setTab(home.tab);
-      setPlace(home.place);
+      setTab("plan");
+      setPlace("plan");
     })();
-  }, [profile]);
+  }, []);
 
   function onTabChange(next: AppTab) {
     setTab(next);
@@ -159,6 +152,10 @@ export default function App() {
             onOpenCheckIn={openCheckIn}
             onBreak={() => setBreakOpen(true)}
             onAsk={() => setAskOpen(true)}
+            onBuildPlan={() => {
+              setTab("plan");
+              setPlace("plan");
+            }}
           />
           <ShellUtilityLinks
             onReadout={() => openFocusedScreen("readout")}

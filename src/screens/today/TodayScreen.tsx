@@ -28,6 +28,7 @@ export interface TodayScreenProps {
   onAsk?: () => void;
   planUpdated?: boolean;
   onUndoPlanUpdate?: () => void;
+  onBuildPlan?: () => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -47,6 +48,7 @@ export function TodayScreen({
   onAsk,
   planUpdated = false,
   onUndoPlanUpdate,
+  onBuildPlan,
 }: TodayScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [sessions, setSessions] = useState<Awaited<ReturnType<typeof loadAgenda>>["sessions"]>([]);
@@ -152,6 +154,13 @@ export function TodayScreen({
         {!loading && !error && !stub && !plan ? (
           <Notice tone="empty" title="No plan yet">
             <p>Save a profile and build a plan before today&apos;s schedule can appear.</p>
+            {onBuildPlan ? (
+              <div className="mt-2">
+                <Button variant="primary" onClick={onBuildPlan}>
+                  Build my plan
+                </Button>
+              </div>
+            ) : null}
           </Notice>
         ) : null}
 

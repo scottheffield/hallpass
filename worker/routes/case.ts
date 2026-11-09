@@ -28,6 +28,6 @@ export async function caseForAttending(request: Request, env: Env, ctx: Executio
   }
 
   const response: CaseResponse = { case: generated };
-  if (stub) response.stub = true;
+  if (stub || !storedProfile) response.stub = true;
   return json(response);
 }

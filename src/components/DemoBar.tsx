@@ -8,6 +8,9 @@ import {
   isDemoMode,
   setDemoNow,
 } from "../lib/clock";
+import type { DemoLoadResponse } from "../../shared/api";
+import { post } from "../lib/api";
+import { Button } from "../ui/Button";
 import { HelloMark } from "../ui/HelloMark";
 import { Stack } from "../ui/Stack";
 import {
@@ -38,6 +41,21 @@ export function DemoBar() {
   const timeId = useId();
   const [picker, setPicker] = useState(initialPicker);
   const [status, setStatus] = useState(() => formatDemoNowLabel(picker.iso));
+  const [loadingDemo, setLoadingDemo] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
+
+  const loadDemoAttendee = useCallback(async () => {
+    setDemoError(null);
+    setLoadingDemo(true);
+    try {
+      await post<DemoLoadResponse>("/api/demo/load", {});
+      window.location.reload();
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : "Could not load demo attendee.");
+    } finally {
+      setLoadingDemo(false);
+    }
+  }, []);
 
   const commit = useCallback((day: EventDay, time: string) => {
     const wall = parseDemoWallTime(time);
@@ -112,6 +130,24 @@ export function DemoBar() {
             })}
           </div>
         </fieldset>
+      </CardRow>
+
+      <CardRow>
+        <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+          <Button
+            type="button"
+            variant="secondary"
+            disabled={loadingDemo}
+            onClick={() => void loadDemoAttendee()}
+          >
+            {loadingDemo ? "Loading demo attendee…" : "Load demo attendee"}
+          </Button>
+          {demoError ? (
+            <p className="text-sm text-error" role="alert">
+              {demoError}
+            </p>
+          ) : null}
+        </div>
       </CardRow>
 
       <CardRow>
