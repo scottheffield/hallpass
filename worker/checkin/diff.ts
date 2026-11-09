@@ -68,12 +68,6 @@ function checkinReasonPhrase(signal: ReplanSignal | undefined): string {
   return "";
 }
 
-function reasonFromCheckinOrPlan(signal: ReplanSignal | undefined, item: PlanItem): string {
-  const fromCheckin = checkinReasonPhrase(signal);
-  if (fromCheckin) return fromCheckin;
-  return trimReason(item.reason);
-}
-
 function withReasonClause(base: string, reason: string): string {
   if (!reason) return `${base}.`;
   return `${base}: ${reason}.`;
@@ -102,7 +96,7 @@ export function diffPlanDay(before: PlanDay, after: PlanDay, options?: DiffPlanD
       changes.push({
         kind: "removed",
         session_id: item.session_id,
-        text: withReasonClause(base, reasonFromCheckinOrPlan(signal, item)),
+        text: withReasonClause(base, checkinReasonPhrase(signal)),
       });
     }
   }
@@ -135,7 +129,7 @@ export function diffPlanDay(before: PlanDay, after: PlanDay, options?: DiffPlanD
         const { title, time } = sessionLabel(moved);
         const base =
           title === "a later session"
-            ? `Moved a session later in today's order`
+            ? `Moved a session in today's order`
             : `Moved ${title}${atTimePhrase(time)} in today's order`;
         changes.push({
           kind: "moved",

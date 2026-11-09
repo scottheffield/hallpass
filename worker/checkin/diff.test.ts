@@ -45,6 +45,16 @@ describe("diffPlanDay", () => {
     }
   });
 
+  it("omits a reason clause on drops when there is no check-in phrase", () => {
+    const before = base();
+    const after = base({ items: before.items.filter((item) => item.session_id !== DROPPED_ID) });
+    const changes = diffPlanDay(before, after);
+    expect(changes[0]?.text).toBe(
+      "Dropped What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes at 12:20.",
+    );
+    expect(changes[0]?.text).not.toContain("Cache-aware LLM");
+  });
+
   it("detects an added session with title and time from the agenda", () => {
     const before = base();
     const after = base({

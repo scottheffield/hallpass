@@ -9,6 +9,7 @@ import { now, parseOffsetDateTime } from "../lib/clock";
 import { fixturePlan, fixtureProfile } from "../lib/fixtures";
 import { HttpError, json } from "../lib/http";
 import { getPlan, getProfile, putCheckIn, putPlan } from "../lib/store";
+import { ensureAgendaCache } from "../plan/agenda-cache";
 import { replanDay } from "../plan";
 import { readObject } from "./body";
 
@@ -106,6 +107,7 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
   try {
     void replanDay(profile, withDone, day, at, signal);
     const revised = adjustDayAfterCheckin(profile, beforeDay, at, signal);
+    await ensureAgendaCache(env);
     const changes = diffPlanDay(beforeDay, revised, { signal });
     if (changes.length > 0) {
       proposal = {
