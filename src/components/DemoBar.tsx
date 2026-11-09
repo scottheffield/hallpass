@@ -10,8 +10,8 @@ import {
 } from "../lib/clock";
 import type { DemoLoadResponse } from "../../shared/api";
 import { post } from "../lib/api";
+import { clearDemoAttendeeLocalStorage } from "../lib/reset";
 import { Button } from "../ui/Button";
-import { HelloMark } from "../ui/HelloMark";
 import { Stack } from "../ui/Stack";
 import {
   buildDemoIso,
@@ -58,6 +58,7 @@ export function DemoBar() {
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [startOverOpen, setStartOverOpen] = useState(false);
 
   const summaryLabel = buildDemoBarSummaryLabel(picker.iso);
 
@@ -81,6 +82,16 @@ export function DemoBar() {
     setDemoNow(iso);
     setPicker({ day, time, iso });
     setStatus(formatDemoNowLabel(iso));
+    setExpanded(false);
+  }, []);
+
+  const confirmStartOver = useCallback(() => {
+    try {
+      clearDemoAttendeeLocalStorage(localStorage);
+    } catch {
+      /* private mode */
+    }
+    window.location.reload();
   }, []);
 
   useEffect(() => {
@@ -123,13 +134,10 @@ export function DemoBar() {
       {expanded ? (
         <Panel id={panelId}>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <HelloMark compact />
-              <p className="text-sm leading-snug text-muted" role="status" aria-live="polite">
-                <span className="font-semibold text-ink">Demo time</span> {status}. Times are Mountain Time (
-                <abbr title={EVENT_TIME_ZONE}>MT</abbr>, {EVENT_OFFSET}).
-              </p>
-            </div>
+            <p className="min-w-0 text-sm leading-snug text-muted" role="status" aria-live="polite">
+              <span className="font-semibold text-ink">Demo time</span> {status}. Times are Mountain Time (
+              <abbr title={EVENT_TIME_ZONE}>MT</abbr>, {EVENT_OFFSET}).
+            </p>
             {stored ? null : (
               <p className="text-xs text-muted">Using default start until you pick a time.</p>
             )}
@@ -163,14 +171,33 @@ export function DemoBar() {
 
           <CardRow>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={loadingDemo}
-                onClick={() => void loadDemoAttendee()}
-              >
-                {loadingDemo ? "Loading demo attendee…" : "Load demo attendee"}
-              </Button>
+              {startOverOpen ? (
+                <div className="flex flex-col gap-2" role="group" aria-label="Start over confirmation">
+                  <p className="text-sm text-ink">Start over? This clears this browser&apos;s attendee.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" onClick={confirmStartOver}>
+                      Start over
+                    </Button>
+                    <Button type="button" variant="quiet" onClick={() => setStartOverOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={loadingDemo}
+                    onClick={() => void loadDemoAttendee()}
+                  >
+                    {loadingDemo ? "Loading demo attendee…" : "Load demo attendee"}
+                  </Button>
+                  <Button type="button" variant="quiet" disabled={loadingDemo} onClick={() => setStartOverOpen(true)}>
+                    Start over
+                  </Button>
+                </div>
+              )}
               {demoError ? (
                 <p className="text-sm text-error" role="alert">
                   {demoError}
