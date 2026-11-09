@@ -106,7 +106,7 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
   try {
     void replanDay(profile, withDone, day, at, signal);
     const revised = adjustDayAfterCheckin(profile, beforeDay, at, signal);
-    const changes = diffPlanDay(beforeDay, revised);
+    const changes = diffPlanDay(beforeDay, revised, { signal });
     if (changes.length > 0) {
       proposal = {
         id: crypto.randomUUID(),
