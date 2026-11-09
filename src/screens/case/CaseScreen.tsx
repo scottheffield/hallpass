@@ -4,6 +4,7 @@ import type { CaseForAttending, Session } from "../../../shared/types";
 import { joinPlanSessions, loadAgenda } from "../../lib/agenda";
 import { ApiFailure, post } from "../../lib/api";
 import { Button, Notice, Screen, SessionCard, Stack, TextArea } from "../../ui";
+import { CASE_COPY_STATUS_ROLE, CASE_SESSION_HEADING_LEVEL } from "./a11y";
 import { copyCaseText, type CopyOutcome } from "./copy";
 
 export interface CaseScreenProps {
@@ -119,6 +120,7 @@ export function CaseScreen({ onBack }: CaseScreenProps) {
                       time={`${session.start.slice(11, 16)}–${session.end.slice(11, 16)}`}
                       room={session.room}
                       reason="On your conference plan"
+                      headingLevel={CASE_SESSION_HEADING_LEVEL}
                     />
                   </li>
                 ))}
@@ -152,7 +154,7 @@ export function CaseScreen({ onBack }: CaseScreenProps) {
           <Stack gap="sm">
             <Button onClick={() => void handleCopy()}>Copy draft</Button>
             {copyStatus ? (
-              <p className="text-sm text-muted" role="status">
+              <p className="text-sm text-muted" role={CASE_COPY_STATUS_ROLE}>
                 {copyStatus}
               </p>
             ) : null}
