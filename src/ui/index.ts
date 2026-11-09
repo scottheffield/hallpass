@@ -5,6 +5,8 @@ export type { AppFrameProps, AppTab } from "./AppFrame";
 export { Button } from "./Button";
 export type { ButtonProps } from "./Button";
 export { ChangeList } from "./ChangeList";
+export { DemoBarSlot } from "./DemoBarSlot";
+export type { DemoBarSlotProps } from "./DemoBarSlot";
 export type { ChangeListProps } from "./ChangeList";
 export { Choice } from "./Choice";
 export type { ChoiceOption, ChoiceProps } from "./Choice";

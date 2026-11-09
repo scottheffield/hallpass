@@ -1,6 +1,30 @@
 import { useState } from "react";
-import { AppFrame, Button, Choice, Field, Notice, Sheet, Stack, type AppTab } from "./ui";
+import { EVENT_TIME_ZONE } from "../shared/event";
+import type { IsoDateTime } from "../shared/types";
+import { demoNowForRequests, isDemoMode } from "./lib/clock";
+import {
+  AppFrame,
+  Button,
+  Choice,
+  DemoBarSlot,
+  Field,
+  Notice,
+  Sheet,
+  Stack,
+  type AppTab,
+} from "./ui";
 import { AdjustPreview, EntryPreview, ILLUSTRATIVE_ANSWER, StubPreview, TodayPreview } from "./ui/preview-screens";
+
+function formatDemoTime(iso: IsoDateTime): string {
+  return new Intl.DateTimeFormat("en-US", {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: EVENT_TIME_ZONE,
+  }).format(new Date(iso));
+}
 
 type Place = "entry" | "today" | "adjust" | "plan" | "goals";
 type Overlay = "explore" | "directions" | "break" | "ask" | null;
@@ -8,7 +32,7 @@ type Overlay = "explore" | "directions" | "break" | "ask" | null;
 /**
  * App frame only: tabs, page column, and slots.
  * Entry, Today, and plan adjustment are illustrative compositions.
- * The demo clock slot is left empty; that call lives outside this slice.
+ * Demo mode (`?demo=1`, wired in main) can show a quiet clock label in the frame slot.
  */
 export default function App() {
   const [place, setPlace] = useState<Place>("entry");
@@ -31,9 +55,12 @@ export default function App() {
   }
 
   const showTabs = place !== "entry" && place !== "adjust";
+  const demoNow = demoNowForRequests();
+  const demoBar =
+    isDemoMode() && demoNow ? <DemoBarSlot timeLabel={formatDemoTime(demoNow)} /> : undefined;
 
   return (
-    <AppFrame tab={tab} onTabChange={onTabChange} showTabs={showTabs}>
+    <AppFrame tab={tab} onTabChange={onTabChange} showTabs={showTabs} demoBar={demoBar}>
       {place === "entry" ? (
         <EntryPreview
           answer={answer}

@@ -1,3 +1,4 @@
+import { EVENT_CITY } from "../../shared/event";
 import { HelloMark } from "./HelloMark";
 import { Button } from "./Button";
 import { ChangeList } from "./ChangeList";
@@ -25,7 +26,7 @@ export function EntryPreview({
   onExplore: () => void;
 }) {
   return (
-    <Screen heading="Why are you here?" headingSize="md" kicker="KubeCon 2026" kickerDetail="Salt Lake City">
+    <Screen heading="Why are you here?" headingSize="md" kicker="KubeCon 2026" kickerDetail={EVENT_CITY}>
       <Stack gap="lg">
         <HelloMark />
         <TextArea
