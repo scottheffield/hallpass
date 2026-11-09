@@ -39,6 +39,7 @@ export default function App() {
   const [place, setPlace] = useState<ShellPlace>("entry");
   const [tab, setTab] = useState<AppTab>("today");
   const [planUpdated, setPlanUpdated] = useState(false);
+  const [planVersion, setPlanVersion] = useState(0);
   const [directions, setDirections] = useState<DirectionsTarget | null>(null);
   const [checkIn, setCheckIn] = useState<CheckInTarget | null>(null);
   const [checkInOpen, setCheckInOpen] = useState(false);
@@ -133,6 +134,7 @@ export default function App() {
 
       {place === "today" ? (
         <TodayRoute
+          planVersion={planVersion}
           planUpdated={planUpdated}
           onUndoPlanUpdate={() => setPlanUpdated(false)}
           onDirections={openDirections}
@@ -162,6 +164,7 @@ export default function App() {
           onClose={closeCheckIn}
           onFinished={({ planUpdated: updated }) => {
             if (updated) setPlanUpdated(true);
+            setPlanVersion((version) => version + 1);
             closeCheckIn();
           }}
         />

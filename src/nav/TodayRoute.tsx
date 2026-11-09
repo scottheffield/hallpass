@@ -11,6 +11,8 @@ import { findCheckInOffer } from "./checkInOffer";
 import type { CheckInTarget, DirectionsTarget } from "./types";
 
 export interface TodayRouteProps {
+  /** Bumped after every completed check-in flow so plan + offer refresh. */
+  planVersion: number;
   planUpdated: boolean;
   onUndoPlanUpdate: () => void;
   onDirections: (target: DirectionsTarget) => void;
@@ -24,6 +26,7 @@ async function fetchPlan(): Promise<Plan | null> {
 }
 
 export function TodayRoute({
+  planVersion,
   planUpdated,
   onUndoPlanUpdate,
   onDirections,
@@ -54,7 +57,7 @@ export function TodayRoute({
     return () => {
       cancelled = true;
     };
-  }, [planUpdated]);
+  }, [planVersion]);
 
   const checkInOffer = useMemo(
     () => findCheckInOffer(now, plan, sessions),
