@@ -13,6 +13,8 @@ export interface SessionCardProps {
   kind?: SessionCardKind;
   /** Second line under a break title. */
   detail?: string;
+  /** Heading level for the session title on the default card (2 under h1, 3 under a section h2). */
+  headingLevel?: 2 | 3;
   children?: ReactNode;
 }
 
@@ -25,6 +27,8 @@ function PauseMark() {
   );
 }
 
+const TITLE_CLASS = "font-display text-[1.65rem] font-semibold leading-tight text-balance";
+
 export function SessionCard({
   title,
   time,
@@ -33,6 +37,7 @@ export function SessionCard({
   reasonLabel,
   kind = "session",
   detail,
+  headingLevel = 2,
   children,
 }: SessionCardProps) {
   if (kind === "break") {
@@ -75,10 +80,12 @@ export function SessionCard({
     );
   }
 
+  const TitleTag = headingLevel === 3 ? "h3" : "h2";
+
   return (
     <article className="text-ink">
-      <h2 className="font-display text-[1.65rem] font-semibold leading-tight text-balance">{title}</h2>
-      <div className="mt-3 flex items-baseline justify-between gap-3 border-b border-line pb-3">
+      <TitleTag className={TITLE_CLASS}>{title}</TitleTag>
+      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-3">
         <p className="font-semibold">{time}</p>
         {room ? <p>{room}</p> : null}
       </div>

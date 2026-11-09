@@ -27,6 +27,7 @@ async function fetchReadout(): Promise<ReadoutResponse> {
 }
 
 function GoalBlock({ goal, status }: { goal: string; status: "hit" | "missed" | "unclear" }) {
+  const statusLabel = goalStatusLabel(status);
   const detail =
     status === "hit"
       ? "Check-ins marked related sessions as helping this goal."
@@ -35,8 +36,8 @@ function GoalBlock({ goal, status }: { goal: string; status: "hit" | "missed" | 
         : "There is not enough session feedback to judge this goal yet.";
   return (
     <article className="rounded-xl border-2 border-line bg-surface px-3 py-3">
-      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{goalStatusLabel(status)}</p>
-      <h2 className="mt-1 font-display text-lg font-semibold text-ink">{goal.replace(/\.$/, "")}</h2>
+      <p className="text-xs font-semibold tracking-wide text-muted uppercase">{statusLabel}</p>
+      <h3 className="mt-1 font-display text-lg font-semibold text-ink">{goal.replace(/\.$/, "")}</h3>
       <p className="mt-2 text-base leading-snug text-ink">{detail}</p>
     </article>
   );
@@ -106,6 +107,7 @@ export function ReadoutScreen({ onBack }: ReadoutScreenProps) {
         headingSize="md"
         brand
         onBack={onBack}
+        backLabel="Back"
         kicker={readout ? readoutEvidenceLine(readout) : undefined}
         lead={
           phase === "loading" ? (
@@ -128,17 +130,24 @@ export function ReadoutScreen({ onBack }: ReadoutScreenProps) {
       >
         {phase === "ready" && readout ? (
           <Stack gap="lg">
-            {readout.goals_hit.map((goal) => (
-              <GoalBlock key={`hit-${goal}`} goal={goal} status="hit" />
-            ))}
-
-            {readout.goals_missed.map((goal) => (
-              <GoalBlock key={`miss-${goal}`} goal={goal} status="missed" />
-            ))}
-
-            {unclear.map((goal) => (
-              <GoalBlock key={`unclear-${goal}`} goal={goal} status="unclear" />
-            ))}
+            {readout.goals_hit.length > 0 || readout.goals_missed.length > 0 || unclear.length > 0 ? (
+              <section aria-labelledby="readout-goals-heading">
+                <h2 id="readout-goals-heading" className="text-base font-semibold text-ink">
+                  Goals
+                </h2>
+                <div className="mt-3 flex flex-col gap-3">
+                  {readout.goals_hit.map((goal) => (
+                    <GoalBlock key={`hit-${goal}`} goal={goal} status="hit" />
+                  ))}
+                  {readout.goals_missed.map((goal) => (
+                    <GoalBlock key={`miss-${goal}`} goal={goal} status="missed" />
+                  ))}
+                  {unclear.map((goal) => (
+                    <GoalBlock key={`unclear-${goal}`} goal={goal} status="unclear" />
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             {helpedSessions.length > 0 ? (
               <section aria-labelledby="readout-helped-heading">
@@ -149,6 +158,7 @@ export function ReadoutScreen({ onBack }: ReadoutScreenProps) {
                   {helpedSessions.map((session) => (
                     <li key={session.id}>
                       <SessionCard
+                        headingLevel={3}
                         title={session.title}
                         time={formatTimeRange(session.start, session.end)}
                         room={session.room}
