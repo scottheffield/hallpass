@@ -2,3 +2,5 @@
 ANTHROPIC_API_KEY=
 ELASTIC_URL=
 ELASTIC_API_KEY=
+# Demo only. "on" sends prompts and model output to Dash0 in Claude spans.
+TRACE_CONTENT=

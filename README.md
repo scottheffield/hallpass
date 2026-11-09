@@ -48,6 +48,7 @@ npm run deploy
 ## Design rules
 
 - Attendee text travels in POST bodies, never URLs, because traces record URLs.
+- Traces and logs go to Dash0. Claude calls get a `claude.request` span with model, token counts and latency. Prompts and model output are added to that span only when the `TRACE_CONTENT` Worker secret is `on`, a demo switch that is off by default.
 - Request bodies are read with a byte limit, and API calls are rate limited per browser.
 - Elastic is never called from the browser.
 - Model output is untrusted: no raw HTML, and session lists come from retrieved data, not model text.

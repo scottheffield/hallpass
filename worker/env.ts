@@ -12,4 +12,6 @@ export interface Env {
   ANTHROPIC_API_KEY?: string;
   ELASTIC_URL?: string;
   ELASTIC_API_KEY?: string;
+  /** Demo switch. "on" adds prompts and model output to Claude spans in Dash0. Off when unset. */
+  TRACE_CONTENT?: string;
 }
