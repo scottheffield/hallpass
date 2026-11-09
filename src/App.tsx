@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import type { ProfileResponse } from "../shared/api";
-import { EVENT_TIME_ZONE } from "../shared/event";
-import type { IsoDateTime, Profile } from "../shared/types";
+import type { Profile } from "../shared/types";
+import { AskHallpass } from "./components/AskHallpass";
+import { DemoBar } from "./components/DemoBar";
 import { post } from "./lib/api";
 import { demoNowForRequests, isDemoMode } from "./lib/clock";
 import { CheckInScreen } from "./screens/checkin";
+import { CaseScreen } from "./screens/case";
+import { InsightsScreen } from "./screens/insights";
+import { ReadoutScreen } from "./screens/readout";
 import {
   DirectionsRoute,
-  PlanTabStub,
+  PlanRoute,
+  ShellUtilityLinks,
   TodayRoute,
   pickHomeShell,
   showShellTabs,
@@ -18,20 +23,7 @@ import {
 } from "./nav";
 import { GoalsView } from "./views/GoalsView";
 import { IntakeFlow } from "./views/IntakeFlow";
-import { AppFrame, Choice, DemoBarSlot, Sheet, type AppTab } from "./ui";
-
-function formatDemoTime(iso: IsoDateTime): string {
-  return new Intl.DateTimeFormat("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: EVENT_TIME_ZONE,
-  }).format(new Date(iso));
-}
-
-// Future overlays (not on main): ask → AskHallpass component; insights → separate route
+import { AppFrame, Button, Choice, Sheet, type AppTab } from "./ui";
 
 export default function App() {
   const [booting, setBooting] = useState(true);
@@ -45,6 +37,8 @@ export default function App() {
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [breakOpen, setBreakOpen] = useState(false);
   const [breakChoice, setBreakChoice] = useState("");
+  const [askOpen, setAskOpen] = useState(false);
+  const [auxReturn, setAuxReturn] = useState<ShellPlace>("today");
 
   useEffect(() => {
     let cancelled = false;
@@ -94,17 +88,29 @@ export default function App() {
     setTab(next);
     setPlace(tabToPlace(next));
     setDirections(null);
+    setAskOpen(false);
+  }
+
+  function openFocusedScreen(nextPlace: ShellPlace) {
+    setAuxReturn(tabToPlace(tab));
+    setPlace(nextPlace);
+    setAskOpen(false);
+  }
+
+  function closeFocusedScreen() {
+    setPlace(auxReturn);
+    setAskOpen(false);
   }
 
   function openDirections(target: DirectionsTarget) {
     setDirections(target);
+    setAuxReturn(tabToPlace(tab));
     setPlace("directions");
   }
 
   function closeDirections() {
     setDirections(null);
-    setPlace("today");
-    setTab("today");
+    setPlace(auxReturn);
   }
 
   function openCheckIn(target: CheckInTarget) {
@@ -116,9 +122,14 @@ export default function App() {
     setCheckInOpen(false);
   }
 
-  const demoNow = demoNowForRequests();
-  const demoBar =
-    isDemoMode() && demoNow ? <DemoBarSlot timeLabel={formatDemoTime(demoNow)} /> : undefined;
+  const showTabs = showShellTabs(place);
+  const showAsk = showTabs;
+  const demoBar = isDemoMode() ? <DemoBar /> : undefined;
+  const askTrigger = showAsk ? (
+    <Button type="button" variant="quiet" onClick={() => setAskOpen(true)}>
+      Ask Hallpass
+    </Button>
+  ) : undefined;
 
   if (booting) {
     return (
@@ -129,18 +140,31 @@ export default function App() {
   }
 
   return (
-    <AppFrame tab={tab} onTabChange={onTabChange} showTabs={showShellTabs(place)} demoBar={demoBar}>
+    <AppFrame
+      tab={tab}
+      onTabChange={onTabChange}
+      showTabs={showTabs}
+      demoBar={demoBar}
+      ask={askTrigger}
+    >
       {place === "entry" ? <IntakeFlow onFinished={enterApp} /> : null}
 
       {place === "today" ? (
-        <TodayRoute
-          planVersion={planVersion}
-          planUpdated={planUpdated}
-          onUndoPlanUpdate={() => setPlanUpdated(false)}
-          onDirections={openDirections}
-          onOpenCheckIn={openCheckIn}
-          onBreak={() => setBreakOpen(true)}
-        />
+        <>
+          <TodayRoute
+            planVersion={planVersion}
+            planUpdated={planUpdated}
+            onUndoPlanUpdate={() => setPlanUpdated(false)}
+            onDirections={openDirections}
+            onOpenCheckIn={openCheckIn}
+            onBreak={() => setBreakOpen(true)}
+            onAsk={() => setAskOpen(true)}
+          />
+          <ShellUtilityLinks
+            onReadout={() => openFocusedScreen("readout")}
+            onInsights={() => openFocusedScreen("insights")}
+          />
+        </>
       ) : null}
 
       {place === "directions" && directions ? (
@@ -151,8 +175,37 @@ export default function App() {
         />
       ) : null}
 
-      {place === "plan" ? <PlanTabStub /> : null}
-      {place === "goals" ? <GoalsView /> : null}
+      {place === "plan" ? (
+        <>
+          <PlanRoute
+            onGoals={() => {
+              setTab("goals");
+              setPlace("goals");
+            }}
+            onCase={() => openFocusedScreen("case")}
+          />
+          <ShellUtilityLinks
+            onReadout={() => openFocusedScreen("readout")}
+            onInsights={() => openFocusedScreen("insights")}
+          />
+        </>
+      ) : null}
+
+      {place === "goals" ? (
+        <>
+          <GoalsView />
+          <ShellUtilityLinks
+            onReadout={() => openFocusedScreen("readout")}
+            onInsights={() => openFocusedScreen("insights")}
+          />
+        </>
+      ) : null}
+
+      {place === "case" ? <CaseScreen onBack={closeFocusedScreen} /> : null}
+      {place === "readout" ? <ReadoutScreen onBack={closeFocusedScreen} /> : null}
+      {place === "insights" ? <InsightsScreen onBack={closeFocusedScreen} /> : null}
+
+      {showAsk ? <AskHallpass open={askOpen} onClose={() => setAskOpen(false)} /> : null}
 
       {checkIn ? (
         <CheckInScreen

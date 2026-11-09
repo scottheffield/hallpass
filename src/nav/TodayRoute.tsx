@@ -18,6 +18,7 @@ export interface TodayRouteProps {
   onDirections: (target: DirectionsTarget) => void;
   onOpenCheckIn: (target: CheckInTarget) => void;
   onBreak: () => void;
+  onAsk?: () => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -32,6 +33,7 @@ export function TodayRoute({
   onDirections,
   onOpenCheckIn,
   onBreak,
+  onAsk,
 }: TodayRouteProps) {
   const now = useConferenceNow();
   const planFetchRef = useRef(0);
@@ -97,6 +99,7 @@ export function TodayRoute({
         onUndoPlanUpdate={onUndoPlanUpdate}
         onDirections={(sessionId) => void onDirectionsById(sessionId)}
         onBreak={onBreak}
+        onAsk={onAsk}
       />
     </>
   );
