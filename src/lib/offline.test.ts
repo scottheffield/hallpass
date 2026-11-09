@@ -5,6 +5,7 @@ import {
   checkInQueueTimestamp,
   conferenceIsoFromDate,
   flushCheckInQueue,
+  isPermanentCheckInFlushError,
   isCheckInRequest,
   listQueuedCheckIns,
   setCheckInSender,
@@ -82,6 +83,29 @@ describe("src/lib/offline check-in queue", () => {
     syncDemoFromUrl();
     setDemoNow("2026-11-10T09:30:00-07:00");
     expect(checkInQueueTimestamp()).toBe("2026-11-10T09:30:00-07:00");
+  });
+
+  it("does not treat 408 or 429 as permanent flush errors", () => {
+    const rateLimited = new Error("rate limited") as Error & { status: number };
+    rateLimited.status = 429;
+    const timeout = new Error("timeout") as Error & { status: number };
+    timeout.status = 408;
+    expect(isPermanentCheckInFlushError(rateLimited)).toBe(false);
+    expect(isPermanentCheckInFlushError(timeout)).toBe(false);
+    expect(isPermanentCheckInFlushError({ status: 400 })).toBe(true);
+  });
+
+  it("keeps the queue when flush hits 429 and retries later", async () => {
+    upsertQueuedCheckIn(sample);
+    setCheckInSender(async () => {
+      const err = new Error("rate limited") as Error & { status: number };
+      err.status = 429;
+      throw err;
+    });
+
+    const count = await flushCheckInQueue();
+    expect(count).toBe(0);
+    expect(listQueuedCheckIns()).toHaveLength(1);
   });
 
   it("drops permanent 4xx failures and flushes later items", async () => {

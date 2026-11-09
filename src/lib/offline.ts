@@ -194,7 +194,9 @@ export function isNetworkFailure(err: unknown): boolean {
 export function isPermanentCheckInFlushError(err: unknown): boolean {
   if (!err || typeof err !== "object") return false;
   const status = (err as { status?: number }).status;
-  return typeof status === "number" && status >= 400 && status < 500;
+  if (typeof status !== "number" || status < 400 || status >= 500) return false;
+  if (status === 408 || status === 429) return false;
+  return true;
 }
 
 export async function flushCheckInQueue(): Promise<number> {
