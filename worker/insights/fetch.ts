@@ -1,21 +1,34 @@
-import type { CheckIn, Plan, Profile, Readout } from "../../shared/types";
+import type { CheckIn, Profile, Readout } from "../../shared/types";
 import type { Env } from "../env";
+import { loadAgenda } from "../lib/agenda";
 import { elastic, indexName } from "../lib/elastic";
 import { HttpError } from "../lib/http";
+import { checkInsOnAgenda } from "./filter";
 import type { CheckInRow, OrganizerRows, ProfileRow, ReadoutRow } from "./rows";
 import { EMPTY_ROWS } from "./rows";
 import { seedOrganizerRows } from "./seed";
 
+const PAGE_SIZE = 500;
+
 interface EsHit<T> {
   _source?: T;
+  sort?: unknown[];
 }
 
 interface EsSearch<T> {
   hits?: { hits?: EsHit<T>[] };
 }
 
+interface EsCount {
+  count?: number;
+}
+
 function elasticOn(env: Env): boolean {
   return Boolean(env.ELASTIC_URL && env.ELASTIC_API_KEY);
+}
+
+function isMissingIndex(err: unknown): boolean {
+  return err instanceof HttpError && /Elastic returned 404/.test(err.message);
 }
 
 function profileRow(source: Profile): ProfileRow | null {
@@ -43,13 +56,53 @@ function readoutRow(source: Readout): ReadoutRow | null {
   return { gap_themes: themes };
 }
 
-async function searchIndex<T>(env: Env, kind: "profiles" | "plans" | "checkins" | "readouts", size: number): Promise<T[]> {
+async function countDocuments(env: Env, kind: "plans"): Promise<number | "failed"> {
   const index = indexName(env, kind);
-  const result = await elastic<EsSearch<T>>(env, "POST", `/${index}/_search`, {
-    size,
-    query: { match_all: {} },
-  });
-  return (result.hits?.hits ?? []).flatMap((hit) => (hit._source ? [hit._source] : []));
+  try {
+    const result = await elastic<EsCount>(env, "POST", `/${index}/_count`, { query: { match_all: {} } });
+    return result.count ?? 0;
+  } catch (err) {
+    if (isMissingIndex(err)) return 0;
+    return "failed";
+  }
+}
+
+async function searchAll<T>(
+  env: Env,
+  kind: "profiles" | "checkins" | "readouts",
+  fields: string[],
+): Promise<T[] | "failed"> {
+  const index = indexName(env, kind);
+  const all: T[] = [];
+  let searchAfter: unknown[] | undefined;
+  try {
+    for (;;) {
+      const body: Record<string, unknown> = {
+        size: PAGE_SIZE,
+        query: { match_all: {} },
+        sort: [{ _shard_doc: "desc" }],
+        _source: fields,
+      };
+      if (searchAfter) body.search_after = searchAfter;
+
+      const result = await elastic<EsSearch<T>>(env, "POST", `/${index}/_search`, body);
+      const hits = result.hits?.hits ?? [];
+      all.push(...hits.flatMap((hit) => (hit._source ? [hit._source] : [])));
+      if (hits.length < PAGE_SIZE) break;
+      const last = hits.at(-1);
+      if (!last?.sort) break;
+      searchAfter = last.sort;
+    }
+    return all;
+  } catch (err) {
+    if (isMissingIndex(err) && all.length === 0) return [];
+    if (isMissingIndex(err)) return all;
+    return "failed";
+  }
+}
+
+function logFetchFailure(kind: string): void {
+  console.error("insights_fetch", { kind });
 }
 
 /** Load organizer rows. Elastic results are aggregated in memory; without Elastic, seeded demo rows are used. */
@@ -58,43 +111,52 @@ export async function loadOrganizerRows(env: Env): Promise<{ rows: OrganizerRows
     return { rows: seedOrganizerRows(), stub: true };
   }
 
-  try {
-    const [profilesRaw, plansRaw, checkinsRaw, readoutsRaw] = await Promise.all([
-      searchIndex<Profile>(env, "profiles", 500),
-      searchIndex<Plan>(env, "plans", 500),
-      searchIndex<CheckIn>(env, "checkins", 2000),
-      searchIndex<Readout>(env, "readouts", 500),
-    ]);
+  const [plansCount, profilesRaw, checkinsRaw, readoutsRaw] = await Promise.all([
+    countDocuments(env, "plans"),
+    searchAll<Profile>(env, "profiles", ["goal_themes", "pacing", "breaks"]),
+    searchAll<CheckIn>(env, "checkins", ["session_id", "moved_goal"]),
+    searchAll<Readout>(env, "readouts", ["gap_themes"]),
+  ]);
 
-    const profiles = profilesRaw.flatMap((doc) => {
-      const row = profileRow(doc);
-      return row ? [row] : [];
-    });
-    const checkins = checkinsRaw.flatMap((doc) => {
+  if (plansCount === "failed" || profilesRaw === "failed" || checkinsRaw === "failed" || readoutsRaw === "failed") {
+    if (plansCount === "failed") logFetchFailure("plans");
+    if (profilesRaw === "failed") logFetchFailure("profiles");
+    if (checkinsRaw === "failed") logFetchFailure("checkins");
+    if (readoutsRaw === "failed") logFetchFailure("readouts");
+    return { rows: seedOrganizerRows(), stub: true };
+  }
+
+  const profiles = profilesRaw.flatMap((doc) => {
+    const row = profileRow(doc);
+    return row ? [row] : [];
+  });
+
+  const agenda = await loadAgenda(env);
+  const agendaIds = new Set(agenda.sessions.map((session) => session.id));
+  const checkins = checkInsOnAgenda(
+    checkinsRaw.flatMap((doc) => {
       const row = checkInRow(doc);
       return row ? [row] : [];
-    });
-    const readouts = readoutsRaw.flatMap((doc) => {
-      const row = readoutRow(doc);
-      return row ? [row] : [];
-    });
+    }),
+    agendaIds,
+  );
 
-    if (profiles.length === 0 && checkins.length === 0 && readouts.length === 0 && plansRaw.length === 0) {
-      return { rows: EMPTY_ROWS, stub: false };
-    }
+  const readouts = readoutsRaw.flatMap((doc) => {
+    const row = readoutRow(doc);
+    return row ? [row] : [];
+  });
 
-    return {
-      rows: {
-        profiles,
-        plans: plansRaw.length,
-        checkins,
-        readouts,
-      },
-      stub: false,
-    };
-  } catch (err) {
-    if (err instanceof HttpError) throw err;
-    console.error("insights_fetch", { name: err instanceof Error ? err.name : "unknown" });
+  if (profiles.length === 0 && checkins.length === 0 && readouts.length === 0 && plansCount === 0) {
     return { rows: EMPTY_ROWS, stub: false };
   }
+
+  return {
+    rows: {
+      profiles,
+      plans: plansCount,
+      checkins,
+      readouts,
+    },
+    stub: false,
+  };
 }
