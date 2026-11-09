@@ -4,6 +4,7 @@ import type { Profile } from "../shared/types";
 import { AskHallpass } from "./components/AskHallpass";
 import { DemoBar } from "./components/DemoBar";
 import { post } from "./lib/api";
+import { readCachedPlan } from "./lib/offline";
 import { demoNowForRequests, isDemoMode } from "./lib/clock";
 import { CheckInScreen } from "./screens/checkin";
 import { CaseScreen } from "./screens/case";
@@ -64,7 +65,10 @@ export default function App() {
             const planRes = await post<PlanResponse>("/api/plan/get", {});
             if (!cancelled) setHasPreparedPlan(planHasPreparedContent(planRes.plan));
           } catch {
-            if (!cancelled) setHasPreparedPlan(false);
+            if (!cancelled) {
+              const cached = readCachedPlan();
+              setHasPreparedPlan(planHasPreparedContent(cached?.body.plan ?? null));
+            }
           }
         }
       } catch {
@@ -78,22 +82,9 @@ export default function App() {
     };
   }, []);
 
-  const syncPreparedPlan = useCallback(async () => {
-    if (!profile) {
-      setHasPreparedPlan(false);
-      return;
-    }
-    try {
-      const planRes = await post<PlanResponse>("/api/plan/get", {});
-      setHasPreparedPlan(planHasPreparedContent(planRes.plan));
-    } catch {
-      setHasPreparedPlan(false);
-    }
-  }, [profile]);
-
-  useEffect(() => {
-    void syncPreparedPlan();
-  }, [syncPreparedPlan, planVersion]);
+  const onPreparedPlanChange = useCallback((prepared: boolean) => {
+    setHasPreparedPlan(prepared);
+  }, []);
 
   const enterApp = useCallback(() => {
     void (async () => {
@@ -232,7 +223,7 @@ export default function App() {
               setPlace("goals");
             }}
             onCase={() => openFocusedScreen("case")}
-            onPlanChange={syncPreparedPlan}
+            onPlanChange={onPreparedPlanChange}
           />
           <ShellUtilityLinks
             onReadout={() => openFocusedScreen("readout")}

@@ -35,12 +35,13 @@ import {
 } from "./accessibility";
 import { planFocusLine } from "./focus";
 import { presentPlanReason } from "./reason";
+import { planHasPreparedContent } from "../../ui/journeyPhase";
 import { planSessionStatusDetail } from "./statusLabel";
 
 export interface PlanScreenProps {
   onGoals?: () => void;
   onCase?: () => void;
-  onPlanChange?: () => void;
+  onPlanChange?: (prepared: boolean) => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -80,8 +81,9 @@ export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
-    onPlanChange?.();
-  }, [plan, onPlanChange]);
+    if (loading) return;
+    onPlanChange?.(planHasPreparedContent(plan));
+  }, [plan, loading, onPlanChange]);
 
   const reload = useCallback(async () => {
     setLoading(true);
