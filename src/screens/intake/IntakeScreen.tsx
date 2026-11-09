@@ -1,7 +1,12 @@
 import type { IntakeAnswers } from "../../../shared/api";
 import { EVENT_NAME, INTAKE } from "../../../shared/event";
-import { Button, HelloMark, Screen, Stack, TextArea } from "../../ui";
+import { Button, HelloMark, Notice, Screen, Stack, TextArea } from "../../ui";
 import { starterGoalSelectedLabel } from "./accessibility";
+
+/** Local copy UX: empty field, example in muted hint (issue #51 item 2). */
+const PURPOSE_PLACEHOLDER = "";
+const PURPOSE_HINT =
+  "For example: we spend too long finding the cause of Kubernetes incidents. Or solve a work problem, learn a topic, or find a community.";
 
 export interface IntakeScreenProps {
   answers: IntakeAnswers;
@@ -42,21 +47,17 @@ export function IntakeScreen({
           value={answers.purpose}
           onChange={(purpose) => onAnswers({ ...answers, purpose })}
           rows={4}
-          placeholder={INTAKE.purpose.placeholder}
-          hint={INTAKE.purpose.hint}
+          placeholder={PURPOSE_PLACEHOLDER}
+          hint={PURPOSE_HINT}
           disabled={busy}
         />
-        <Stack gap="sm">
-          <Button variant="quiet" onClick={onToggleStarters} disabled={busy}>
-            {showStarters ? "Hide starter goals" : INTAKE.purpose.figuringItOut}
-          </Button>
-          {showStarters ? (
-            <section aria-labelledby="starter-goals-heading">
-              <h2 id="starter-goals-heading" className="text-base font-semibold text-ink">
-                Starter goals
-              </h2>
-              <p className="text-sm text-muted">Tap any that fit. You can still write your own answer above.</p>
-              <div className="mt-2">
+        {showStarters ? (
+          <section aria-labelledby="starter-goals-heading">
+            <h2 id="starter-goals-heading" className="text-base font-semibold text-ink">
+              Starter goals
+            </h2>
+            <p className="text-sm text-muted">Tap any that fit. You can still write your own answer above.</p>
+            <div className="mt-2">
               <Stack gap="sm">
                 {INTAKE.purpose.starterGoals.map((goal) => {
                   const selected = answers.starter_goals?.includes(goal) ?? false;
@@ -79,21 +80,24 @@ export function IntakeScreen({
                   );
                 })}
               </Stack>
-              </div>
-            </section>
-          ) : null}
-        </Stack>
+            </div>
+          </section>
+        ) : null}
         {error ? (
           <p className="text-sm text-error" role="alert">
             {error}
           </p>
         ) : null}
+        {busy ? <Notice tone="loading" title="Reading your answers…" /> : null}
         <Stack gap="sm">
           <Button variant="primary" onClick={onMakePlan} disabled={busy}>
             {INTAKE.purpose.directAction}
             <span aria-hidden="true">→</span>
           </Button>
-          <Button variant="secondary" onClick={onExplore} disabled={busy}>
+          <Button variant="quiet" onClick={onToggleStarters} disabled={busy}>
+            {showStarters ? "Hide starter goals" : INTAKE.purpose.figuringItOut}
+          </Button>
+          <Button variant="quiet" onClick={onExplore} disabled={busy}>
             {INTAKE.purpose.exploreAction}
           </Button>
           <p className="text-center text-sm text-muted">Start directly, or explore together. You can change answers later.</p>
