@@ -15,19 +15,27 @@ export async function elastic<T = unknown>(
   method: "GET" | "POST" | "PUT" | "DELETE" | "HEAD",
   path: string,
   body?: unknown,
-  options?: { allowNotFound?: boolean },
+  options?: { allowNotFound?: boolean; timeoutMs?: number },
 ): Promise<T> {
   if (!env.ELASTIC_URL || !env.ELASTIC_API_KEY) {
     throw new HttpError(503, "upstream", "Elastic is not configured");
   }
-  const res = await fetch(new URL(path, env.ELASTIC_URL), {
-    method,
-    headers: {
-      authorization: `ApiKey ${env.ELASTIC_API_KEY}`,
-      "content-type": "application/json",
-    },
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(new URL(path, env.ELASTIC_URL), {
+      method,
+      headers: {
+        authorization: `ApiKey ${env.ELASTIC_API_KEY}`,
+        "content-type": "application/json",
+      },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal:
+        options?.timeoutMs !== undefined ? AbortSignal.timeout(Math.max(1, options.timeoutMs)) : undefined,
+    });
+  } catch {
+    console.error("elastic_error", { method, status: 0 });
+    throw new HttpError(504, "upstream", "Elastic request failed");
+  }
   if (!res.ok) {
     await res.body?.cancel();
     if (options?.allowNotFound && res.status === 404) return { found: false } as T;

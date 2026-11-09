@@ -1,6 +1,8 @@
 import type { Session } from "../../shared/types";
 import type { Env } from "../env";
-import { loadAgenda } from "./agenda";
+import { loadAgenda, type LoadedAgenda } from "./agenda";
+import { elastic } from "./elastic";
+import { HttpError } from "./http";
 
 export type SearchField = "search_text" | "speaker_text";
 
@@ -25,6 +27,7 @@ export interface SearchResult {
   fallback?: string;
 }
 
+const ELASTIC_SEARCH_TIMEOUT_MS = 2500;
 const STOP = new Set(["a", "an", "the", "of", "to", "and", "or", "for", "in", "on", "at", "we", "it", "is", "be"]);
 
 function tokens(text: string): string[] {
@@ -41,22 +44,89 @@ function scoreField(haystack: string, needles: string[]): number {
   return score;
 }
 
-/**
- * Keyword match over the agenda. The Data slice adds Elastic semantic search and
- * should keep this signature, falling back here when Elastic is missing or errors.
- * Phase 0 always uses the keyword path.
- */
-export async function searchSessions(env: Env, query: SearchQuery): Promise<SearchResult> {
-  const agenda = await loadAgenda(env);
-  const fallback = agenda.source === "fixture"
-    ? "Keyword match on the bundled agenda sample because Elastic search is not configured."
-    : "Keyword match on the agenda because Elastic search is not configured.";
+function addCalendarDays(day: string, days: number): string {
+  const [year, month, date] = day.split("-").map((part) => Number(part));
+  const next = new Date(year, month - 1, date + days);
+  const y = next.getFullYear();
+  const m = String(next.getMonth() + 1).padStart(2, "0");
+  const d = String(next.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function conferenceDayRange(day: string): { gte: string; lt: string } {
+  return {
+    gte: `${day}T00:00:00-07:00`,
+    lt: `${addCalendarDays(day, 1)}T00:00:00-07:00`,
+  };
+}
+
+/** Elastic `_search` body for semantic_text match. Exported for tests. */
+export function buildElasticSearchBody(query: SearchQuery): Record<string, unknown> {
   const field: SearchField = query.field === "speaker_text" ? "speaker_text" : "search_text";
   const size = Math.min(60, Math.max(1, Math.floor(query.size ?? 20)));
-  if (query.day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(query.day)) {
-    return { hits: [], source: "fallback", fallback: "Day filter must be YYYY-MM-DD." };
+  const matchClause = {
+    match: {
+      [field]: { query: query.text },
+    },
+  };
+  if (query.day !== undefined) {
+    const range = conferenceDayRange(query.day);
+    return {
+      size,
+      query: {
+        bool: {
+          must: [matchClause],
+          filter: [{ range: { start: range } }],
+        },
+      },
+    };
   }
+  return { size, query: matchClause };
+}
 
+interface ElasticSearchHit {
+  _id: string;
+  _score?: number;
+}
+
+interface ElasticSearchResponse {
+  hits?: { hits?: ElasticSearchHit[] };
+}
+
+export type ElasticSearchFallbackReason = "error" | "timeout" | "empty";
+
+function agendaLabel(agenda: LoadedAgenda): string {
+  return agenda.source === "fixture" ? "the bundled agenda sample" : "the agenda";
+}
+
+function fallbackMessage(agenda: LoadedAgenda, elasticReason?: ElasticSearchFallbackReason): string {
+  const target = agendaLabel(agenda);
+  if (elasticReason === "timeout") {
+    return `Keyword match on ${target} because Elastic search timed out.`;
+  }
+  if (elasticReason === "empty") {
+    return `Keyword match on ${target} because Elastic search returned no hits.`;
+  }
+  if (elasticReason === "error") {
+    return `Keyword match on ${target} because Elastic search failed.`;
+  }
+  return agenda.source === "fixture"
+    ? "Keyword match on the bundled agenda sample because Elastic search is not configured."
+    : "Keyword match on the agenda because Elastic search is not configured.";
+}
+
+function normalizeElasticScore(raw: number, top: number): number {
+  if (top <= 0 || raw <= 0) return 0;
+  return (raw / top) * 5;
+}
+
+function keywordSearch(
+  agenda: LoadedAgenda,
+  query: SearchQuery,
+  field: SearchField,
+  size: number,
+  fallback: string,
+): SearchResult {
   const needles = tokens(query.text);
   if (needles.length === 0) return { hits: [], source: "fallback", fallback };
 
@@ -74,4 +144,79 @@ export async function searchSessions(env: Env, query: SearchQuery): Promise<Sear
     source: "fallback",
     fallback,
   };
+}
+
+function elasticFallbackStatus(err: unknown): number {
+  if (err instanceof HttpError) return err.status;
+  return 0;
+}
+
+type ElasticAttempt =
+  | { kind: "elastic"; result: SearchResult }
+  | { kind: "fallback"; reason: ElasticSearchFallbackReason }
+  | { kind: "unconfigured" };
+
+async function tryElasticSearch(env: Env, query: SearchQuery, agenda: LoadedAgenda): Promise<ElasticAttempt> {
+  if (!env.ELASTIC_URL || !env.ELASTIC_API_KEY) return { kind: "unconfigured" };
+
+  try {
+    const response = await elastic<ElasticSearchResponse>(
+      env,
+      "POST",
+      `/${env.SESSIONS_INDEX}/_search`,
+      buildElasticSearchBody(query),
+      { timeoutMs: ELASTIC_SEARCH_TIMEOUT_MS },
+    );
+    const rawHits = response.hits?.hits ?? [];
+    if (rawHits.length === 0) {
+      console.error("search_fallback", { status: 200 });
+      return { kind: "fallback", reason: "empty" };
+    }
+
+    const top = Math.max(...rawHits.map((hit) => (typeof hit._score === "number" ? hit._score : 0)), 0);
+    const byId = new Map(agenda.sessions.map((session) => [session.id, session]));
+    const hits: SearchHit[] = [];
+    for (const hit of rawHits) {
+      const session = byId.get(hit._id);
+      if (!session) continue;
+      const raw = typeof hit._score === "number" ? hit._score : 0;
+      hits.push({
+        session,
+        score: normalizeElasticScore(raw, top),
+        source: "elastic",
+      });
+    }
+
+    if (hits.length === 0) {
+      console.error("search_fallback", { status: 200 });
+      return { kind: "fallback", reason: "empty" };
+    }
+
+    return { kind: "elastic", result: { hits, source: "elastic" } };
+  } catch (err) {
+    const status = elasticFallbackStatus(err);
+    console.error("search_fallback", { status });
+    const reason: ElasticSearchFallbackReason = status === 504 ? "timeout" : "error";
+    return { kind: "fallback", reason };
+  }
+}
+
+/**
+ * Semantic search over hallpass-sessions when Elastic is configured; keyword match on the agenda otherwise.
+ */
+export async function searchSessions(env: Env, query: SearchQuery): Promise<SearchResult> {
+  const agenda = await loadAgenda(env);
+  const fallback = fallbackMessage(agenda);
+  const field: SearchField = query.field === "speaker_text" ? "speaker_text" : "search_text";
+  const size = Math.min(60, Math.max(1, Math.floor(query.size ?? 20)));
+  if (query.day !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(query.day)) {
+    return { hits: [], source: "fallback", fallback: "Day filter must be YYYY-MM-DD." };
+  }
+
+  const attempt = await tryElasticSearch(env, query, agenda);
+  if (attempt.kind === "elastic") return attempt.result;
+
+  const fallbackText =
+    attempt.kind === "fallback" ? fallbackMessage(agenda, attempt.reason) : fallback;
+  return keywordSearch(agenda, query, field, size, fallbackText);
 }
