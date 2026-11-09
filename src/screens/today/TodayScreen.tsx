@@ -1,0 +1,288 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import type { PlanResponse } from "../../../shared/api";
+import type { Plan } from "../../../shared/types";
+import { loadAgenda } from "../../lib/agenda";
+import { ApiFailure, post } from "../../lib/api";
+import { useConferenceNow } from "./useConferenceNow";
+import { Button, Notice, Screen, SessionCard, Stack } from "../../ui";
+import {
+  activeBreak,
+  breakDetail,
+  breakFollowingSession,
+  breakTitle,
+  buildDayTimeline,
+  conferenceDateKey,
+  formatHeaderDate,
+  formatBreakTime,
+  formatTime,
+  formatTimeRange,
+  nextPlannedSession,
+  resolveTodayHeading,
+  type TodayTimelineBlock,
+} from "./timeline";
+
+export interface TodayScreenProps {
+  onDirections?: (sessionId: string) => void;
+  onChangeSession?: (sessionId: string) => void;
+  onBreak?: () => void;
+  onAsk?: () => void;
+  planUpdated?: boolean;
+  onUndoPlanUpdate?: () => void;
+}
+
+async function fetchPlan(): Promise<Plan | null> {
+  const response = await post<PlanResponse>("/api/plan/get", {});
+  return response.plan;
+}
+
+function blockKey(block: TodayTimelineBlock, index: number): string {
+  if (block.kind === "session") return `session-${block.session.id}`;
+  return `break-${block.start}-${index}`;
+}
+
+export function TodayScreen({
+  onDirections,
+  onChangeSession,
+  onBreak,
+  onAsk,
+  planUpdated = false,
+  onUndoPlanUpdate,
+}: TodayScreenProps) {
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [sessions, setSessions] = useState<Awaited<ReturnType<typeof loadAgenda>>["sessions"]>([]);
+  const [agendaSource, setAgendaSource] = useState<"agenda" | "fixture" | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [stub, setStub] = useState(false);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [planResult, agenda] = await Promise.all([fetchPlan(), loadAgenda()]);
+      setPlan(planResult);
+      setSessions(agenda.sessions);
+      setAgendaSource(agenda.source);
+      setStub(false);
+    } catch (err) {
+      setPlan(null);
+      if (err instanceof ApiFailure && err.status === 501) {
+        setStub(true);
+        setError(null);
+      } else {
+        setError(err instanceof Error ? err.message : "Could not load your plan.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  const now = useConferenceNow();
+  const dayKey = useMemo(() => conferenceDateKey(now), [now]);
+  const headerDate = useMemo(() => formatHeaderDate(dayKey), [dayKey]);
+
+  const dayPlan = plan?.days[dayKey];
+  const timeline = useMemo(
+    () => buildDayTimeline(sessions, dayPlan),
+    [sessions, dayPlan],
+  );
+
+  const heading = useMemo(
+    () => (plan ? resolveTodayHeading(dayKey, timeline, now.getTime(), plan, sessions) : null),
+    [plan, dayKey, timeline, now, sessions],
+  );
+
+  const next = useMemo(() => nextPlannedSession(timeline, now.getTime()), [timeline, now]);
+  const highlightedBreak = useMemo(() => {
+    const inBreak = activeBreak(timeline, now.getTime());
+    if (inBreak) return inBreak;
+    if (next) return breakFollowingSession(timeline, next.block);
+    return null;
+  }, [timeline, now, next]);
+
+  const screenHeading = useMemo(() => {
+    if (!heading) return "Today";
+    switch (heading.kind) {
+      case "next":
+      case "in-break":
+        return heading.text;
+      case "empty-day":
+        return heading.text;
+      case "off-event":
+        return "Outside conference days";
+      case "day-done":
+        return heading.nextSessionTitle
+          ? `Nothing else today`
+          : "Conference plan complete";
+      default:
+        return "Today";
+    }
+  }, [heading]);
+
+  return (
+    <Screen brand heading={screenHeading} headerEnd={<span>{headerDate}</span>}>
+      <Stack>
+        {loading ? (
+          <Notice tone="loading" title="Loading your plan">
+            <p>Pulling today&apos;s schedule.</p>
+          </Notice>
+        ) : null}
+
+        {!loading && stub ? (
+          <Notice tone="stub" title="Plan API is not wired here">
+            <p>This preview cannot load a saved plan from the server.</p>
+          </Notice>
+        ) : null}
+
+        {!loading && error ? (
+          <Notice tone="error" title="Could not load plan">
+            <p>{error}</p>
+            <div className="mt-2">
+              <Button variant="secondary" onClick={() => void reload()}>
+                Try again
+              </Button>
+            </div>
+          </Notice>
+        ) : null}
+
+        {!loading && !error && !stub && !plan ? (
+          <Notice tone="empty" title="No plan yet">
+            <p>Save a profile and build a plan before today&apos;s schedule can appear.</p>
+          </Notice>
+        ) : null}
+
+        {!loading && !error && !stub && plan ? (
+          <>
+            {plan.source === "basic" ? (
+              <p className="text-sm text-muted">basic plan (AI unavailable)</p>
+            ) : null}
+            {agendaSource === "fixture" ? (
+              <p className="text-sm text-muted">Agenda fallback in use. Session details may be incomplete.</p>
+            ) : null}
+
+            {planUpdated ? (
+              <Notice tone="info" title="Plan updated">
+                <p>Your plan changed after the last check-in.</p>
+                {onUndoPlanUpdate ? (
+                  <div className="mt-2">
+                    <Button variant="quiet" onClick={onUndoPlanUpdate}>
+                      Undo
+                    </Button>
+                  </div>
+                ) : null}
+              </Notice>
+            ) : null}
+
+            {heading?.kind === "day-done" && heading.nextSessionTitle ? (
+              <Notice tone="info" title="Tomorrow starts here">
+                <p>
+                  {formatHeaderDate(heading.nextDayKey ?? "")}: {heading.nextSessionTitle} at{" "}
+                  {heading.nextSessionTime}.
+                </p>
+              </Notice>
+            ) : null}
+
+            {heading?.kind === "day-done" && !heading.nextSessionTitle ? (
+              <Notice tone="info" title="Nothing left on your plan">
+                <p>Your saved sessions for the conference are complete.</p>
+              </Notice>
+            ) : null}
+
+            {next ? (
+              <>
+                <SessionCard
+                  title={next.block.session.title}
+                  time={formatTimeRange(next.block.start, next.block.end)}
+                  room={next.block.session.room}
+                  reasonLabel="Why it's on your plan"
+                  reason={next.block.item.reason}
+                />
+                {onDirections ? (
+                  <Button variant="primary" onClick={() => onDirections(next.block.session.id)}>
+                    Get directions
+                    <span aria-hidden="true">→</span>
+                  </Button>
+                ) : null}
+                {onChangeSession ? (
+                  <div className="flex justify-center">
+                    <Button variant="quiet" onClick={() => onChangeSession(next.block.session.id)}>
+                      Change session
+                    </Button>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+
+            {highlightedBreak ? (
+              <SessionCard
+                kind="break"
+                title={breakTitle(highlightedBreak.planBreak.note)}
+                time={formatBreakTime(highlightedBreak.start, highlightedBreak.end)}
+                detail={breakDetail(highlightedBreak.planBreak.note)}
+              />
+            ) : null}
+
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink">Today&apos;s plan</h2>
+              <Stack gap="sm">
+                {timeline.length === 0 ? (
+                  <p className="text-sm text-muted">No sessions or breaks on this day.</p>
+                ) : (
+                  timeline.map((block, index) => {
+                    if (block.kind === "break") {
+                      return (
+                        <SessionCard
+                          key={blockKey(block, index)}
+                          kind="break"
+                          title={breakTitle(block.planBreak.note)}
+                          time={formatTime(block.start)}
+                          detail={breakDetail(block.planBreak.note)}
+                        />
+                      );
+                    }
+
+                    const status =
+                      block.item.status === "done"
+                        ? "Done"
+                        : block.item.status === "skipped"
+                          ? "Skipped"
+                          : undefined;
+
+                    return (
+                      <SessionCard
+                        key={blockKey(block, index)}
+                        title={block.session.title}
+                        time={formatTimeRange(block.start, block.end)}
+                        room={block.session.room}
+                        reasonLabel={status ? undefined : "Why it's on your plan"}
+                        reason={status ? undefined : block.item.reason}
+                        detail={status}
+                      />
+                    );
+                  })
+                )}
+              </Stack>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              {onBreak ? (
+                <Button variant="quiet" onClick={onBreak}>
+                  I need a break
+                </Button>
+              ) : null}
+              {onAsk ? (
+                <Button variant="quiet" onClick={onAsk}>
+                  Ask Hallpass
+                </Button>
+              ) : null}
+            </div>
+          </>
+        ) : null}
+      </Stack>
+    </Screen>
+  );
+}
