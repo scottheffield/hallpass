@@ -21,7 +21,7 @@ You are building one slice of Hallpass. Read [docs/BUILD-PLAN.md](docs/BUILD-PLA
 
 - Attendee text (goals, notes, questions) goes in POST bodies, never URLs.
 - Read request bodies with `readLimitedJson`, never `request.json()`.
-- No attendee text, model output or request bodies in logs or spans. Log status codes, counts and timings.
+- No attendee text, model output or request bodies in logs or spans. Log status codes, counts and timings. The one exception is `worker/lib/claude.ts`, which adds prompts and output to its `claude.request` span only when the `TRACE_CONTENT` demo switch is on. Don't add other content capture.
 - Model output is untrusted. Validate it in code, render it as text (no raw HTML), and build session lists from IDs that exist in the agenda.
 - Times are ISO 8601 with offset (`-07:00` for the conference).
 - The organizer view gets aggregates only. Never notes, access needs or individual rows.

@@ -5,7 +5,7 @@ Flag any change that breaks one of these. Each rule comes from the product spec.
 ## Privacy and telemetry
 
 - Attendee text (goals, answers, notes, chat, access needs) must travel in POST bodies, never in URLs or query strings. Traces record URLs.
-- No attendee text in `console.*` logs, error messages, span attributes or metric labels. Log status codes and IDs only.
+- No attendee text in `console.*` logs, error messages, span attributes or metric labels. Log status codes and IDs only. Exception: the `claude.request` span in `worker/lib/claude.ts` may carry prompts and output when `contentCaptureOn(env)` is true (the `TRACE_CONTENT` demo switch). Flag any other content capture, or capture that skips that check.
 - The organizer insights route returns aggregates only: no individual rows, notes, chat text or access needs.
 
 ## Request handling
