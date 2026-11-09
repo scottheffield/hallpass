@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Profile } from "../../shared/types";
-import { pickHomeTab, pickInitialPlace } from "./home";
+import { pickHomeShell, pickHomeTab, pickInitialPlace } from "./home";
 
 const profile: Profile = {
   attendee_id: "demo",
@@ -37,5 +37,20 @@ describe("pickHomeTab", () => {
   it("suggests plan before the event", () => {
     const now = new Date("2026-11-01T10:00:00-07:00");
     expect(pickHomeTab(now, profile)).toBe("plan");
+  });
+});
+
+describe("pickHomeShell", () => {
+  it("maps the home tab to the same place", () => {
+    const before = new Date("2026-11-01T10:00:00-07:00");
+    expect(pickHomeShell(before, profile)).toEqual({ tab: "plan", place: "plan" });
+
+    const during = new Date("2026-11-10T10:00:00-07:00");
+    expect(pickHomeShell(during, profile)).toEqual({ tab: "today", place: "today" });
+  });
+
+  it("keeps new attendees on intake", () => {
+    const now = new Date("2026-11-10T10:00:00-07:00");
+    expect(pickHomeShell(now, null)).toEqual({ tab: "today", place: "entry" });
   });
 });

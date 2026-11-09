@@ -9,8 +9,7 @@ import {
   DirectionsRoute,
   PlanTabStub,
   TodayRoute,
-  pickHomeTab,
-  pickInitialPlace,
+  pickHomeShell,
   showShellTabs,
   tabToPlace,
   type CheckInTarget,
@@ -52,10 +51,12 @@ export default function App() {
       try {
         const res = await post<ProfileResponse>("/api/profile/get", {});
         if (!cancelled && res.profile) {
-          const now = demoNowForRequests() ? new Date(demoNowForRequests()!) : new Date();
+          const nowIso = demoNowForRequests();
+          const now = nowIso ? new Date(nowIso) : new Date();
+          const home = pickHomeShell(now, res.profile);
           setProfile(res.profile);
-          setPlace(pickInitialPlace(res.profile));
-          setTab(pickHomeTab(now, res.profile));
+          setTab(home.tab);
+          setPlace(home.place);
         }
       } catch {
         /* Stay on intake when the profile is missing or the request fails. */
@@ -82,8 +83,9 @@ export default function App() {
       }
       const nowIso = demoNowForRequests();
       const now = nowIso ? new Date(nowIso) : new Date();
-      setTab(pickHomeTab(now, nextProfile));
-      setPlace("today");
+      const home = pickHomeShell(now, nextProfile);
+      setTab(home.tab);
+      setPlace(home.place);
     })();
   }, [profile]);
 

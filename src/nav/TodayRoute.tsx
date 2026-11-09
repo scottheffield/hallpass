@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { PlanResponse } from "../../shared/api";
-import type { Plan } from "../../shared/types";
+import type { Plan, Session } from "../../shared/types";
 import { getSession, loadAgenda } from "../lib/agenda";
 import { post } from "../lib/api";
 import { TodayScreen } from "../screens/today";
@@ -31,23 +31,38 @@ export function TodayRoute({
   onBreak,
 }: TodayRouteProps) {
   const now = useConferenceNow();
-  const [checkInOffer, setCheckInOffer] = useState<CheckInTarget | null>(null);
-
-  const refreshOffer = useCallback(async () => {
-    try {
-      const [plan, agenda] = await Promise.all([fetchPlan(), loadAgenda()]);
-      setCheckInOffer(findCheckInOffer(now, plan, agenda.sessions));
-    } catch {
-      setCheckInOffer(null);
-    }
-  }, [now]);
+  const planFetchRef = useRef(0);
+  const [plan, setPlan] = useState<Plan | null>(null);
+  const [sessions, setSessions] = useState<Session[]>([]);
 
   useEffect(() => {
-    void refreshOffer();
-  }, [refreshOffer, planUpdated]);
+    const token = ++planFetchRef.current;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [loadedPlan, agenda] = await Promise.all([fetchPlan(), loadAgenda()]);
+        if (cancelled || token !== planFetchRef.current) return;
+        setPlan(loadedPlan);
+        setSessions(agenda.sessions);
+      } catch {
+        if (cancelled || token !== planFetchRef.current) return;
+        setPlan(null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planUpdated]);
+
+  const checkInOffer = useMemo(
+    () => findCheckInOffer(now, plan, sessions),
+    [now, plan, sessions],
+  );
 
   const onDirectionsById = useCallback(
-  async (sessionId: string) => {
+    async (sessionId: string) => {
       try {
         const agenda = await loadAgenda();
         const session = getSession(agenda.sessions, sessionId);

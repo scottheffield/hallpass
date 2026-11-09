@@ -3,6 +3,7 @@ import type { Profile } from "../../shared/types";
 import type { AppTab } from "../ui/AppFrame";
 import { conferenceDateKey } from "../screens/today/timeline";
 import type { ShellPlace } from "./types";
+import { tabToPlace } from "./types";
 
 export function pickHomeTab(now: Date, profile: Profile | null): AppTab {
   if (!profile) return "today";
@@ -17,4 +18,16 @@ export function pickHomeTab(now: Date, profile: Profile | null): AppTab {
 
 export function pickInitialPlace(profile: Profile | null): ShellPlace {
   return profile ? "today" : "entry";
+}
+
+/** Keeps the selected tab and rendered place in sync after boot or intake. */
+export function pickHomeShell(
+  now: Date,
+  profile: Profile | null,
+): { tab: AppTab; place: ShellPlace } {
+  if (!profile) {
+    return { tab: "today", place: "entry" };
+  }
+  const tab = pickHomeTab(now, profile);
+  return { tab, place: tabToPlace(tab) };
 }
