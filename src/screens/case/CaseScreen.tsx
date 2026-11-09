@@ -27,8 +27,12 @@ async function fetchCase(): Promise<CaseResponse> {
 }
 
 async function fetchPlan(): Promise<Plan | null> {
-  const response = await post<PlanResponse>("/api/plan/get", {});
-  return response.plan;
+  try {
+    const response = await post<PlanResponse>("/api/plan/get", {});
+    return response.plan;
+  } catch {
+    return null;
+  }
 }
 
 export function CaseScreen({ onBack }: CaseScreenProps) {
