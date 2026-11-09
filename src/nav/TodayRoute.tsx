@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { PlanResponse } from "../../shared/api";
+import type { LeaveSessionResponse, PlanResponse } from "../../shared/api";
 import type { Plan, Session } from "../../shared/types";
 import { getSession, loadAgenda } from "../lib/agenda";
-import { post } from "../lib/api";
+import { ApiFailure, post } from "../lib/api";
 import { TodayScreen } from "../screens/today";
 import { useConferenceNow } from "../screens/today/useConferenceNow";
 import { formatTimeRange } from "../screens/today/timeline";
-import { Button } from "../ui";
+import { Button, Notice, Sheet, Stack } from "../ui";
 import { findCheckInOffer } from "./checkInOffer";
 import type { CheckInTarget, DirectionsTarget } from "./types";
 
@@ -20,6 +20,7 @@ export interface TodayRouteProps {
   onBreak: () => void;
   onAsk?: () => void;
   onBuildPlan?: () => void;
+  onPlanRefresh: () => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -36,11 +37,15 @@ export function TodayRoute({
   onBreak,
   onAsk,
   onBuildPlan,
+  onPlanRefresh,
 }: TodayRouteProps) {
   const now = useConferenceNow();
   const planFetchRef = useRef(0);
   const [plan, setPlan] = useState<Plan | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [leaveBusy, setLeaveBusy] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
+  const [leaveFollowUp, setLeaveFollowUp] = useState<CheckInTarget | null>(null);
 
   useEffect(() => {
     const token = ++planFetchRef.current;
@@ -87,6 +92,32 @@ export function TodayRoute({
     [onDirections],
   );
 
+  const handleLeaveSession = useCallback(
+    async (sessionId: string) => {
+      setLeaveBusy(true);
+      setLeaveError(null);
+      try {
+        await post<LeaveSessionResponse>("/api/session/leave", { session_id: sessionId });
+        const session = getSession(sessions, sessionId);
+        if (session) {
+          setLeaveFollowUp({
+            sessionId,
+            sessionTitle: session.title,
+            sessionTime: formatTimeRange(session.start, session.end),
+            sessionRoom: session.room,
+            leftEarly: true,
+          });
+        }
+        onPlanRefresh();
+      } catch (err) {
+        setLeaveError(err instanceof ApiFailure ? err.message : "Could not leave that session. Try again.");
+      } finally {
+        setLeaveBusy(false);
+      }
+    },
+    [onPlanRefresh, sessions],
+  );
+
   return (
     <>
       {checkInOffer ? (
@@ -94,6 +125,13 @@ export function TodayRoute({
           <Button variant="secondary" onClick={() => onOpenCheckIn(checkInOffer)}>
             Check in: {checkInOffer.sessionTitle}
           </Button>
+        </div>
+      ) : null}
+      {leaveError ? (
+        <div className="mb-4">
+          <Notice tone="error" title="Could not leave session">
+            <p>{leaveError}</p>
+          </Notice>
         </div>
       ) : null}
       <TodayScreen
@@ -104,7 +142,42 @@ export function TodayRoute({
         onBreak={onBreak}
         onAsk={onAsk}
         onBuildPlan={onBuildPlan}
+        onLeaveSession={(sessionId) => void handleLeaveSession(sessionId)}
+        leaveSessionBusy={leaveBusy}
       />
+      <Sheet
+        open={leaveFollowUp !== null}
+        title="You left the session"
+        onClose={() => setLeaveFollowUp(null)}
+      >
+        {leaveFollowUp ? (
+          <Stack gap="md">
+            <p className="text-sm text-muted">
+              Optional feedback helps Hallpass adjust the rest of your day. You can also skip and see what is next on
+              Today.
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => {
+                const target = leaveFollowUp;
+                setLeaveFollowUp(null);
+                onOpenCheckIn(target);
+              }}
+            >
+              Give feedback
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setLeaveFollowUp(null);
+                onPlanRefresh();
+              }}
+            >
+              Skip
+            </Button>
+          </Stack>
+        ) : null}
+      </Sheet>
     </>
   );
 }

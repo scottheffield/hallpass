@@ -101,7 +101,7 @@ function itemCountsAsPrevious(
   sessionEndMs: number,
   nowMs: number,
 ): boolean {
-  if (status === "done") return true;
+  if (status === "done" || status === "left_early") return true;
   if (status === "skipped") return false;
   return Number.isFinite(sessionEndMs) && sessionEndMs <= nowMs;
 }

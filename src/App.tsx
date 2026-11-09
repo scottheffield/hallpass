@@ -197,6 +197,7 @@ export default function App() {
               setTab("plan");
               setPlace("plan");
             }}
+            onPlanRefresh={() => setPlanVersion((version) => version + 1)}
           />
           <ShellUtilityLinks
             onReadout={() => openFocusedScreen("readout")}
@@ -259,6 +260,7 @@ export default function App() {
           sessionTitle={checkIn.sessionTitle}
           sessionTime={checkIn.sessionTime}
           sessionRoom={checkIn.sessionRoom}
+          earlyDeparture={Boolean(checkIn.leftEarly)}
           returnFocusRef={checkInOpenerRef}
           onClose={closeCheckIn}
           onFinished={({ planUpdated: updated }) => {

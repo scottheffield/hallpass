@@ -34,6 +34,21 @@ function markSessionDone(plan: Plan, day: string, sessionId: string): Plan {
   return copy;
 }
 
+function markSessionLeftEarly(plan: Plan, day: string, sessionId: string): Plan {
+  const copy = structuredClone(plan);
+  const dayPlan = copy.days[day];
+  if (!dayPlan) return copy;
+  for (const item of dayPlan.items) {
+    if (item.session_id === sessionId) item.status = "left_early";
+  }
+  copy.updated_at = conferenceIsoFromDate(new Date());
+  return copy;
+}
+
+function planItemForSession(plan: Plan, day: string, sessionId: string) {
+  return plan.days[day]?.items.find((item) => item.session_id === sessionId);
+}
+
 export function resolveCheckInAt(request: Request, body: Record<string, unknown>): string {
   const serverNow = now(request);
   const defaultAt = conferenceIsoFromDate(serverNow);
@@ -71,6 +86,7 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
   const sessionId = body.session_id.trim();
   const worthIt = requiredChoice(body.worth_it, WORTH, "worth_it");
   const movedGoal = requiredChoice(body.moved_goal, MOVED, "moved_goal");
+  const leftEarly = body.left_early === true;
 
   const at = resolveCheckInAt(request, body);
   const checkinBody: CheckIn = {
@@ -81,6 +97,7 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
     moved_goal: movedGoal,
   };
   if (typeof body.note === "string" && body.note.trim()) checkinBody.note = body.note.trim();
+  if (leftEarly) checkinBody.left_early = true;
 
   let plan = (await getPlan(env, attendeeId)) ?? fixturePlan(attendeeId);
   plan.attendee_id = attendeeId;
@@ -100,7 +117,23 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
     note: checkinBody.note,
   };
 
-  const withDone = markSessionDone(plan, day, sessionId);
+  const existingItem = planItemForSession(plan, day, sessionId);
+  if (leftEarly) {
+    if (existingItem && existingItem.status !== "planned" && existingItem.status !== "left_early") {
+      throw new HttpError(400, "bad_request", "That session is not open for early feedback.");
+    }
+  }
+
+  let withDone = plan;
+  if (leftEarly) {
+    if (existingItem?.status === "left_early") {
+      withDone = structuredClone(plan);
+    } else if (existingItem?.status === "planned") {
+      withDone = markSessionLeftEarly(plan, day, sessionId);
+    }
+  } else {
+    withDone = markSessionDone(plan, day, sessionId);
+  }
   const beforeDay = structuredClone(withDone.days[day]);
 
   let proposal: PlanProposal | null = null;

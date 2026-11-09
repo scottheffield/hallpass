@@ -29,6 +29,7 @@ export function buildCheckInRequest(
   worthIt: WorthIt | "",
   movedGoal: MovedGoal | "",
   note: string,
+  leftEarly = false,
 ): CheckInRequest | null {
   if (!sessionId.trim() || !worthIt || !movedGoal) return null;
   if (noteExceedsLimit(note)) return null;
@@ -39,6 +40,7 @@ export function buildCheckInRequest(
   };
   const trimmed = trimNote(note);
   if (trimmed) body.note = trimmed;
+  if (leftEarly) body.left_early = true;
   return body;
 }
 

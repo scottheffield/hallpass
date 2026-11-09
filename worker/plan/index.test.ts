@@ -31,7 +31,10 @@ describe("replanDay", () => {
       const session = byId.get(item.session_id);
       if (!session) continue;
       const keptEarly =
-        item.pinned || item.status === "done" || Date.parse(session.end) <= fromMs;
+        item.pinned ||
+        item.status === "done" ||
+        item.status === "left_early" ||
+        Date.parse(session.end) <= fromMs;
       if (!keptEarly) {
         expect(Date.parse(session.start)).toBeGreaterThanOrEqual(fromMs);
       }

@@ -124,9 +124,11 @@ export function nextPlannedSession(blocks: TodayTimelineBlock[], nowMs: number):
     if (block.kind !== "session") continue;
     if (block.item.status !== "planned") continue;
     if (parseInstant(block.end) <= nowMs) continue;
+    const startMs = parseInstant(block.start);
+    const inProgress = Number.isFinite(startMs) && startMs <= nowMs && nowMs < parseInstant(block.end);
     return {
       block,
-      heading: `Next, at ${formatTime(block.start)}`,
+      heading: inProgress ? "On your plan now" : `Next, at ${formatTime(block.start)}`,
     };
   }
   return null;

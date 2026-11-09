@@ -9,6 +9,7 @@ describe("planSessionStatusDetail", () => {
 
   it("labels done, skipped, and pinned", () => {
     expect(planSessionStatusDetail({ pinned: false, status: "done" })).toBe("Status: Done");
+    expect(planSessionStatusDetail({ pinned: false, status: "left_early" })).toBe("Status: Left early");
     expect(planSessionStatusDetail({ pinned: false, status: "skipped" })).toBe("Status: Skipped");
     expect(planSessionStatusDetail({ pinned: true, status: "planned" })).toBe("Status: Kept on your plan");
   });

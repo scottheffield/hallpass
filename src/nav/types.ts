@@ -26,6 +26,8 @@ export interface CheckInTarget {
   sessionTitle: string;
   sessionTime: string;
   sessionRoom: string;
+  /** Feedback after leaving the session before it ended. */
+  leftEarly?: boolean;
 }
 
 export function tabToPlace(tab: AppTab): ShellPlace {

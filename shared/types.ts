@@ -54,7 +54,7 @@ export interface Profile {
   updated_at: IsoDateTime;
 }
 
-export type PlanItemStatus = "planned" | "done" | "skipped";
+export type PlanItemStatus = "planned" | "done" | "skipped" | "left_early";
 
 export interface PlanItem {
   session_id: string;
@@ -106,6 +106,8 @@ export interface CheckIn {
   worth_it: WorthIt;
   moved_goal: MovedGoal;
   note?: string;
+  /** True when feedback follows leaving a session before it ended. */
+  left_early?: boolean;
 }
 
 export interface CaseForAttending {
