@@ -1,26 +1,27 @@
 import type { ReadoutResponse } from "../../shared/api";
 import type { Env } from "../env";
+import { fixturePlan, fixtureProfile } from "../lib/fixtures";
 import { json } from "../lib/http";
+import { getPlan, getProfile, listCheckIns, putReadout } from "../lib/store";
+import { generateReadout } from "../summary/readout";
+import { now } from "../lib/clock";
 import { readObject } from "./body";
 
-/** Stub readout. No check-ins yet, so it does not claim a goal was hit. */
+/** Builds a readout from stored profile, plan and check-ins. Saves to the readouts index. */
 export async function readout(request: Request, env: Env, ctx: ExecutionContext, attendeeId: string): Promise<Response> {
-  void env;
   void ctx;
   await readObject(request);
-  const response: ReadoutResponse = {
-    stub: true,
-    readout: {
-      attendee_id: attendeeId,
-      as_of: "2026-11-10T18:00:00-07:00",
-      final: false,
-      goals_hit: [],
-      goals_missed: [],
-      helped_sessions: [],
-      gaps: ["Not enough feedback to tell"],
-      gap_themes: [],
-      followups: ["Check in after Ask Your Platform in Grand Ballroom H at 11:30."],
-    },
-  };
+
+  const profile = (await getProfile(env, attendeeId)) ?? fixtureProfile(attendeeId);
+  profile.attendee_id = attendeeId;
+  const plan = (await getPlan(env, attendeeId)) ?? fixturePlan(attendeeId);
+  plan.attendee_id = attendeeId;
+  const checkins = await listCheckIns(env, attendeeId);
+
+  const { readout: generated, stub } = await generateReadout(env, attendeeId, profile, plan, checkins, now(request));
+  await putReadout(env, generated);
+
+  const response: ReadoutResponse = { readout: generated };
+  if (stub) response.stub = true;
   return json(response);
 }
