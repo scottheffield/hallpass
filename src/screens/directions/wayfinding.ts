@@ -1,3 +1,4 @@
+import { formatRoomDisplay } from "../../lib/roomDisplay";
 import { LEVEL_UNKNOWN, parseRoom, transferMinutes } from "../../../shared/venue";
 import type { IsoDateTime, PlanItem, PlanItemStatus, Session } from "../../../shared/types";
 import { parseInstant } from "../today/timeline";
@@ -10,24 +11,7 @@ const AWAY_FROM_VENUE =
 
 /** One heading line from parseRoom, or the raw name when it does not parse. */
 export function formatRoomHeading(roomName: string): string {
-  const trimmed = roomName.trim();
-  if (!trimmed) return trimmed;
-
-  const parsed = parseRoom(trimmed);
-  if (parsed.kind === "unknown" && !trimmed.includes("|")) {
-    return trimmed;
-  }
-  if (parsed.kind === "off-site") {
-    return trimmed;
-  }
-
-  if (parsed.building && parsed.level !== LEVEL_UNKNOWN) {
-    return `${parsed.building} › ${parsed.level} › ${parsed.room}`;
-  }
-  if (parsed.building) {
-    return `${parsed.building} › ${parsed.room}`;
-  }
-  return trimmed;
+  return formatRoomDisplay(roomName);
 }
 
 function eitherAwayFromMainVenue(fromName: string, toName: string): boolean {

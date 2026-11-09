@@ -27,21 +27,19 @@ const LEVELS = [
 
 describe("formatRoomHeading", () => {
   it("formats a three-part Salt Palace name", () => {
-    expect(formatRoomHeading("Salt Palace | Level 2 | 255 BC")).toBe(
-      "Salt Palace › Level 2 › 255 BC",
-    );
+    expect(formatRoomHeading("Salt Palace | Level 2 | 255 BC")).toBe("255 BC · Level 2 · Salt Palace");
   });
 
   it("formats a longer Solutions Showcase name", () => {
     const name =
       "Salt Palace | Level 1 | Solutions Showcase | Hall 1 | Alpine Overlook Zone | Demo Theater";
     expect(formatRoomHeading(name)).toBe(
-      "Salt Palace › Level 1 › Solutions Showcase › Hall 1 › Alpine Overlook Zone › Demo Theater",
+      "Solutions Showcase › Hall 1 › Alpine Overlook Zone › Demo Theater · Level 1 · Salt Palace",
     );
   });
 
   it("shows Hyatt Regency Lobby as building and room", () => {
-    expect(formatRoomHeading("Hyatt Regency Lobby")).toBe("Hyatt Regency › Lobby");
+    expect(formatRoomHeading("Hyatt Regency Lobby")).toBe("Lobby · Hyatt Regency");
   });
 
   it("shows Off-Site Location as-is", () => {

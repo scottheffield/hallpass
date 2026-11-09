@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { formatRoomDisplay } from "../lib/roomDisplay";
 
 export type SessionCardKind = "session" | "break" | "current" | "suggested";
 
@@ -42,6 +43,7 @@ export function SessionCard({
   children,
 }: SessionCardProps) {
   const TitleTag = headingLevel === 3 ? "h3" : "h2";
+  const roomLine = room ? formatRoomDisplay(room) : undefined;
 
   if (kind === "break") {
     return (
@@ -78,7 +80,7 @@ export function SessionCard({
             <p className="min-w-0 font-display text-lg font-semibold leading-tight">{title}</p>
           ) : null}
         </div>
-        {room ? <p className="mt-2 text-sm">{room}</p> : null}
+        {roomLine ? <p className="mt-2 text-sm">{roomLine}</p> : null}
         {reasonLabel ? <p className="mt-2 font-semibold">{reasonLabel}</p> : null}
         {reason ? <p className="mt-1 text-base leading-snug">{reason}</p> : null}
         {detail ? <p className="mt-1 text-base leading-snug">{detail}</p> : null}
@@ -92,7 +94,7 @@ export function SessionCard({
       {title ? <TitleTag className={TITLE_CLASS}>{title}</TitleTag> : null}
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-3">
         <p className="font-semibold">{time}</p>
-        {room ? <p>{room}</p> : null}
+        {roomLine ? <p>{roomLine}</p> : null}
       </div>
       {reasonLabel ? <p className="mt-3 font-semibold">{reasonLabel}</p> : null}
       {reason ? <p className="mt-1 text-base leading-snug">{reason}</p> : null}
