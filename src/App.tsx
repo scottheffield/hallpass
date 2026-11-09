@@ -171,6 +171,7 @@ export default function App() {
         <DirectionsRoute
           target={directions}
           accessNeeds={profile?.access_needs}
+          planVersion={planVersion}
           onBack={closeDirections}
         />
       ) : null}
