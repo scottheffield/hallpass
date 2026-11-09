@@ -32,3 +32,11 @@ Timeline grouped by day, each item with time, room, title (from the agenda) and 
 ## Done when
 
 The demo persona's first day shows at least 3 picks, one "picked over X because Y" and one resolved clash, on the live URL, from real agenda data.
+
+## Follow-up: tight transfers (added after the plan slice merged in PR #6)
+
+A small PR against `worker/plan/validate.ts`, with tests. It depends on `shared/venue.ts` from the brief 21 follow-up, step 1, and uses `transferMinutes` from it, so the plan and Directions show the same walking times.
+
+- A gap between consecutive picks is tight when it's shorter than `transferMinutes(from.room, to.room)`. Pacing `light` doubles the minimum.
+- When a gap is tight, prefer a candidate in a closer room. If the pick stays, add a `clash_note` that uses the same minutes Directions will show, for example "Tight change: the Hyatt Regency is about 12 minutes from 255 BC, and you have 10."
+- Unknown and off-site rooms count as long transfers (see `transferMinutes`), so they're flagged rather than silently allowed.
