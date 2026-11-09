@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEVEL_UNKNOWN, parseRoom, roomNamesMatch, transferMinutes } from "./venue";
+import { LEVEL_UNKNOWN, parseRoom, transferMinutes } from "./venue";
 
 describe("parseRoom", () => {
   it("parses a three-part Salt Palace name", () => {
@@ -51,19 +51,6 @@ describe("parseRoom", () => {
 
   it("classifies Hyatt Regency pipe names", () => {
     expect(parseRoom("Hyatt Regency | Level 4 | Regency Ballroom B").kind).toBe("hyatt");
-  });
-});
-
-describe("roomNamesMatch", () => {
-  const ace = "Salt Palace | Level 1 | Grand Ballroom ACE";
-
-  it("matches identical names and trims whitespace", () => {
-    expect(roomNamesMatch(ace, ace)).toBe(true);
-    expect(roomNamesMatch(`${ace} `, ace)).toBe(true);
-  });
-
-  it("does not match different rooms on the same level", () => {
-    expect(roomNamesMatch(ace, "Salt Palace | Level 1 | Grand Ballroom H")).toBe(false);
   });
 });
 

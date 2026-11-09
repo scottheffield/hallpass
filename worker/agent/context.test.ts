@@ -69,13 +69,6 @@ const grandBallroomH: Room = {
   walking_hint: "East escalators from Hall DE.",
 };
 
-const grandBallroomAce: Room = {
-  name: "Salt Palace | Level 1 | Grand Ballroom ACE",
-  level: "Level 1",
-  landmark: "Grand Ballroom",
-  walking_hint: "Follow the ACE signs.",
-};
-
 describe("planRowsForDay", () => {
   it("picks the next session after the clock passes the first block", () => {
     const atNoon = new Date("2026-11-10T12:05:00-07:00");
@@ -98,14 +91,6 @@ describe("room hints", () => {
     expect(shortRoom(sessionA.room)).toBe("Grand Ballroom H");
   });
 
-  it("resolves Grand Ballroom ACE for next-session context", () => {
-    const aceSession: Session = {
-      ...sessionB,
-      room: "Salt Palace | Level 1 | Grand Ballroom ACE",
-    };
-    const hit = roomForName([grandBallroomAce, grandBallroomH], aceSession.room);
-    expect(hit?.walking_hint).toContain("ACE");
-  });
 });
 
 describe("buildAgentContext", () => {

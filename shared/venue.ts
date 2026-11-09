@@ -78,14 +78,6 @@ function isSameRoom(a: ParsedRoom, b: ParsedRoom, from: string, to: string): boo
   );
 }
 
-/** True when two room name strings refer to the same venue room (trimmed or parsed match). */
-export function roomNamesMatch(from: string, to: string): boolean {
-  const fromTrim = from.trim();
-  const toTrim = to.trim();
-  if (!fromTrim || !toTrim) return false;
-  return isSameRoom(parseRoom(fromTrim), parseRoom(toTrim), fromTrim, toTrim);
-}
-
 /** Walking-time estimates shared by Directions, plan, and the corner agent. */
 export function transferMinutes(from: string, to: string): number {
   const fromTrim = from.trim();
