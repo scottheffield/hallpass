@@ -12,6 +12,7 @@ import { presentPlanReason } from "../plan/reason";
 
 export interface CaseScreenProps {
   onBack?: () => void;
+  backLabel?: string;
 }
 
 type LoadPhase = "loading" | "ready" | "error";
@@ -35,7 +36,7 @@ async function fetchPlan(): Promise<Plan | null> {
   }
 }
 
-export function CaseScreen({ onBack }: CaseScreenProps) {
+export function CaseScreen({ onBack, backLabel }: CaseScreenProps) {
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [caseItem, setCaseItem] = useState<CaseForAttending | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -87,6 +88,7 @@ export function CaseScreen({ onBack }: CaseScreenProps) {
       headingSize="md"
       brand
       onBack={onBack}
+      backLabel={backLabel}
       kicker="Optional draft for your manager"
       lead={
         phase === "loading" ? (

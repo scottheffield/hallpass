@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useShellNav } from "../nav/ShellNavContext";
 import { Button } from "./Button";
 import { HelloMark } from "./HelloMark";
 
@@ -12,6 +13,8 @@ export interface ScreenProps {
   kickerDetail?: string;
   /** Compact Hallpass wordmark in the header. */
   brand?: boolean;
+  /** Overrides shell home navigation for the brand control. */
+  onGoHome?: () => void;
   onBack?: () => void;
   backLabel?: string;
   /** Trailing header slot: a date, Close, or another labeled control. */
@@ -32,19 +35,27 @@ export function Screen({
   kicker,
   kickerDetail,
   brand = false,
+  onGoHome,
   onBack,
-  backLabel = "Back",
+  backLabel = "← Back",
   headerEnd,
   lead,
   children,
 }: ScreenProps) {
+  const shellNav = useShellNav();
+  const goHome = onGoHome ?? shellNav?.onGoHome;
   const showRow = brand || kicker || kickerDetail || headerEnd;
 
   return (
     <div className="flex flex-col">
       {onBack ? (
         <div className="mb-2">
-          <Button variant="quiet" onClick={onBack}>
+          <Button
+            variant="quiet"
+            className="min-h-11 justify-start px-0"
+            onClick={onBack}
+            aria-label={backLabel}
+          >
             {backLabel}
           </Button>
         </div>
@@ -52,7 +63,7 @@ export function Screen({
       {showRow ? (
         <div className="mb-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
-            {brand ? <HelloMark compact /> : null}
+            {brand ? <HelloMark compact onActivate={goHome} /> : null}
             {kicker ? <p className="text-sm text-ink">{kicker}</p> : null}
             {kickerDetail ? <p className="text-sm text-muted">{kickerDetail}</p> : null}
           </div>

@@ -7,7 +7,7 @@ export type AppTab = "today" | "plan" | "goals";
 export interface AppFrameProps {
   tab: AppTab;
   onTabChange: (tab: AppTab) => void;
-  /** Hide the tab bar on entry and on a focused adjustment screen. */
+  /** Hide the tab bar during intake or while a sheet covers the shell. */
   showTabs?: boolean;
   /** Slot for the demo clock bar. This frame does not advance time. */
   demoBar?: ReactNode;

@@ -1,11 +1,20 @@
 export interface HelloMarkProps {
   /** Compact wordmark for operational headers. The full sticker is the default. */
   compact?: boolean;
+  /** When set, the compact mark is a home control. */
+  onActivate?: () => void;
 }
 
 /** Conference name sticker. Full badge on entry; wordmark only once the day starts. */
-export function HelloMark({ compact = false }: HelloMarkProps) {
+export function HelloMark({ compact = false, onActivate }: HelloMarkProps) {
   if (compact) {
+    if (onActivate) {
+      return (
+        <button type="button" className="hello-mark hello-mark-btn" onClick={onActivate} aria-label="Hallpass, go to Today">
+          Hallpass
+        </button>
+      );
+    }
     return <span className="hello-mark">Hallpass</span>;
   }
 
