@@ -41,7 +41,7 @@ describe("buildInsights", () => {
 
   it("computes moved-goal rate per session with a minimum check-in count", () => {
     const sessionA = "1246200";
-    const sessionB = "1246201";
+    const sessionB = "1233585";
     const checkins: CheckInRow[] = [
       { session_id: sessionA, moved_goal: "yes" },
       { session_id: sessionA, moved_goal: "a_little" },

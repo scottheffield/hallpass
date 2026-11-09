@@ -3,7 +3,8 @@ import type { OrganizerRows } from "./rows";
 
 /** Deterministic demo rows. Theme ids and session ids only — no attendee names or goal text. */
 const THEMES = ["observability", "platform-engineering", "security", "delivery", "community"] as const;
-const SESSIONS = ["1246200", "1246201", "1246202", "1246203", "1246204"] as const;
+/** Real KubeCon session ids from public/agenda.json (same pool as the demo seed script). */
+const SESSIONS = ["1246200", "1233585", "1250865", "1246033", "1250770"] as const;
 const MOVED: MovedGoal[] = ["yes", "a_little", "no"];
 const PACINGS: Pacing[] = ["light", "balanced", "packed"];
 
