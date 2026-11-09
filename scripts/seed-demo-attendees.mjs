@@ -5,8 +5,9 @@
  *   node --env-file=.dev.vars scripts/seed-demo-attendees.mjs
  *
  * Requires ELASTIC_URL, ELASTIC_API_KEY, and ELASTIC_INDEX_PREFIX set in the
- * environment (for example hallpass-intake). Refuses the shared production prefix
- * "hallpass". Does not write hallpass-sessions. Does not print secrets.
+ * environment (for example hallpass-intake). Refuses the shared prefix "hallpass"
+ * unless SEED_ALLOW_SHARED_PREFIX is set to that same value exactly (opt-in for
+ * live demo indexes). Does not write hallpass-sessions. Does not print secrets.
  */
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
@@ -46,54 +47,21 @@ const MOVED = ["yes", "a_little", "no"];
 const RETRY = new Set([429, 502, 503, 504]);
 const FORBIDDEN_PREFIXES = new Set(["hallpass"]);
 
-const url = process.env.ELASTIC_URL;
-const key = process.env.ELASTIC_API_KEY;
-const prefix = process.env.ELASTIC_INDEX_PREFIX?.trim() || "hallpass";
-
-if (!url || !key) {
-  console.log("seed did not run: elastic is not configured");
-  process.exit(0);
+/** @returns {{ allowed: boolean; prefix: string }} */
+export function resolveSeedPrefix(elasticIndexPrefix, allowSharedPrefix) {
+  const prefix = elasticIndexPrefix?.trim() || "hallpass";
+  if (!FORBIDDEN_PREFIXES.has(prefix)) return { allowed: true, prefix };
+  if (allowSharedPrefix?.trim() === prefix) return { allowed: true, prefix };
+  return { allowed: false, prefix };
 }
 
-if (FORBIDDEN_PREFIXES.has(prefix)) {
-  console.log("seed did not run: set ELASTIC_INDEX_PREFIX to your own dev prefix, not hallpass");
-  process.exit(1);
+function isDirectRun() {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  return fileURLToPath(import.meta.url) === entry;
 }
 
-const agenda = JSON.parse(await readFile(join(root, "public", "agenda.json"), "utf8"));
-const byDay = groupPlanableSessions(agenda.sessions);
-const popular = pickPopularSessions(byDay, 18);
-const started = Date.now();
-const rng = mulberry32(RNG_SEED);
-
-const bundles = [];
-for (let i = 1; i <= ATTENDEE_COUNT; i += 1) {
-  const attendee_id = `seed_${String(i).padStart(3, "0")}`;
-  bundles.push(buildAttendee(attendee_id, i - 1, byDay, popular, rng));
-}
-
-let written = 0;
-for (const bundle of bundles) {
-  await putDoc(`${prefix}-profiles`, bundle.profile.attendee_id, bundle.profile);
-  await putDoc(`${prefix}-plans`, bundle.plan.attendee_id, bundle.plan);
-  for (const checkin of bundle.checkins) {
-    const id = `${checkin.attendee_id}:${checkin.session_id}`;
-    await putDoc(`${prefix}-checkins`, id, checkin);
-  }
-  await putDoc(`${prefix}-readouts`, bundle.readout.attendee_id, bundle.readout);
-  written += 1;
-  if (written % 10 === 0) {
-    console.log(`seeded ${written} attendees ms ${Date.now() - started}`);
-  }
-}
-
-console.log(
-  `seed complete attendees ${written} checkins ${bundles.reduce((n, b) => n + b.checkins.length, 0)} prefix ${prefix} ms ${
-    Date.now() - started
-  }`,
-);
-
-function buildAttendee(attendee_id, index, sessionsByDay, popularIds, random) {
+function buildAttendee(attendee_id, index, sessionsByDay, popularIds, allSessions, random) {
   const themeCount = 1 + (index % 3);
   const goal_themes = [];
   for (let t = 0; t < themeCount; t += 1) {
@@ -168,7 +136,7 @@ function buildAttendee(attendee_id, index, sessionsByDay, popularIds, random) {
   const shuffled = shuffle(planSessionIds, random);
   for (let c = 0; c < Math.min(checkinCount, shuffled.length); c += 1) {
     const session_id = shuffled[c];
-    const session = findSession(agenda.sessions, session_id);
+    const session = findSession(allSessions, session_id);
     const moved_goal = pickMovedGoal(index, c, session_id, popularIds);
     checkins.push({
       attendee_id,
@@ -270,24 +238,24 @@ function mulberry32(seed) {
   };
 }
 
-async function putDoc(index, id, doc) {
-  const result = await elastic("PUT", `/${index}/_doc/${encodeURIComponent(id)}`, JSON.stringify(doc));
+async function putDoc(elasticUrl, elasticKey, index, id, doc) {
+  const result = await elastic(elasticUrl, elasticKey, "PUT", `/${index}/_doc/${encodeURIComponent(id)}`, JSON.stringify(doc));
   if (!result.ok) {
     console.log(`seed failed status ${result.status} index ${index}`);
     process.exit(1);
   }
 }
 
-async function elastic(method, path, body, contentType = "application/json") {
+async function elastic(elasticUrl, elasticKey, method, path, body, contentType = "application/json") {
   const headers = {
-    authorization: `ApiKey ${key}`,
+    authorization: `ApiKey ${elasticKey}`,
     accept: "application/json",
   };
   if (body !== undefined) headers["content-type"] = contentType;
   for (let attempt = 0; attempt < 5; attempt += 1) {
     let response;
     try {
-      response = await fetch(new URL(path, url), {
+      response = await fetch(new URL(path, elasticUrl), {
         method,
         headers,
         body,
@@ -314,4 +282,62 @@ async function elastic(method, path, body, contentType = "application/json") {
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function main() {
+  const url = process.env.ELASTIC_URL;
+  const key = process.env.ELASTIC_API_KEY;
+  const { allowed, prefix } = resolveSeedPrefix(
+    process.env.ELASTIC_INDEX_PREFIX,
+    process.env.SEED_ALLOW_SHARED_PREFIX,
+  );
+
+  if (!url || !key) {
+    console.log("seed did not run: elastic is not configured");
+    process.exit(0);
+  }
+
+  if (!allowed) {
+    console.log(
+      "seed did not run: set ELASTIC_INDEX_PREFIX to your own dev prefix, or SEED_ALLOW_SHARED_PREFIX=hallpass to seed live",
+    );
+    process.exit(1);
+  }
+
+  const agenda = JSON.parse(await readFile(join(root, "public", "agenda.json"), "utf8"));
+  const byDay = groupPlanableSessions(agenda.sessions);
+  const popular = pickPopularSessions(byDay, 18);
+  const started = Date.now();
+  const rng = mulberry32(RNG_SEED);
+
+  const bundles = [];
+  for (let i = 1; i <= ATTENDEE_COUNT; i += 1) {
+    const attendee_id = `seed_${String(i).padStart(3, "0")}`;
+    bundles.push(buildAttendee(attendee_id, i - 1, byDay, popular, agenda.sessions, rng));
+  }
+
+  let written = 0;
+  for (const bundle of bundles) {
+    await putDoc(url, key, `${prefix}-profiles`, bundle.profile.attendee_id, bundle.profile);
+    await putDoc(url, key, `${prefix}-plans`, bundle.plan.attendee_id, bundle.plan);
+    for (const checkin of bundle.checkins) {
+      const id = `${checkin.attendee_id}:${checkin.session_id}`;
+      await putDoc(url, key, `${prefix}-checkins`, id, checkin);
+    }
+    await putDoc(url, key, `${prefix}-readouts`, bundle.readout.attendee_id, bundle.readout);
+    written += 1;
+    if (written % 10 === 0) {
+      console.log(`seeded ${written} attendees ms ${Date.now() - started}`);
+    }
+  }
+
+  console.log(
+    `seed complete attendees ${written} checkins ${bundles.reduce((n, b) => n + b.checkins.length, 0)} prefix ${prefix} ms ${
+      Date.now() - started
+    }`,
+  );
+}
+
+if (isDirectRun()) {
+  await main();
 }
