@@ -1,0 +1,14 @@
+[
+  {
+    "building": "Salt Palace",
+    "level": "Level 1",
+    "image": "/floor/salt-palace-level-1.webp",
+    "alt": "Salt Palace Level 1 map with exhibit halls A through E and 1 through 5, the Grand Ballroom, south foyer, and meeting rooms 150, 151, and 155."
+  },
+  {
+    "building": "Salt Palace",
+    "level": "Level 2",
+    "image": "/floor/salt-palace-level-2.webp",
+    "alt": "Salt Palace Level 2 map with the upper concourse and meeting rooms 250 through 255 on the east mezzanine and second level."
+  }
+]

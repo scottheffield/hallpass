@@ -4,4 +4,6 @@
 
 Hallpass is not affiliated with Visit Salt Lake or the Salt Palace Convention Center. Including this file is not an endorsement.
 
-Directions use text from public/rooms.json; the floor plan is supplementary only. Any link to this PDF in the app must include alt text or a text description.
+WebP crops of the first and second levels (`salt-palace-level-1.webp`, `salt-palace-level-2.webp`) and `levels.json` list building, level, image path, and alt text for each. The Hyatt Regency has no floor image here.
+
+Directions use text from public/rooms.json; the floor plan is supplementary only. Any link to this PDF or a level image in the app must include alt text or a text description.

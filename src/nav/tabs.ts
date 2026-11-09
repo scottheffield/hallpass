@@ -1,12 +1,7 @@
 import type { ShellPlace } from "./types";
+import { isTabPlace } from "./types";
 
-/** Bottom tab bar visibility. Hide on intake and full-screen directions. */
+/** Bottom tab bar visibility. Hide on intake and focused auxiliary screens. */
 export function showShellTabs(place: ShellPlace): boolean {
-  return place !== "entry" && place !== "directions";
+  return isTabPlace(place);
 }
-
-/**
- * Registered tab destinations once slices merge (do not import until on main):
- * - plan: PlanView
- * - readout: ReadoutView (may replace home after last conference day)
- */
