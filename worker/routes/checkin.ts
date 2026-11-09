@@ -105,9 +105,9 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
 
   let proposal: PlanProposal | null = null;
   try {
-    void replanDay(profile, withDone, day, at, signal);
-    const revised = adjustDayAfterCheckin(profile, beforeDay, at, signal);
     await ensureAgendaCache(env);
+    void replanDay(profile, withDone, day, at, signal);
+    const revised = adjustDayAfterCheckin(profile, day, beforeDay, at, signal);
     const changes = diffPlanDay(beforeDay, revised, { signal });
     if (changes.length > 0) {
       proposal = {
