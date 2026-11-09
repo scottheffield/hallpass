@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useState } from "react";
-import type { CaseResponse } from "../../../shared/api";
-import type { CaseForAttending, Session } from "../../../shared/types";
+import type { CaseResponse, PlanResponse } from "../../../shared/api";
+import type { CaseForAttending, Plan, Session } from "../../../shared/types";
 import { joinPlanSessions, loadAgenda } from "../../lib/agenda";
 import { ApiFailure, post } from "../../lib/api";
+import { formatTimeRange } from "../today/timeline";
 import { Button, Notice, Screen, SessionCard, Stack, TextArea } from "../../ui";
 import { CASE_COPY_STATUS_ROLE, CASE_SESSION_HEADING_LEVEL } from "./a11y";
 import { copyCaseText, type CopyOutcome } from "./copy";
+import { planReasonBySessionId, reasonForCaseSession } from "./planSessions";
+import { presentPlanReason } from "../plan/reason";
 
 export interface CaseScreenProps {
   onBack?: () => void;
@@ -23,10 +26,20 @@ async function fetchCase(): Promise<CaseResponse> {
   return post<CaseResponse>("/api/case", {});
 }
 
+async function fetchPlan(): Promise<Plan | null> {
+  try {
+    const response = await post<PlanResponse>("/api/plan/get", {});
+    return response.plan;
+  } catch {
+    return null;
+  }
+}
+
 export function CaseScreen({ onBack }: CaseScreenProps) {
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [caseItem, setCaseItem] = useState<CaseForAttending | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [planReasons, setPlanReasons] = useState<Map<string, string>>(() => new Map());
   const [draftText, setDraftText] = useState("");
   const [stub, setStub] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,16 +50,18 @@ export function CaseScreen({ onBack }: CaseScreenProps) {
     setError(null);
     setCopyStatus(null);
     try {
-      const [response, agenda] = await Promise.all([fetchCase(), loadAgenda()]);
+      const [response, agenda, plan] = await Promise.all([fetchCase(), loadAgenda(), fetchPlan()]);
       setCaseItem(response.case);
       setDraftText(response.case.text);
       setStub(Boolean(response.stub));
       const planned = joinPlanSessions(agenda.sessions, response.case.sessions);
       setSessions(planned);
+      setPlanReasons(planReasonBySessionId(plan));
       setPhase("ready");
     } catch (err) {
       setCaseItem(null);
       setSessions([]);
+      setPlanReasons(new Map());
       if (err instanceof ApiFailure && err.status === 501) {
         setStub(true);
         setError("Case for attending is not available yet.");
@@ -113,17 +128,24 @@ export function CaseScreen({ onBack }: CaseScreenProps) {
                 Sessions in your plan
               </h2>
               <ul className="mt-2 flex list-none flex-col gap-3 p-0">
-                {sessions.map((session) => (
-                  <li key={session.id}>
-                    <SessionCard
-                      title={session.title}
-                      time={`${session.start.slice(11, 16)}–${session.end.slice(11, 16)}`}
-                      room={session.room}
-                      reason="On your conference plan"
-                      headingLevel={CASE_SESSION_HEADING_LEVEL}
-                    />
-                  </li>
-                ))}
+                {sessions.map((session) => {
+                  const rawReason = reasonForCaseSession(session.id, planReasons);
+                  const presented = rawReason ? presentPlanReason(rawReason) : null;
+                  return (
+                    <li key={session.id}>
+                      <SessionCard
+                        title={session.title}
+                        time={formatTimeRange(session.start, session.end)}
+                        room={session.room}
+                        reasonLabel={
+                          presented ? (presented.reasonLabel ?? "Why it's on your plan") : undefined
+                        }
+                        reason={presented?.reason}
+                        headingLevel={CASE_SESSION_HEADING_LEVEL}
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             </section>
           ) : null}

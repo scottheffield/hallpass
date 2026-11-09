@@ -34,6 +34,7 @@ import {
   planDayTabId,
 } from "./accessibility";
 import { planFocusLine } from "./focus";
+import { presentPlanReason } from "./reason";
 import { planSessionStatusDetail } from "./statusLabel";
 
 export interface PlanScreenProps {
@@ -56,7 +57,7 @@ function blockKey(block: TodayTimelineBlock, index: number): string {
   return `break-${block.start}-${index}`;
 }
 
-export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
+export function PlanScreen({ onCase }: PlanScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -249,17 +250,12 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
     }
   }
 
-  const headerEnd = onGoals ? (
-    <Button variant="quiet" className="min-h-0 w-auto px-0 py-0 text-sm font-semibold" onClick={onGoals}>
-      Goals
-    </Button>
-  ) : null;
-
   const isEditing = editingId !== null;
+  const detailPresented = detail ? presentPlanReason(detail.item.reason) : null;
 
   return (
     <>
-      <Screen brand heading="Your conference plan" headerEnd={headerEnd}>
+      <Screen brand heading="Your conference plan">
         <Stack>
           {loading ? (
             <Notice tone="loading" title="Loading your plan">
@@ -400,6 +396,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
                           }
 
                           const statusDetail = planSessionStatusDetail(block.item);
+                          const presentedReason = presentPlanReason(block.item.reason);
 
                           return (
                             <SessionCard
@@ -407,8 +404,10 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
                               title={block.session.title}
                               time={formatTimeRange(block.start, block.end)}
                               room={block.session.room}
-                              reasonLabel={statusDetail ? undefined : "Why"}
-                              reason={statusDetail ? undefined : block.item.reason}
+                              reasonLabel={
+                                statusDetail ? undefined : (presentedReason.reasonLabel ?? "Why")
+                              }
+                              reason={statusDetail ? undefined : presentedReason.reason}
                               detail={statusDetail}
                             >
                               {!statusDetail ? (
@@ -450,14 +449,14 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
           setEditError(null);
         }}
       >
-        {detail ? (
+        {detail && detailPresented ? (
           <Stack>
             <SessionCard
-              title={detail.session.title}
               time={formatTimeRange(detail.start, detail.end)}
               room={detail.session.room}
-              reasonLabel="Why it's on your plan"
-              reason={detail.item.reason}
+              reasonLabel={detailPresented.reasonLabel ?? "Why it's on your plan"}
+              reason={detailPresented.reason}
+              headingLevel={3}
             />
             {detailBullets.length > 0 ? (
               <>

@@ -149,9 +149,13 @@ export function breakFollowingSession(
   return null;
 }
 
+const OPEN_TIME_BETWEEN_SESSIONS =
+  /^open time between sessions on the schedule\.?$/i;
+
 export function breakTitle(note: string): string {
   const trimmed = note.trim();
   if (!trimmed) return "Room to breathe";
+  if (OPEN_TIME_BETWEEN_SESSIONS.test(trimmed)) return "Open time";
   const first = trimmed.split(".")[0]?.trim();
   return first && first.length <= 48 ? first : "Room to breathe";
 }
@@ -159,6 +163,7 @@ export function breakTitle(note: string): string {
 export function breakDetail(note: string): string | undefined {
   const trimmed = note.trim();
   if (!trimmed) return undefined;
+  if (OPEN_TIME_BETWEEN_SESSIONS.test(trimmed)) return undefined;
   const title = breakTitle(trimmed);
   if (title === trimmed) return undefined;
   return trimmed;
