@@ -23,25 +23,14 @@ function requiredChoice<T extends string>(value: unknown, allowed: readonly T[],
   return value as T;
 }
 
-function markSessionDone(plan: Plan, day: string, sessionId: string): Plan {
+function markSessionDone(plan: Plan, day: string, sessionId: string, updatedAt: string): Plan {
   const copy = structuredClone(plan);
   const dayPlan = copy.days[day];
   if (!dayPlan) return copy;
   for (const item of dayPlan.items) {
     if (item.session_id === sessionId) item.status = "done";
   }
-  copy.updated_at = conferenceIsoFromDate(new Date());
-  return copy;
-}
-
-function markSessionLeftEarly(plan: Plan, day: string, sessionId: string): Plan {
-  const copy = structuredClone(plan);
-  const dayPlan = copy.days[day];
-  if (!dayPlan) return copy;
-  for (const item of dayPlan.items) {
-    if (item.session_id === sessionId) item.status = "left_early";
-  }
-  copy.updated_at = conferenceIsoFromDate(new Date());
+  copy.updated_at = updatedAt;
   return copy;
 }
 
@@ -88,6 +77,8 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
   const movedGoal = requiredChoice(body.moved_goal, MOVED, "moved_goal");
   const leftEarly = body.left_early === true;
 
+  const serverNow = now(request);
+  const planUpdatedAt = conferenceIsoFromDate(serverNow);
   const at = resolveCheckInAt(request, body);
   const checkinBody: CheckIn = {
     attendee_id: attendeeId,
@@ -119,20 +110,16 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
 
   const existingItem = planItemForSession(plan, day, sessionId);
   if (leftEarly) {
-    if (existingItem && existingItem.status !== "planned" && existingItem.status !== "left_early") {
+    if (!existingItem || existingItem.status !== "left_early") {
       throw new HttpError(400, "bad_request", "That session is not open for early feedback.");
     }
   }
 
-  let withDone = plan;
+  const withDone = leftEarly
+    ? structuredClone(plan)
+    : markSessionDone(plan, day, sessionId, planUpdatedAt);
   if (leftEarly) {
-    if (existingItem?.status === "left_early") {
-      withDone = structuredClone(plan);
-    } else if (existingItem?.status === "planned") {
-      withDone = markSessionLeftEarly(plan, day, sessionId);
-    }
-  } else {
-    withDone = markSessionDone(plan, day, sessionId);
+    withDone.updated_at = planUpdatedAt;
   }
   const beforeDay = structuredClone(withDone.days[day]);
 
