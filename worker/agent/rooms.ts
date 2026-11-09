@@ -1,4 +1,5 @@
 import type { Room } from "../../shared/types";
+import { roomNamesMatch } from "../../shared/venue";
 import type { Env } from "../env";
 
 let cached: Room[] | null = null;
@@ -37,7 +38,9 @@ export async function loadRooms(env: Env): Promise<Room[]> {
   return [];
 }
 
-/** Exact match on Session.room / Room.name. */
+/** Match session.room to rooms.json the same way Directions and transferMinutes treat room names. */
 export function roomForName(rooms: Room[], roomName: string): Room | null {
-  return rooms.find((room) => room.name === roomName) ?? null;
+  const target = roomName.trim();
+  if (!target) return null;
+  return rooms.find((room) => roomNamesMatch(room.name, target)) ?? null;
 }

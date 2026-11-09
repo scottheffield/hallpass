@@ -62,11 +62,18 @@ const plan: Plan = {
   updated_at: "2026-11-10T08:00:00-07:00",
 };
 
-const grandBallroom: Room = {
+const grandBallroomH: Room = {
   name: "Salt Palace | Level 1 | Grand Ballroom H",
   level: "Level 1",
-  landmark: "Grand Ballroom H",
+  landmark: "Grand Ballroom",
   walking_hint: "East escalators from Hall DE.",
+};
+
+const grandBallroomAce: Room = {
+  name: "Salt Palace | Level 1 | Grand Ballroom ACE",
+  level: "Level 1",
+  landmark: "Grand Ballroom",
+  walking_hint: "Follow the ACE signs.",
 };
 
 describe("planRowsForDay", () => {
@@ -86,16 +93,25 @@ describe("planRowsForDay", () => {
 
 describe("room hints", () => {
   it("looks up a room by the exact agenda path", () => {
-    const hit = roomForName([grandBallroom], sessionA.room);
+    const hit = roomForName([grandBallroomH], sessionA.room);
     expect(hit?.walking_hint).toContain("escalators");
     expect(shortRoom(sessionA.room)).toBe("Grand Ballroom H");
+  });
+
+  it("resolves Grand Ballroom ACE for next-session context", () => {
+    const aceSession: Session = {
+      ...sessionB,
+      room: "Salt Palace | Level 1 | Grand Ballroom ACE",
+    };
+    const hit = roomForName([grandBallroomAce, grandBallroomH], aceSession.room);
+    expect(hit?.walking_hint).toContain("ACE");
   });
 });
 
 describe("buildAgentContext", () => {
   it("includes the next item and room hint for the system prompt", () => {
     const at = new Date("2026-11-10T12:05:00-07:00");
-    const ctx = buildAgentContext(at, profile, plan, sessions, [grandBallroom]);
+    const ctx = buildAgentContext(at, profile, plan, sessions, [grandBallroomH]);
     expect(ctx.next?.title).toBe(sessionB.title);
     expect(ctx.nextRoom?.walking_hint).toContain("escalators");
     expect(ctx.goals[0]).toContain("incidents");
