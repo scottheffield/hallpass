@@ -1,5 +1,6 @@
 import { EVENT_DAYS, EVENT_TIME_ZONE } from "../../../shared/event";
 import type { IsoDateTime, Plan, PlanBreak, PlanItem, Session } from "../../../shared/types";
+import { formatDisplayTime } from "../../../shared/time";
 import { getSession } from "../../lib/agenda";
 import { formatRoomDisplay } from "../../lib/roomDisplay";
 
@@ -49,11 +50,7 @@ export function formatHeaderDate(dayKey: string): string {
 }
 
 export function formatTime(iso: IsoDateTime): string {
-  return new Intl.DateTimeFormat("en-US", {
-    hour: "numeric",
-    minute: "2-digit",
-    timeZone: EVENT_TIME_ZONE,
-  }).format(new Date(iso));
+  return formatDisplayTime(iso);
 }
 
 export function formatTimeRange(start: IsoDateTime, end: IsoDateTime): string {

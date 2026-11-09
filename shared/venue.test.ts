@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LEVEL_UNKNOWN, parseRoom, transferMinutes } from "./venue";
+import { formatRoomDisplay, LEVEL_UNKNOWN, parseRoom, transferMinutes } from "./venue";
 
 describe("parseRoom", () => {
   it("parses a three-part Salt Palace name", () => {
@@ -51,6 +51,23 @@ describe("parseRoom", () => {
 
   it("classifies Hyatt Regency pipe names", () => {
     expect(parseRoom("Hyatt Regency | Level 4 | Regency Ballroom B").kind).toBe("hyatt");
+  });
+});
+
+describe("formatRoomDisplay", () => {
+  it("formats a three-part Salt Palace name room-first", () => {
+    expect(formatRoomDisplay("Salt Palace | Level 1 | Grand Ballroom H")).toBe(
+      "Grand Ballroom H · Level 1 · Salt Palace",
+    );
+    expect(formatRoomDisplay("Salt Palace | Level 1 | 151")).toBe("151 · Level 1 · Salt Palace");
+  });
+
+  it("shows Hyatt Regency Lobby as room and building", () => {
+    expect(formatRoomDisplay("Hyatt Regency Lobby")).toBe("Lobby · Hyatt Regency");
+  });
+
+  it("shows Off-Site Location as-is", () => {
+    expect(formatRoomDisplay("Off-Site Location")).toBe("Off-Site Location");
   });
 });
 

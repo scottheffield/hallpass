@@ -36,7 +36,7 @@ describe("diffPlanDay", () => {
       {
         kind: "removed",
         session_id: DROPPED_ID,
-        text: `Dropped What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes at 12:20: you said the last session didn't move your goal.`,
+        text: `Dropped What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes at 12:20 PM: you said the last session didn't move your goal.`,
       },
     ]);
     for (const change of changes) {
@@ -50,7 +50,7 @@ describe("diffPlanDay", () => {
     const after = base({ items: before.items.filter((item) => item.session_id !== DROPPED_ID) });
     const changes = diffPlanDay(before, after);
     expect(changes[0]?.text).toBe(
-      "Dropped What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes at 12:20.",
+      "Dropped What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes at 12:20 PM.",
     );
     expect(changes[0]?.text).not.toContain("Cache-aware LLM");
   });
@@ -72,7 +72,7 @@ describe("diffPlanDay", () => {
       {
         kind: "added",
         session_id: "1246033",
-        text: "Added When Infrastructure Breaks in Production: How EarnIn Brought Testing to the Full CNCF Stack at 12:20: EarnIn's CNCF testing framework.",
+        text: "Added When Infrastructure Breaks in Production: How EarnIn Brought Testing to the Full CNCF Stack at 12:20 PM: EarnIn's CNCF testing framework.",
       },
     ]);
     expect(changes[0]?.text).not.toContain("1246033");
@@ -125,6 +125,60 @@ describe("diffPlanDay", () => {
       breaks: [{ start: "2026-11-10T16:00:00-07:00", end: "2026-11-10T16:15:00-07:00", note: "New" }],
     };
     expect(diffPlanDay(before, after).length).toBeLessThanOrEqual(3);
+  });
+
+  it("describes a swap with both titles, 12-hour time, formatted room, and check-in reason", () => {
+    const before: PlanDay = {
+      items: [
+        {
+          session_id: "1246200",
+          status: "done",
+          reason:
+            "SREs describe AI incident response stalling on missing context: a recent deploy, an owner change, an upstream dependency.",
+        },
+        {
+          session_id: "1250770",
+          status: "planned",
+          reason:
+            "SREs describe AI incident response stalling on missing context: a recent deploy, an owner change, an upstream dependency.",
+          beat_alternative: {
+            session_id: "1244963",
+            why: "Verkada's triage agent also fits, but this talk addresses the root bottleneck in incident response.",
+          },
+        },
+      ],
+      breaks: [],
+    };
+    const after: PlanDay = {
+      items: [
+        before.items[0]!,
+        {
+          session_id: "1244963",
+          status: "planned",
+          reason: "Same slot with more incident context.",
+        },
+      ],
+      breaks: [],
+    };
+    const goals = [
+      "Find practical ways to run AI inference on the platform I already operate.",
+      "Get better at Kubernetes incident response when the hard part is missing context, not more dashboards.",
+    ];
+    const changes = diffPlanDay(before, after, {
+      signal: { session_id: "1246200", worth_it: "mixed", moved_goal: "no" },
+      profileGoals: goals,
+    });
+    expect(changes).toHaveLength(1);
+    const text = changes[0]?.text ?? "";
+    expect(text).toMatch(/^Swapped /);
+    expect(text).toContain("The SRE Is Not Dead");
+    expect(text).toContain("Triaging 4,700 Alerts");
+    expect(text).toContain(" at 3:40 PM");
+    expect(text).toContain(" in 151 · Level 1 · Salt Palace");
+    expect(text).not.toContain("|");
+    expect(text).not.toContain("Verkada's triage agent");
+    expect(text).toContain("incident-response");
+    expect(text).toContain("didn't help, so this tries a different angle");
   });
 
   it("never puts raw session ids in attendee-facing text", () => {

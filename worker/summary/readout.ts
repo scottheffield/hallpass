@@ -1,4 +1,6 @@
 import { GOAL_THEMES, isGoalTheme } from "../../shared/event";
+import { formatDisplayTime } from "../../shared/time";
+import { formatRoomDisplay } from "../../shared/venue";
 import type { CheckIn, IsoDateTime, Plan, Profile, Readout } from "../../shared/types";
 import { goalForPlanReason, goalsReferToSameTopic } from "../checkin/goal";
 import type { Env } from "../env";
@@ -166,15 +168,6 @@ export function plannedGoalForSession(plan: Plan, sessionId: string, profileGoal
   return null;
 }
 
-function formatAgendaTime(iso: string): string {
-  const match = /T(\d{2}):(\d{2})/.exec(iso);
-  if (!match) return "";
-  const hour = Number(match[1]);
-  const minute = match[2];
-  if (minute === "00") return String(hour);
-  return `${hour}:${minute}`;
-}
-
 export interface NextStepPick {
   session_id: string;
   goal_index: number;
@@ -218,8 +211,8 @@ export function pickNextStepSessions(
           session_id: item.session_id,
           goal_index: goalIndex,
           title: meta.title,
-          time: formatAgendaTime(meta.start),
-          room: meta.room,
+          time: formatDisplayTime(meta.start),
+          room: formatRoomDisplay(meta.room),
           startMs: Number.isFinite(startMs) ? startMs : 0,
         });
       }
