@@ -21,7 +21,7 @@ import {
   type TodayTimelineBlock,
 } from "../today/timeline";
 import { Button, ChangeList, Notice, Screen, SessionCard, Sheet, Stack } from "../../ui";
-import { dayNeedsGeneration, dayTabLabel } from "./days";
+import { dayNeedsGeneration, dayTabLabel, seedAttemptedDaysFromPlan } from "./days";
 import { sessionDetailBullets } from "./detail";
 import { generationStageIndex, PLAN_GENERATION_STAGES } from "./generation";
 import { planFocusLine } from "./focus";
@@ -64,17 +64,22 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
   const [detail, setDetail] = useState<TodaySessionBlock | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const generatingRef = useRef(false);
+  const attemptedDaysRef = useRef(new Set<string>());
 
   const reload = useCallback(async () => {
     setLoading(true);
     setError(null);
-  setGenError(null);
+    setGenError(null);
+    attemptedDaysRef.current = new Set();
     try {
       const [planResult, agenda, profileResult] = await Promise.all([
         fetchPlan(),
         loadAgenda(),
         fetchProfile(),
       ]);
+      if (planResult) {
+        attemptedDaysRef.current = seedAttemptedDaysFromPlan(planResult);
+      }
       setPlan(planResult);
       setSessions(agenda.sessions);
       setAgendaSource(agenda.source);
@@ -125,11 +130,13 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
   );
 
   useEffect(() => {
-    if (!plan || stub || loading || generating) return;
+    if (!plan || stub || loading || generating || genError) return;
+    if (attemptedDaysRef.current.has(selectedDay)) return;
     const dayBody = plan.days[selectedDay];
     if (!dayNeedsGeneration(dayBody)) return;
+    attemptedDaysRef.current.add(selectedDay);
     void generateDay(selectedDay);
-  }, [plan, selectedDay, stub, loading, generating, generateDay]);
+  }, [plan, selectedDay, stub, loading, generating, genError, generateDay]);
 
   useEffect(() => {
     if (!generating || genStartedAt === null) return;
@@ -178,6 +185,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
     const body: PlanEditRequest = { day: selectedDay, session_id: sessionId, action };
     try {
       const response = await post<PlanEditResponse>("/api/plan/edit", body);
+      attemptedDaysRef.current.add(selectedDay);
       setPlan(response.plan);
       const summary = response.changes
         .map((change) => change.text.trim())

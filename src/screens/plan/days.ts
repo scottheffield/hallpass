@@ -1,5 +1,5 @@
-import { EVENT_TIME_ZONE } from "../../../shared/event";
-import type { PlanBreak, PlanItem } from "../../../shared/types";
+import { EVENT_DAYS, EVENT_TIME_ZONE } from "../../../shared/event";
+import type { Plan, PlanBreak, PlanItem } from "../../../shared/types";
 
 export function dayTabLabel(dayKey: string): string {
   const noon = Date.parse(`${dayKey}T12:00:00-07:00`);
@@ -15,4 +15,13 @@ export function dayNeedsGeneration(
 ): boolean {
   if (!day) return true;
   return day.items.length === 0 && day.breaks.length === 0;
+}
+
+/** Days that already have content should not be auto-generated after edits clear them. */
+export function seedAttemptedDaysFromPlan(plan: Plan): Set<string> {
+  const attempted = new Set<string>();
+  for (const day of EVENT_DAYS) {
+    if (!dayNeedsGeneration(plan.days[day])) attempted.add(day);
+  }
+  return attempted;
 }
