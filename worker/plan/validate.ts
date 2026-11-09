@@ -22,6 +22,30 @@ function breakCountOk(pacing: Pacing, count: number): boolean {
   return count >= 2;
 }
 
+function breakCapFor(pacing: Pacing): number {
+  if (pacing === "packed") return 1;
+  if (pacing === "balanced") return 2;
+  return Number.POSITIVE_INFINITY;
+}
+
+function isValidPlanBreak(br: PlanBreak): boolean {
+  const startMs = Date.parse(br.start);
+  const endMs = Date.parse(br.end);
+  return (
+    Number.isFinite(startMs) &&
+    Number.isFinite(endMs) &&
+    startMs < endMs &&
+    br.start.endsWith(EVENT_OFFSET) &&
+    br.end.endsWith(EVENT_OFFSET)
+  );
+}
+
+/** Valid conference-offset breaks, capped for packed and balanced pacing. */
+export function normalizePlanBreaks(pacing: Pacing, breaks: PlanBreak[]): PlanBreak[] {
+  const validBreaks = breaks.filter(isValidPlanBreak);
+  return validBreaks.slice(0, breakCapFor(pacing));
+}
+
 function sanitizeText(value: string, max: number): string {
   const trimmed = value.trim().replace(/\s+/g, " ");
   return trimmed.length > max ? `${trimmed.slice(0, max - 1)}…` : trimmed;
@@ -52,8 +76,6 @@ export function validateDayPlan(
     .map((item) => options.sessions.get(item.session_id))
     .filter((session): session is Session => Boolean(session));
 
-  const breakCap =
-    options.pacing === "packed" ? 1 : options.pacing === "balanced" ? 2 : Number.POSITIVE_INFINITY;
   if (!breakCountOk(options.pacing, breaks.length)) {
     errors.push(`Break count ${breaks.length} does not fit pacing ${options.pacing}.`);
   }
@@ -95,19 +117,8 @@ export function validateDayPlan(
     scheduled.push(session);
   }
 
-  const validBreaks = breaks.filter((br) => {
-    const startMs = Date.parse(br.start);
-    const endMs = Date.parse(br.end);
-    const ok =
-      Number.isFinite(startMs) &&
-      Number.isFinite(endMs) &&
-      startMs < endMs &&
-      br.start.endsWith(EVENT_OFFSET) &&
-      br.end.endsWith(EVENT_OFFSET);
-    if (!ok) errors.push("Invalid break times.");
-    return ok;
-  });
-  const cappedBreaks = validBreaks.slice(0, breakCap);
+  if (breaks.some((br) => !isValidPlanBreak(br))) errors.push("Invalid break times.");
+  const cappedBreaks = normalizePlanBreaks(options.pacing, breaks);
 
   return { items: sortByStart(accepted, options.sessions), breaks: cappedBreaks, errors };
 }

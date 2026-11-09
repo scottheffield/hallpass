@@ -5,7 +5,7 @@ import { aiDayPlan } from "./ai";
 import { ensureAgendaCache, getCachedSessions, sessionById } from "./agenda-cache";
 import { basicDayPlan } from "./basic";
 import { gatherCandidates } from "./candidates";
-import { type RawPick, validateDayPlan } from "./validate";
+import { normalizePlanBreaks, type RawPick, validateDayPlan } from "./validate";
 
 export type PlanDay = Plan["days"][string];
 
@@ -61,7 +61,18 @@ function defaultBreaks(day: string, items: PlanItem[], sessions: Map<string, Ses
       note: "Lunch away from sessions.",
     });
   }
-  return breaks.slice(0, 3);
+  return breaks;
+}
+
+function planBreaks(
+  pacing: Profile["pacing"],
+  day: string,
+  items: PlanItem[],
+  sessions: Map<string, Session>,
+  existing: PlanBreak[],
+): PlanBreak[] {
+  if (existing.length > 0) return normalizePlanBreaks(pacing, existing);
+  return normalizePlanBreaks(pacing, defaultBreaks(day, items, sessions));
 }
 
 async function buildDay(
@@ -81,7 +92,7 @@ async function buildDay(
     return {
       day: {
         items: ai.items,
-        breaks: ai.breaks.length > 0 ? ai.breaks : defaultBreaks(day, ai.items, map),
+        breaks: planBreaks(profile.pacing, day, ai.items, map, ai.breaks),
       },
       source: "ai",
     };
@@ -89,7 +100,7 @@ async function buildDay(
 
   const basic = basicDayPlan(day, profile.pacing, candidates, map, pinned);
   const items = basic.items;
-  const breaks = basic.breaks.length > 0 ? basic.breaks : defaultBreaks(day, items, map);
+  const breaks = planBreaks(profile.pacing, day, items, map, basic.breaks);
 
   return { day: { items, breaks }, source: "basic" };
 }
@@ -115,17 +126,14 @@ export function replanDay(profile: Profile, plan: Plan, day: string, from: strin
   const current = plan.days[day] ?? { items: [], breaks: [] };
   const kept = keptBeforeReplen(from, current.items);
   const fromMs = Date.parse(from);
-  const sessions = getCachedSessions().filter(
-    (row) =>
-      row.start.slice(0, 10) === day &&
-      !row.all_access &&
-      Number.isFinite(fromMs) &&
-      Date.parse(row.start) >= fromMs,
+  const daySessions = getCachedSessions().filter((row) => row.start.slice(0, 10) === day && !row.all_access);
+  const map = sessionsMap(daySessions);
+  const refillSessions = daySessions.filter(
+    (row) => Number.isFinite(fromMs) && Date.parse(row.start) >= fromMs,
   );
-  const map = sessionsMap(sessions);
 
   const steerAway = signal.moved_goal === "no" ? signal.session_id : undefined;
-  const candidates = gatherCandidatesSync(profile, day, plan, sessions, steerAway);
+  const candidates = gatherCandidatesSync(profile, day, plan, refillSessions, steerAway);
   const basic = basicDayPlan(day, profile.pacing, candidates, map, kept);
 
   const combined = validateDayPlan(
@@ -163,7 +171,7 @@ export function replanDay(profile: Profile, plan: Plan, day: string, from: strin
 
   return {
     items,
-    breaks: current.breaks.length > 0 ? current.breaks : defaultBreaks(day, items, map),
+    breaks: planBreaks(profile.pacing, day, items, map, combined.breaks.length > 0 ? combined.breaks : current.breaks),
   };
 }
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PlanItem, Session } from "../../shared/types";
-import { hasOverlaps, validateDayPlan } from "./validate";
+import { hasOverlaps, normalizePlanBreaks, validateDayPlan } from "./validate";
 
 function session(id: string, start: string, end: string): Session {
   return {
@@ -65,6 +65,19 @@ describe("validateDayPlan", () => {
     );
     expect(result.breaks).toHaveLength(0);
     expect(result.errors.some((err) => err.includes("Invalid break"))).toBe(true);
+  });
+});
+
+describe("normalizePlanBreaks", () => {
+  it("does not let a packed plan emit more than one break", () => {
+    const breaks = [
+      { start: "2026-11-10T12:00:00-07:00", end: "2026-11-10T13:00:00-07:00", note: "Lunch" },
+      { start: "2026-11-10T15:00:00-07:00", end: "2026-11-10T15:45:00-07:00", note: "Coffee" },
+      { start: "2026-11-10T16:30:00-07:00", end: "2026-11-10T17:00:00-07:00", note: "Walk" },
+    ];
+    expect(normalizePlanBreaks("packed", breaks)).toHaveLength(1);
+    expect(normalizePlanBreaks("balanced", breaks)).toHaveLength(2);
+    expect(normalizePlanBreaks("light", breaks)).toHaveLength(3);
   });
 });
 
