@@ -11,7 +11,7 @@ startOfflineSync();
 function registerServiceWorker(): void {
   if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
   if (!window.isSecureContext) return;
-  navigator.serviceWorker.register("/sw.js").catch(() => {
+  navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {
     // Previews without SW support still run the app.
   });
 }

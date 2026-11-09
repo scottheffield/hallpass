@@ -1,4 +1,5 @@
-const RUNTIME_CACHE = "hallpass-runtime-v2";
+// Keep fetch routing in sync with src/lib/swRouting.ts
+const RUNTIME_CACHE = "hallpass-runtime-v3";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(RUNTIME_CACHE));
@@ -14,8 +15,9 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-function networkFirst(request) {
-  return fetch(request)
+function networkFirst(request, { freshShell = false } = {}) {
+  const fetchRequest = freshShell ? new Request(request, { cache: "no-store" }) : request;
+  return fetch(fetchRequest)
     .then((response) => {
       if (response.ok) {
         const copy = response.clone();
@@ -39,14 +41,17 @@ function cacheFirstRuntime(request) {
   });
 }
 
-function isHtmlNavigation(request) {
+function isShellNavigation(request, pathname) {
   return (
     request.mode === "navigate" ||
+    request.destination === "document" ||
+    pathname === "/" ||
+    pathname === "/index.html" ||
     (request.method === "GET" && request.headers.get("accept")?.includes("text/html"))
   );
 }
 
-function isStaticDataOrFloor(pathname) {
+function isOfflineStaticPath(pathname) {
   return (
     pathname === "/agenda.json" ||
     pathname === "/rooms.json" ||
@@ -54,33 +59,31 @@ function isStaticDataOrFloor(pathname) {
   );
 }
 
+function resolveSwFetchStrategy(request, pathname, sameOrigin) {
+  if (request.method !== "GET") return null;
+  if (!sameOrigin) return null;
+  if (pathname.startsWith("/api/")) return "network-first";
+  if (pathname.startsWith("/assets/")) return "cache-first";
+  if (isShellNavigation(request, pathname)) return "network-first";
+  if (isOfflineStaticPath(pathname)) return "network-first";
+  return "network-fallback";
+}
+
 self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") return;
-
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin) return;
+  const strategy = resolveSwFetchStrategy(event.request, url.pathname, url.origin === self.location.origin);
+  if (!strategy) return;
 
-  if (url.pathname.startsWith("/api/")) {
-    event.respondWith(networkFirst(event.request));
+  if (strategy === "network-first") {
+    const freshShell = isShellNavigation(event.request, url.pathname);
+    event.respondWith(networkFirst(event.request, { freshShell }));
     return;
   }
 
-  if (url.pathname.startsWith("/assets/")) {
+  if (strategy === "cache-first") {
     event.respondWith(cacheFirstRuntime(event.request));
     return;
   }
 
-  if (
-    isHtmlNavigation(event.request) ||
-    url.pathname === "/" ||
-    url.pathname === "/index.html" ||
-    isStaticDataOrFloor(url.pathname)
-  ) {
-    event.respondWith(networkFirst(event.request));
-    return;
-  }
-
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request)),
-  );
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
