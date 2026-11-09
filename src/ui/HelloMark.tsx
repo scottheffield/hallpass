@@ -1,3 +1,5 @@
+import styles from "./delight.module.css";
+
 export interface HelloMarkProps {
   /** Compact wordmark for operational headers. The full sticker is the default. */
   compact?: boolean;
@@ -19,7 +21,7 @@ export function HelloMark({ compact = false, onActivate }: HelloMarkProps) {
   }
 
   return (
-    <div className="hello-badge">
+    <div className={`hello-badge ${styles.badge}`}>
       <div className="hello-badge-top">
         <div className="hello-badge-hello">HELLO</div>
         <div className="hello-badge-mine">my name is</div>

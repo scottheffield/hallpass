@@ -157,7 +157,7 @@ export function CheckInScreen({
   }
 
   const sheetTitle =
-    phase === "proposal" ? "Suggested change" : phase === "saved" ? "Feedback saved" : "How was that session?";
+    phase === "proposal" ? "Review a plan change" : phase === "saved" ? "Feedback saved" : "Session check-in";
 
   return (
     <Sheet open={open} title={sheetTitle} onClose={onClose}>
@@ -235,7 +235,7 @@ export function CheckInScreen({
             <p>No session changes are suggested for the rest of today.</p>
           </Notice>
           <Button variant="primary" onClick={dismissSaved}>
-            Done
+            Back to your day
           </Button>
         </Stack>
       ) : null}

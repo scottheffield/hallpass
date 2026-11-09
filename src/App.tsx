@@ -26,8 +26,11 @@ import {
 import { GoalsView } from "./views/GoalsView";
 import { IntakeFlow } from "./views/IntakeFlow";
 import { AppFrame, Button, Choice, Sheet, type AppTab } from "./ui";
+import { Journey } from "./ui/JourneyIndicator";
+import { useConferenceNow } from "./screens/today/useConferenceNow";
 
 export default function App() {
+  const conferenceNow = useConferenceNow();
   const [booting, setBooting] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [place, setPlace] = useState<ShellPlace>("entry");
@@ -158,6 +161,7 @@ export default function App() {
         demoBar={demoBar}
         ask={askTrigger}
       >
+      {place !== "insights" ? <Journey now={conferenceNow} /> : null}
       {place === "entry" ? <IntakeFlow onFinished={enterApp} /> : null}
 
       {place === "today" ? (

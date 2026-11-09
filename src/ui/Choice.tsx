@@ -1,4 +1,5 @@
 import { useId } from "react";
+import styles from "./delight.module.css";
 
 export interface ChoiceOption {
   value: string;
@@ -32,7 +33,7 @@ export function Choice({ legend, name, value, options, onChange, hint }: ChoiceP
         return (
           <label
             key={option.value}
-            className={`choice-card flex min-h-12 cursor-pointer items-start rounded-xl border-2 px-3 py-3 ${selected ? "border-action" : "border-line"}`}
+            className={`${styles.choice} choice-card flex min-h-12 cursor-pointer items-start rounded-xl border-2 px-3 py-3 ${selected ? "border-action" : "border-line"}`}
           >
             <input
               className="sr-only"

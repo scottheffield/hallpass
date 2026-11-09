@@ -1,0 +1,111 @@
+/* Physical conference materials: a settling sticker and responsive controls.
+   Scoped to primitives; the existing palette and public props stay intact. */
+.badge {
+  transform: rotate(-3deg);
+  transform-origin: 35% 65%;
+  box-shadow: 0 3px 5px rgb(23 43 64 / 16%), 0 12px 20px rgb(23 43 64 / 18%);
+  animation: sticker-settle 480ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sticker-settle {
+  from { transform: translateY(-7px) rotate(-7deg); }
+  to { transform: translateY(0) rotate(-3deg); }
+}
+
+.button {
+  transition: transform 140ms ease-out, box-shadow 140ms ease-out, background-color 140ms ease-out;
+  text-underline-offset: 4px;
+}
+
+.primary:not(:disabled) {
+  box-shadow: 0 3px 4px rgb(23 43 64 / 16%), 0 7px 14px rgb(23 43 64 / 14%);
+}
+
+.button:not(:disabled):active {
+  transform: translateY(2px);
+  box-shadow: none;
+}
+
+.choice {
+  transition: background-color 160ms ease-out, border-color 160ms ease-out, box-shadow 160ms ease-out;
+}
+
+.choice:has(input:checked) {
+  background: color-mix(in srgb, var(--color-action-quiet) 8%, var(--color-surface));
+  box-shadow: 0 3px 8px rgb(23 43 64 / 12%);
+}
+
+.frame {
+  box-shadow: 0 12px 48px rgb(23 43 64 / 14%);
+}
+
+.writingField {
+  background: color-mix(in srgb, var(--color-canvas) 45%, var(--color-surface));
+  box-shadow: inset 0 2px 5px rgb(23 43 64 / 10%);
+  caret-color: var(--color-action-quiet);
+  transition: background-color 160ms ease-out;
+}
+
+.writingField:focus {
+  background: var(--color-surface);
+}
+
+.writingField::selection {
+  background: var(--color-suggest);
+  color: var(--color-on-suggest);
+}
+
+.breakCard {
+  box-shadow: 0 3px 5px rgb(23 43 64 / 10%), 0 8px 14px rgb(23 43 64 / 8%);
+}
+
+.tab {
+  position: relative;
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+
+.tab[aria-current="page"] {
+  background: color-mix(in srgb, var(--color-action-quiet) 8%, var(--color-surface));
+}
+
+.tab::after {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: calc(50% - 12px);
+  width: 24px;
+  height: 3px;
+  border-radius: 3px;
+  background: var(--color-action-quiet);
+  transform: scaleX(0);
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.tab[aria-current="page"]::after { transform: scaleX(1); }
+
+.sheet {
+  box-shadow: 0 -8px 32px rgb(23 43 64 / 20%);
+  animation: sheet-open 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sheet-open {
+  from { transform: translateY(24px); }
+  to { transform: translateY(0); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .primary:not(:disabled):hover { transform: translateY(-1px); }
+  .primary:not(:disabled):active { transform: translateY(2px); }
+  .choice:hover { background: color-mix(in srgb, var(--color-action-quiet) 5%, var(--color-surface)); }
+  .tab:hover { background: color-mix(in srgb, var(--color-action-quiet) 5%, var(--color-surface)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge, .sheet { animation: none; }
+  .button, .choice, .tab, .tab::after { transition: none; }
+  .button:not(:disabled):hover, .button:not(:disabled):active { transform: none; }
+}
+
+@media (forced-colors: active) {
+  .tab[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
+}

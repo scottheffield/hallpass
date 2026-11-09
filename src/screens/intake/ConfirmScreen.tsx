@@ -37,7 +37,7 @@ export function ConfirmScreen({
   }
 
   return (
-    <Screen heading="Your goals" headingSize="md" backLabel="Back" onBack={onBack}>
+    <Screen heading="Review your goals" headingSize="md" backLabel="Back to your answers" onBack={onBack}>
       <Stack gap="lg">
         {aiUnavailable ? (
           <Notice tone="info" title="AI unavailable">

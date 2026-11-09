@@ -1,0 +1,10 @@
+.journey { margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-line); }
+.phases { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; padding: 0; margin: 0; list-style: none; }
+.phases li { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; color: var(--color-muted); font-size: 0.8125rem; line-height: 1.25; }
+.marker { display: grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1px solid var(--color-line); border-radius: 50%; font-weight: 600; }
+.phases li[aria-current="step"] { color: var(--color-action-quiet); font-weight: 600; }
+.phases li[aria-current="step"] .marker { background: var(--color-action); color: var(--color-on-action); border-color: var(--color-action); outline: 2px solid var(--color-action-quiet); outline-offset: 3px; }
+@media (forced-colors: active) {
+  .phases li[aria-current="step"] { text-decoration: underline; }
+  .phases li[aria-current="step"] .marker { outline-color: Highlight; }
+}

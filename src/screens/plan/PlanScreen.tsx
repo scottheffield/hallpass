@@ -255,7 +255,7 @@ export function PlanScreen({ onCase }: PlanScreenProps) {
 
   return (
     <>
-      <Screen brand heading="Your conference plan">
+      <Screen brand heading={loading ? "Your conference plan" : generating ? "Building your plan" : plan ? "Review your plan" : "Build your plan"}>
         <Stack>
           {loading ? (
             <Notice tone="loading" title="Loading your plan">

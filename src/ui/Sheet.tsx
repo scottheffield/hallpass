@@ -2,6 +2,7 @@ import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 import type { ReactNode } from "react";
 import { Button } from "./Button";
+import styles from "./delight.module.css";
 
 export interface SheetProps {
   open: boolean;
@@ -108,7 +109,7 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className="max-h-[85dvh] w-full max-w-[420px] overflow-y-auto rounded-t-2xl border-2 border-b-0 border-line bg-surface px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+        className={`${styles.sheet} max-h-[85dvh] w-full max-w-[420px] overflow-y-auto rounded-t-2xl border-2 border-b-0 border-line bg-surface px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="mb-4 flex items-start justify-between gap-3">

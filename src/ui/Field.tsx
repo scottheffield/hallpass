@@ -1,4 +1,5 @@
 import { useId } from "react";
+import styles from "./delight.module.css";
 
 export interface FieldProps {
   label: string;
@@ -41,7 +42,7 @@ export function Field({
         autoComplete={autoComplete}
         aria-describedby={hintId}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-12 w-full rounded-xl border-2 border-line bg-surface px-3 text-base text-ink"
+        className={`${styles.writingField} min-h-12 w-full rounded-xl border-2 border-line px-3 text-base text-ink`}
       />
       {hint ? (
         <p id={hintId} className="text-sm text-muted">

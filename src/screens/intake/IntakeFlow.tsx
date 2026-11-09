@@ -96,7 +96,7 @@ export function IntakeFlow({ onFinished }: IntakeFlowProps) {
         />
       ) : null}
       {phase === "clarify" && clarifyQuestion ? (
-        <Screen heading="One more detail" headingSize="md">
+        <Screen heading="Refine your goals" headingSize="md">
           <Stack gap="lg">
             <Notice tone="info" title="One more detail">
               {clarifyQuestion}
