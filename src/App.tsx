@@ -224,6 +224,10 @@ export default function App() {
             }}
             onCase={() => openFocusedScreen("case")}
             onPlanChange={onPreparedPlanChange}
+            onOpenToday={() => {
+              setTab("today");
+              setPlace("today");
+            }}
           />
           <ShellUtilityLinks
             onReadout={() => openFocusedScreen("readout")}

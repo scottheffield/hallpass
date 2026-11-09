@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EVENT_DAYS } from "../../../shared/event";
+import { useConferenceNow } from "../today/useConferenceNow";
 import type {
   PlanAction,
   PlanDayRequest,
@@ -15,6 +16,7 @@ import {
   buildDayTimeline,
   breakDetail,
   breakTitle,
+  conferenceDateKey,
   formatTime,
   formatTimeRange,
   type TodaySessionBlock,
@@ -37,11 +39,13 @@ import { planFocusLine } from "./focus";
 import { presentPlanReason } from "./reason";
 import { planHasPreparedContent } from "../../ui/journeyPhase";
 import { planSessionStatusDetail } from "./statusLabel";
+import { isSelectedDayPlanReady, planDayReadyCopy } from "./nextStep";
 
 export interface PlanScreenProps {
   onGoals?: () => void;
   onCase?: () => void;
   onPlanChange?: (prepared: boolean) => void;
+  onOpenToday?: () => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -59,7 +63,7 @@ function blockKey(block: TodayTimelineBlock, index: number): string {
   return `break-${block.start}-${index}`;
 }
 
-export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
+export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -79,6 +83,7 @@ export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
   const generatingRef = useRef(false);
   const attemptedDaysRef = useRef(new Set<string>());
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const conferenceNow = useConferenceNow();
 
   useEffect(() => {
     if (loading) return;
@@ -194,6 +199,21 @@ export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
     () => buildDayTimeline(sessions, dayPlan),
     [sessions, dayPlan],
   );
+
+  const dayReady = useMemo(
+    () =>
+      isSelectedDayPlanReady({
+        generating,
+        genError,
+        timelineLength: timeline.length,
+      }),
+    [generating, genError, timeline.length],
+  );
+
+  const dayReadyCopy = useMemo(() => {
+    if (!dayReady) return null;
+    return planDayReadyCopy(selectedDay, conferenceDateKey(conferenceNow));
+  }, [dayReady, selectedDay, conferenceNow]);
 
   const detailBullets = useMemo(() => {
     if (!detail) return [];
@@ -377,6 +397,25 @@ export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
                         Try again
                       </Button>
                     </div>
+                  </Notice>
+                ) : null}
+
+                {dayReadyCopy ? (
+                  <Notice tone="info" title={dayReadyCopy.title}>
+                    {dayReadyCopy.reviewLines.map((line) => (
+                      <p key={line}>{line}</p>
+                    ))}
+                    {dayReadyCopy.futureTodayLine ? <p>{dayReadyCopy.futureTodayLine}</p> : null}
+                    {dayReadyCopy.offerOpenToday && onOpenToday ? (
+                      <div className="mt-2">
+                        <Button variant="primary" onClick={onOpenToday}>
+                          Open Today
+                        </Button>
+                        <p className="mt-2 text-sm text-muted">
+                          Today shows your next session and directions when you are ready to go.
+                        </p>
+                      </div>
+                    ) : null}
                   </Notice>
                 ) : null}
 
