@@ -6,18 +6,16 @@ import { ApiFailure, post } from "../../lib/api";
 import { useConferenceNow } from "./useConferenceNow";
 import { Button, Notice, Screen, SessionCard, Stack } from "../../ui";
 import {
-  activeBreak,
   breakDetail,
-  breakFollowingSession,
   breakTitle,
   buildDayTimeline,
   conferenceDateKey,
   formatHeaderDate,
-  formatBreakTime,
   formatTime,
   formatTimeRange,
   nextPlannedSession,
   resolveTodayHeading,
+  restOfTodayTimeline,
   type TodayTimelineBlock,
 } from "./timeline";
 import { TODAY_PLAN_HEADING_ID, todaySessionStatusDetail } from "./accessibility";
@@ -100,12 +98,10 @@ export function TodayScreen({
   );
 
   const next = useMemo(() => nextPlannedSession(timeline, now.getTime()), [timeline, now]);
-  const highlightedBreak = useMemo(() => {
-    const inBreak = activeBreak(timeline, now.getTime());
-    if (inBreak) return inBreak;
-    if (next) return breakFollowingSession(timeline, next.block);
-    return null;
-  }, [timeline, now, next]);
+  const listTimeline = useMemo(
+    () => restOfTodayTimeline(timeline, next),
+    [timeline, next],
+  );
 
   const screenHeading = useMemo(() => {
     if (!heading) return "Today";
@@ -239,17 +235,6 @@ export function TodayScreen({
               </section>
             ) : null}
 
-            {highlightedBreak ? (
-              <section aria-label="Break on your plan">
-                <SessionCard
-                  kind="break"
-                  title={breakTitle(highlightedBreak.planBreak.note)}
-                  time={formatBreakTime(highlightedBreak.start, highlightedBreak.end)}
-                  detail={breakDetail(highlightedBreak.planBreak.note)}
-                />
-              </section>
-            ) : null}
-
             <section aria-labelledby={TODAY_PLAN_HEADING_ID}>
               <h2
                 id={TODAY_PLAN_HEADING_ID}
@@ -258,10 +243,10 @@ export function TodayScreen({
                 Today&apos;s plan
               </h2>
               <Stack gap="sm">
-                {timeline.length === 0 ? (
+                {listTimeline.length === 0 ? (
                   <p className="text-sm text-muted">No sessions or breaks on this day.</p>
                 ) : (
-                  timeline.map((block, index) => {
+                  listTimeline.map((block, index) => {
                     if (block.kind === "break") {
                       return (
                         <SessionCard
