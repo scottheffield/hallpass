@@ -52,6 +52,8 @@ describe("shouldAutoGeneratePlanDay", () => {
     loading: false,
     generating: false,
     genError: null as string | null,
+    loadError: null as string | null,
+    hasProfile: true,
     plan: null as Plan | null,
     selectedDay: EVENT_DAYS[0],
     attemptedDays: new Set<string>(),
@@ -66,6 +68,25 @@ describe("shouldAutoGeneratePlanDay", () => {
       shouldAutoGeneratePlanDay({
         ...idle,
         attemptedDays: new Set([EVENT_DAYS[0]]),
+      }),
+    ).toBe(false);
+  });
+
+  it("does not generate without a saved profile", () => {
+    expect(
+      shouldAutoGeneratePlanDay({
+        ...idle,
+        hasProfile: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("does not generate after a plan load error", () => {
+    expect(
+      shouldAutoGeneratePlanDay({
+        ...idle,
+        plan: null,
+        loadError: "Could not load your plan.",
       }),
     ).toBe(false);
   });

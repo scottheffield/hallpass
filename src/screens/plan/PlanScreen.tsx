@@ -156,6 +156,8 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
       loading,
       generating,
       genError,
+      loadError: error,
+      hasProfile: profile !== null,
       plan,
       selectedDay,
       attemptedDays: attemptedDaysRef.current,
@@ -163,7 +165,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
     if (!shouldGenerate) return;
     attemptedDaysRef.current.add(selectedDay);
     void generateDay(selectedDay);
-  }, [plan, selectedDay, stub, loading, generating, genError, generateDay]);
+  }, [plan, profile, selectedDay, stub, loading, generating, genError, error, generateDay]);
 
   useEffect(() => {
     if (!generating || genStartedAt === null) return;

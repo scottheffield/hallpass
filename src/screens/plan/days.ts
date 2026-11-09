@@ -22,11 +22,14 @@ export function shouldAutoGeneratePlanDay(input: {
   loading: boolean;
   generating: boolean;
   genError: string | null;
+  loadError: string | null;
+  hasProfile: boolean;
   plan: Plan | null;
   selectedDay: string;
   attemptedDays: Set<string>;
 }): boolean {
-  if (input.stub || input.loading || input.generating || input.genError) return false;
+  if (input.stub || input.loading || input.generating || input.genError || input.loadError) return false;
+  if (!input.plan && !input.hasProfile) return false;
   if (input.attemptedDays.has(input.selectedDay)) return false;
   return dayNeedsGeneration(input.plan?.days[input.selectedDay]);
 }
