@@ -137,6 +137,8 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
       setLive(null);
     } catch (err) {
       if (token !== reqRef.current) return;
+      setMessages(messages);
+      setDraft(trimmed);
       setLive(null);
       setStreamFlags(null);
       if (err instanceof TypeError || (err instanceof Error && err.message === "Failed to fetch")) {
@@ -203,7 +205,7 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
             ))}
             {showLiveBubble ? (
               <div ref={liveRef}>
-                <MessageBubble role="assistant" text={live?.text ?? (sending ? "…" : "")} />
+                <MessageBubble role="assistant" text={live?.text || (sending ? "…" : "")} />
               </div>
             ) : null}
             {streamFlags ? <ReplyFlags reply={streamFlags} /> : null}
