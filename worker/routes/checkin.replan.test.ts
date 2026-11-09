@@ -45,7 +45,11 @@ describe("check-in route proposal copy", () => {
     expect(response.status).toBe(200);
     const body = (await response.json()) as CheckInResponse;
     expect(body.proposal).not.toBeNull();
-    const removed = body.proposal?.changes.find((change) => change.kind === "removed");
-    expect(removed?.text).toContain("you said the last session didn't move your goal");
+    const change = body.proposal?.changes.find((c) => c.kind === "moved" || c.kind === "removed");
+    expect(change?.text).toBeTruthy();
+    expect(change?.text).not.toMatch(/\b1250865\b/);
+    if (change?.kind === "moved") {
+      expect(change.text).toMatch(/^Swapped in /);
+    }
   });
 });

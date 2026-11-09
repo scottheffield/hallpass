@@ -40,10 +40,38 @@ function formatAgendaTime(iso: string): string {
   return `${hour}:${minute}`;
 }
 
-function sessionLabel(sessionId: string): { title: string; time: string } {
+function sessionLabel(sessionId: string): { title: string; time: string; room: string } {
   const session = sessionById(sessionId);
-  if (!session) return { title: "a later session", time: "" };
-  return { title: session.title, time: formatAgendaTime(session.start) };
+  if (!session) return { title: "a later session", time: "", room: "" };
+  return { title: session.title, time: formatAgendaTime(session.start), room: session.room };
+}
+
+function swapPairs(before: PlanDay, after: PlanDay): Array<{ from: string; to: string; reason: string }> {
+  const beforePlanned = new Set(plannedIds(before));
+  const afterPlanned = new Set(plannedIds(after));
+  const pairs: Array<{ from: string; to: string; reason: string }> = [];
+  const limit = Math.min(before.items.length, after.items.length);
+  for (let index = 0; index < limit; index++) {
+    const prev = before.items[index];
+    const next = after.items[index];
+    if (prev.status !== "planned" || next.status !== "planned") continue;
+    if (prev.session_id === next.session_id) continue;
+    if (!beforePlanned.has(prev.session_id) || !afterPlanned.has(next.session_id)) continue;
+    if (afterPlanned.has(prev.session_id) || beforePlanned.has(next.session_id)) continue;
+    pairs.push({ from: prev.session_id, to: next.session_id, reason: next.reason });
+  }
+  return pairs;
+}
+
+function swapChangeText(sessionId: string, reason: string): string {
+  const { title, time, room } = sessionLabel(sessionId);
+  const roomPhrase = room ? ` in ${room}` : "";
+  const base =
+    title === "a later session"
+      ? `Swapped in a session for the rest of today`
+      : `Swapped in ${title}${atTimePhrase(time)}${roomPhrase}`;
+  const detail = trimReason(reason);
+  return withReasonClause(base, detail);
 }
 
 function atTimePhrase(time: string): string {
@@ -84,9 +112,22 @@ export function diffPlanDay(before: PlanDay, after: PlanDay, options?: DiffPlanD
   const changes: PlanChange[] = [];
   const beforePlanned = new Set(plannedIds(before));
   const afterPlanned = new Set(plannedIds(after));
+  const swappedFrom = new Set<string>();
+  const swappedTo = new Set<string>();
+
+  for (const pair of swapPairs(before, after)) {
+    swappedFrom.add(pair.from);
+    swappedTo.add(pair.to);
+    changes.push({
+      kind: "moved",
+      session_id: pair.to,
+      text: swapChangeText(pair.to, pair.reason),
+    });
+  }
 
   for (const item of before.items) {
     if (item.status !== "planned") continue;
+    if (swappedFrom.has(item.session_id)) continue;
     if (!afterPlanned.has(item.session_id)) {
       const { title, time } = sessionLabel(item.session_id);
       const base =
@@ -103,6 +144,7 @@ export function diffPlanDay(before: PlanDay, after: PlanDay, options?: DiffPlanD
 
   for (const item of after.items) {
     if (item.status !== "planned") continue;
+    if (swappedTo.has(item.session_id)) continue;
     if (!beforePlanned.has(item.session_id)) {
       const { title, time } = sessionLabel(item.session_id);
       const base =
