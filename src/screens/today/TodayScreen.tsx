@@ -243,10 +243,10 @@ export function TodayScreen({
                 Today&apos;s plan
               </h2>
               <Stack gap="sm">
-                {listTimeline.length === 0 ? (
+                {timeline.length === 0 ? (
                   <p className="text-sm text-muted">No sessions or breaks on this day.</p>
-                ) : (
-                  listTimeline.map((block, index) => {
+                ) : null}
+                {listTimeline.map((block, index) => {
                     if (block.kind === "break") {
                       return (
                         <SessionCard
@@ -274,8 +274,7 @@ export function TodayScreen({
                         detail={statusDetail}
                       />
                     );
-                  })
-                )}
+                  })}
               </Stack>
             </section>
 

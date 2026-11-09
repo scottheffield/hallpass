@@ -66,6 +66,16 @@ describe("today timeline", () => {
     expect(list).toEqual(blocks.filter((block) => block !== next?.block));
   });
 
+  it("empties the list without meaning the day has no plan when next is the only block", () => {
+    const session = sessions.find((row) => row.id === "1246200")!;
+    const blocks = [sessionBlock(session)];
+    const beforeStart = Date.parse(session.start) - 60_000;
+    const next = nextPlannedSession(blocks, beforeStart);
+    expect(next?.block.session.id).toBe(session.id);
+    expect(restOfTodayTimeline(blocks, next)).toEqual([]);
+    expect(blocks.length).toBe(1);
+  });
+
   it("uses Mountain Time for the conference date key", () => {
     const instant = new Date("2026-11-11T06:30:00.000Z");
     expect(conferenceDateKey(instant)).toBe("2026-11-10");
