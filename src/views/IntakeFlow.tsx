@@ -3,7 +3,7 @@ import type { IntakeAnswers, InterviewResponse, ProfileDraft, ProfileResponse } 
 import { post, ApiFailure } from "../lib/api";
 import { Button, Choice, Field, Notice, Sheet, Stack } from "../ui";
 import { ConfirmView } from "./ConfirmView";
-import { exploreStepAt } from "./exploreSteps";
+import { buildExplorePlan, type ExploreStep } from "./exploreSteps";
 import { IntakeView } from "./IntakeView";
 
 type Phase = "entry" | "clarify" | "confirm";
@@ -24,6 +24,7 @@ export function IntakeFlow({ onFinished }: IntakeFlowProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [exploreOpen, setExploreOpen] = useState(false);
+  const [explorePlan, setExplorePlan] = useState<ExploreStep[]>([]);
   const [exploreIndex, setExploreIndex] = useState(0);
   const [stepValue, setStepValue] = useState("");
 
@@ -36,12 +37,12 @@ export function IntakeFlow({ onFinished }: IntakeFlowProps) {
       if (res.clarify && !nextAnswers.clarify_answer) {
         setClarifyQuestion(res.clarify);
         setDraft(res.profile);
-        setAiUnavailable(true);
+        setAiUnavailable(Boolean(res.basic));
         setPhase("clarify");
         return;
       }
       setDraft(res.profile);
-      setAiUnavailable(false);
+      setAiUnavailable(Boolean(res.basic));
       setPhase("confirm");
     } catch (err) {
       setError(err instanceof ApiFailure ? err.message : "Could not build a summary.");
@@ -65,12 +66,13 @@ export function IntakeFlow({ onFinished }: IntakeFlowProps) {
   }
 
   function openExplore() {
+    setExplorePlan(buildExplorePlan(answers));
     setExploreIndex(0);
     setStepValue("");
     setExploreOpen(true);
   }
 
-  const step = exploreOpen ? exploreStepAt(answers, exploreIndex) : null;
+  const step = exploreOpen ? (explorePlan[exploreIndex] ?? null) : null;
 
   return (
     <>

@@ -3,7 +3,7 @@ import type { Env } from "../env";
 import { claudeJson } from "../lib/claude";
 import { HttpError } from "../lib/http";
 import { draftFromAnswers, mergeClarify, needsClarify, CLARIFY_QUESTION } from "./fallback";
-import { parseIntakeAnswers } from "./parse";
+import { parseIntakeAnswers, parseProfileDraft } from "./parse";
 import { repairProfileDraft } from "./validate";
 
 export interface InterviewResult {
@@ -24,7 +24,7 @@ export function draftFromBody(body: Record<string, unknown>): ProfileDraft {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
     throw new HttpError(400, "bad_request", "Profile must be an object.");
   }
-  const draft = raw as ProfileDraft;
+  const draft = parseProfileDraft(raw);
   return repairProfileDraft(draft, draft.why_summary ?? "");
 }
 

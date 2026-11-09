@@ -98,6 +98,8 @@ export interface InterviewResponse {
   profile: ProfileDraft;
   /** One clarifying question. Absent when the answers are enough to plan. */
   clarify?: string;
+  /** True when the draft was built without Claude (or Claude failed). Safe to show in UI. */
+  basic?: boolean;
   stub?: boolean;
 }
 

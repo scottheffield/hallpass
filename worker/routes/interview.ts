@@ -19,6 +19,7 @@ export async function interview(
   const response: InterviewResponse = {
     profile: result.profile,
     clarify: result.clarify,
+    basic: result.basic,
   };
   return json(response);
 }
