@@ -432,9 +432,25 @@ export function PlanScreen({ onCase }: PlanScreenProps) {
               </div>
 
               {onCase ? (
-                <Button variant="secondary" onClick={onCase}>
-                  Make the case for attending
-                </Button>
+                <section
+                  aria-labelledby="plan-optional-tools-heading"
+                  className="mt-6 border-t border-line pt-4"
+                >
+                  <h2
+                    id="plan-optional-tools-heading"
+                    className="font-display text-lg font-semibold text-ink"
+                  >
+                    Optional planning tools
+                  </h2>
+                  <p className="mt-1 text-sm text-muted">
+                    For manager approval or travel paperwork. Not required to attend.
+                  </p>
+                  <div className="mt-2">
+                    <Button type="button" variant="quiet" onClick={onCase}>
+                      Make the case for attending
+                    </Button>
+                  </div>
+                </section>
               ) : null}
             </>
           ) : null}
