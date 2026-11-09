@@ -24,7 +24,14 @@ import { Button, ChangeList, Notice, Screen, SessionCard, Sheet, Stack } from ".
 import { dayNeedsGeneration, dayTabLabel, seedAttemptedDaysFromPlan } from "./days";
 import { sessionDetailBullets } from "./detail";
 import { generationStageIndex, PLAN_GENERATION_STAGES } from "./generation";
+import {
+  dayTabFocusIndex,
+  planDayPanelId,
+  planDayTabAccessibleName,
+  planDayTabId,
+} from "./accessibility";
 import { planFocusLine } from "./focus";
+import { planSessionStatusDetail } from "./statusLabel";
 
 export interface PlanScreenProps {
   onGoals?: () => void;
@@ -65,6 +72,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const generatingRef = useRef(false);
   const attemptedDaysRef = useRef(new Set<string>());
+  const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -101,6 +109,16 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
   useEffect(() => {
     void reload();
   }, [reload]);
+
+  useEffect(() => {
+    if (detail !== null) return;
+    const trigger = detailTriggerRef.current;
+    detailTriggerRef.current = null;
+    if (!trigger?.isConnected) return;
+    requestAnimationFrame(() => {
+      trigger.focus();
+    });
+  }, [detail]);
 
   const generateDay = useCallback(
     async (day: string) => {
@@ -278,101 +296,131 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
                 </Notice>
               ) : null}
 
-              <nav aria-label="Conference days" className="flex gap-2">
-                {EVENT_DAYS.map((day) => {
+              <div role="tablist" aria-label="Conference days" className="flex gap-2">
+                {EVENT_DAYS.map((day, index) => {
                   const selected = day === selectedDay;
+                  const label = dayTabLabel(day);
+                  const tabText = planDayTabAccessibleName(label, selected);
                   return (
                     <Button
                       key={day}
+                      id={planDayTabId(day)}
+                      role="tab"
+                      type="button"
                       variant={selected ? "secondary" : "quiet"}
                       className="min-h-10 flex-1 px-2"
-                      aria-current={selected ? "page" : undefined}
+                      aria-selected={selected}
+                      aria-controls={planDayPanelId(day)}
+                      tabIndex={selected ? 0 : -1}
                       onClick={() => {
                         setSelectedDay(day);
                         setActionMessage(null);
                         setGenError(null);
                       }}
+                      onKeyDown={(event) => {
+                        const key = event.key;
+                        if (key !== "ArrowLeft" && key !== "ArrowRight" && key !== "Home" && key !== "End") {
+                          return;
+                        }
+                        const nextIndex = dayTabFocusIndex(index, key);
+                        if (nextIndex === null) return;
+                        event.preventDefault();
+                        const nextDay = EVENT_DAYS[nextIndex];
+                        setSelectedDay(nextDay);
+                        setActionMessage(null);
+                        setGenError(null);
+                        document.getElementById(planDayTabId(nextDay))?.focus();
+                      }}
                     >
-                      {dayTabLabel(day)}
+                      {tabText}
                     </Button>
                   );
                 })}
-              </nav>
+              </div>
 
-              {focus ? (
-                <p className="text-base text-ink">
-                  <span className="font-semibold">Focus:</span> {focus}
-                </p>
-              ) : null}
+              <div
+                id={planDayPanelId(selectedDay)}
+                role="tabpanel"
+                aria-labelledby={planDayTabId(selectedDay)}
+                aria-busy={generating || undefined}
+              >
+                {focus ? (
+                  <p className="mt-3 text-base text-ink">
+                    <span className="font-semibold">Focus:</span> {focus}
+                  </p>
+                ) : null}
 
-              {generating ? (
-                <Notice tone="loading" title="Plan generating">
-                  <p>{genStage ?? PLAN_GENERATION_STAGES[0]}.</p>
-                </Notice>
-              ) : null}
+                {generating ? (
+                  <Notice tone="loading" title="Plan generating">
+                    <p>{genStage ?? PLAN_GENERATION_STAGES[0]}.</p>
+                  </Notice>
+                ) : null}
 
-              {genError ? (
-                <Notice tone="error" title="Could not generate this day">
-                  <p>{genError}</p>
-                  <div className="mt-2">
-                    <Button variant="secondary" onClick={() => void generateDay(selectedDay)}>
-                      Try again
-                    </Button>
-                  </div>
-                </Notice>
-              ) : null}
+                {genError ? (
+                  <Notice tone="error" title="Could not generate this day">
+                    <p>{genError}</p>
+                    <div className="mt-2">
+                      <Button variant="secondary" onClick={() => void generateDay(selectedDay)}>
+                        Try again
+                      </Button>
+                    </div>
+                  </Notice>
+                ) : null}
 
-              {!generating && !genError ? (
-                <Stack gap="sm">
-                  {timeline.length === 0 ? (
-                    <p className="text-sm text-muted">No sessions or breaks on this day yet.</p>
-                  ) : (
-                    timeline.map((block, index) => {
-                      if (block.kind === "break") {
-                        return (
-                          <SessionCard
-                            key={blockKey(block, index)}
-                            kind="break"
-                            title={breakTitle(block.planBreak.note)}
-                            time={formatTime(block.start)}
-                            detail={breakDetail(block.planBreak.note)}
-                          />
-                        );
-                      }
+                {!generating && !genError ? (
+                  <section aria-labelledby="plan-schedule-heading" className="mt-3">
+                    <h2 id="plan-schedule-heading" className="sr-only">
+                      Schedule for {dayTabLabel(selectedDay)}
+                    </h2>
+                    <Stack gap="sm">
+                      {timeline.length === 0 ? (
+                        <p className="text-sm text-muted">No sessions or breaks on this day yet.</p>
+                      ) : (
+                        timeline.map((block, index) => {
+                          if (block.kind === "break") {
+                            return (
+                              <SessionCard
+                                key={blockKey(block, index)}
+                                kind="break"
+                                title={breakTitle(block.planBreak.note)}
+                                time={formatTime(block.start)}
+                                detail={breakDetail(block.planBreak.note)}
+                              />
+                            );
+                          }
 
-                      const pinned = block.item.pinned ? "Kept on your plan" : undefined;
-                      const status =
-                        block.item.status === "done"
-                          ? "Done"
-                          : block.item.status === "skipped"
-                            ? "Skipped"
-                            : pinned;
+                          const statusDetail = planSessionStatusDetail(block.item);
 
-                      return (
-                        <SessionCard
-                          key={blockKey(block, index)}
-                          title={block.session.title}
-                          time={formatTimeRange(block.start, block.end)}
-                          room={block.session.room}
-                          reasonLabel={status ? undefined : "Why"}
-                          reason={status ? undefined : block.item.reason}
-                          detail={status}
-                        >
-                          {!status ? (
-                            <Button
-                              variant="quiet"
-                              className="min-h-10 w-auto px-0"
-                              onClick={() => setDetail(block)}
+                          return (
+                            <SessionCard
+                              key={blockKey(block, index)}
+                              title={block.session.title}
+                              time={formatTimeRange(block.start, block.end)}
+                              room={block.session.room}
+                              reasonLabel={statusDetail ? undefined : "Why"}
+                              reason={statusDetail ? undefined : block.item.reason}
+                              detail={statusDetail}
                             >
-                              Details and alternatives
-                            </Button>
-                          ) : null}
-                        </SessionCard>
-                      );
-                    })
-                  )}
-                </Stack>
-              ) : null}
+                              {!statusDetail ? (
+                                <Button
+                                  variant="quiet"
+                                  className="min-h-10 w-auto px-0"
+                                  onClick={(event) => {
+                                    detailTriggerRef.current = event.currentTarget;
+                                    setDetail(block);
+                                  }}
+                                >
+                                  Details and alternatives
+                                </Button>
+                              ) : null}
+                            </SessionCard>
+                          );
+                        })
+                      )}
+                    </Stack>
+                  </section>
+                ) : null}
+              </div>
 
               {onCase ? (
                 <Button variant="secondary" onClick={onCase}>
@@ -416,7 +464,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
               </Notice>
             ) : null}
 
-            <Stack gap="sm">
+            <section aria-label="Change this session" className="flex flex-col gap-3">
               {detail.item.pinned ? (
                 <p className="text-sm font-semibold text-ink">This session is kept on your plan.</p>
               ) : (
@@ -442,7 +490,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
               >
                 Remove from plan
               </Button>
-            </Stack>
+            </section>
           </Stack>
         ) : null}
       </Sheet>
