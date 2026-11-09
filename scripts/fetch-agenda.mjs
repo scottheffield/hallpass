@@ -31,7 +31,16 @@ const rooms = buildRooms(agenda.sessions, hints);
 const sample = sessionsSample(agenda);
 
 await mkdir(join(root, "public"), { recursive: true });
+await mkdir(join(root, "public", "raw"), { recursive: true });
 await mkdir(join(root, "shared", "fixtures"), { recursive: true });
+await writeFile(
+  join(root, "public", "raw", "kubecon-na-2026-schedule.json"),
+  `${JSON.stringify(sched, null, 2)}\n`,
+);
+await writeFile(
+  join(root, "public", "raw", "kubecon-na-2026-schedule.source.txt"),
+  `${agenda.source} pulled_at ${agenda.pulled_at}\n`,
+);
 await writeFile(join(root, "public", "agenda.json"), `${JSON.stringify(agenda, null, 2)}\n`);
 await writeFile(
   join(root, "public", "agenda.meta.json"),
