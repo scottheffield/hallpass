@@ -267,6 +267,7 @@ export function TodayScreen({
                         <SessionCard
                           key={blockKey(block, index)}
                           kind="break"
+                          headingLevel={3}
                           title={breakTitle(block.planBreak.note)}
                           time={formatTime(block.start)}
                           detail={breakDetail(block.planBreak.note)}
