@@ -4,7 +4,7 @@ import type { Insights } from "../../../shared/types";
 import { EVENT_NAME } from "../../../shared/event";
 import { getSession, loadAgenda } from "../../lib/agenda";
 import { ApiFailure, get } from "../../lib/api";
-import { Notice, Screen, Stack } from "../../ui";
+import { Button, Notice, Screen, Stack } from "../../ui";
 import {
   formatAttendeeSample,
   formatBreakDemand,
@@ -207,6 +207,7 @@ export function InsightsScreen({ onBack }: InsightsScreenProps) {
             <Notice tone="error" title="Could not load insights">
               {state.message}
             </Notice>
+            <Button onClick={() => void reload()}>Try again</Button>
           </Stack>
         ) : null}
         {state.kind === "ready" ? (
