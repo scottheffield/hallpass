@@ -13,7 +13,7 @@ export interface SessionCardProps {
   kind?: SessionCardKind;
   /** Second line under a break title. */
   detail?: string;
-  /** Heading level for the session title on the default card (2 under h1, 3 under a section h2). */
+  /** Heading level for the title on session and break cards (2 under h1, 3 under a section h2). */
   headingLevel?: 2 | 3;
   children?: ReactNode;
 }
@@ -40,6 +40,8 @@ export function SessionCard({
   headingLevel = 2,
   children,
 }: SessionCardProps) {
+  const TitleTag = headingLevel === 3 ? "h3" : "h2";
+
   if (kind === "break") {
     return (
       <article className="rounded-xl bg-butter px-3 py-3 text-on-butter">
@@ -49,7 +51,7 @@ export function SessionCard({
             <span>{time}</span>
           </p>
           <div className="min-w-0">
-            <h2 className="font-display text-lg font-semibold leading-tight">{title}</h2>
+            <TitleTag className="font-display text-lg font-semibold leading-tight">{title}</TitleTag>
             {detail ? <p className="mt-1 text-base leading-snug">{detail}</p> : null}
           </div>
         </div>
@@ -79,8 +81,6 @@ export function SessionCard({
       </article>
     );
   }
-
-  const TitleTag = headingLevel === 3 ? "h3" : "h2";
 
   return (
     <article className="text-ink">
