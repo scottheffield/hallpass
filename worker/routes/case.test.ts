@@ -51,4 +51,85 @@ describe("case route", () => {
     putCase.mockRestore();
     vi.restoreAllMocks();
   });
+
+  it("sets stub when the profile is not saved", async () => {
+    vi.spyOn(store, "getProfile").mockResolvedValue(null);
+    vi.spyOn(store, "getPlan").mockResolvedValue(fixturePlan("test-attendee"));
+    vi.spyOn(caseGen, "generateCase").mockResolvedValue({
+      stub: false,
+      case: {
+        attendee_id: "test-attendee",
+        problems: ["problem"],
+        sessions: ["1246200"],
+        bring_back: ["goal"],
+        text: "Case text from model.",
+      },
+    });
+
+    const request = new Request("https://hallpass.local/api/case", {
+      method: "POST",
+      headers: { "X-Hallpass-Attendee": "test-attendee" },
+      body: "{}",
+    });
+    const env = {} as Env;
+    const response = await caseForAttending(request, env, {} as ExecutionContext, "test-attendee");
+    const body = (await response.json()) as { stub?: boolean };
+    expect(body.stub).toBe(true);
+
+    vi.restoreAllMocks();
+  });
+
+  it("sets stub when the plan is not saved", async () => {
+    vi.spyOn(store, "getProfile").mockResolvedValue(fixtureProfile("test-attendee"));
+    vi.spyOn(store, "getPlan").mockResolvedValue(null);
+    vi.spyOn(caseGen, "generateCase").mockResolvedValue({
+      stub: false,
+      case: {
+        attendee_id: "test-attendee",
+        problems: ["problem"],
+        sessions: ["1246200"],
+        bring_back: ["goal"],
+        text: "Case text from model.",
+      },
+    });
+
+    const request = new Request("https://hallpass.local/api/case", {
+      method: "POST",
+      headers: { "X-Hallpass-Attendee": "test-attendee" },
+      body: "{}",
+    });
+    const env = {} as Env;
+    const response = await caseForAttending(request, env, {} as ExecutionContext, "test-attendee");
+    const body = (await response.json()) as { stub?: boolean };
+    expect(body.stub).toBe(true);
+
+    vi.restoreAllMocks();
+  });
+
+  it("omits stub when profile and plan are stored and generation succeeds", async () => {
+    vi.spyOn(store, "getProfile").mockResolvedValue(fixtureProfile("test-attendee"));
+    vi.spyOn(store, "getPlan").mockResolvedValue(fixturePlan("test-attendee"));
+    vi.spyOn(caseGen, "generateCase").mockResolvedValue({
+      stub: false,
+      case: {
+        attendee_id: "test-attendee",
+        problems: ["problem"],
+        sessions: ["1246200"],
+        bring_back: ["goal"],
+        text: "Case text from model.",
+      },
+    });
+
+    const request = new Request("https://hallpass.local/api/case", {
+      method: "POST",
+      headers: { "X-Hallpass-Attendee": "test-attendee" },
+      body: "{}",
+    });
+    const env = {} as Env;
+    const response = await caseForAttending(request, env, {} as ExecutionContext, "test-attendee");
+    const body = (await response.json()) as { stub?: boolean };
+    expect(body.stub).toBeUndefined();
+
+    vi.restoreAllMocks();
+  });
 });
