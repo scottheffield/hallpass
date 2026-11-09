@@ -2,6 +2,7 @@ import type { CheckInRequest, CheckInResponse, PlanResponse, ProfileResponse } f
 import { EVENT_OFFSET } from "../../shared/event";
 import type { CheckIn, IsoDateTime, MovedGoal, WorthIt } from "../../shared/types";
 import { getAttendeeId } from "./attendee";
+import { demoNowForRequests } from "./clock";
 
 export const OFFLINE_CHECKIN_SAVED_COPY =
   "Saved on this device. We'll send it when you're online." as const;
@@ -37,6 +38,11 @@ let flushTimer: ReturnType<typeof setInterval> | null = null;
 export function isOnline(): boolean {
   if (typeof navigator === "undefined") return true;
   return navigator.onLine;
+}
+
+/** Conference time for queue timestamps: demo clock when demo mode is on, else device time. */
+export function checkInQueueTimestamp(): IsoDateTime {
+  return demoNowForRequests() ?? conferenceIsoFromDate(new Date());
 }
 
 export function conferenceIsoFromDate(date: Date): IsoDateTime {
@@ -143,7 +149,7 @@ function payloadForQueue(body: CheckInRequest, queuedAt: IsoDateTime): CheckInRe
 }
 
 /** Upserts by queue id so the same session check-in is not duplicated. */
-export function upsertQueuedCheckIn(body: CheckInRequest, queuedAt = conferenceIsoFromDate(new Date())): QueuedCheckIn {
+export function upsertQueuedCheckIn(body: CheckInRequest, queuedAt = checkInQueueTimestamp()): QueuedCheckIn {
   const id = checkInQueueId(body.session_id);
   const entry: QueuedCheckIn = { id, body: payloadForQueue(body, queuedAt), queuedAt };
   const queue = readQueue().filter((item) => item.id !== id);
@@ -164,7 +170,7 @@ export function removeQueuedCheckIn(id: string): void {
   updateFlushTimer();
 }
 
-export function offlineCheckInResponse(body: CheckInRequest, at = body.at ?? conferenceIsoFromDate(new Date())): CheckInResponse {
+export function offlineCheckInResponse(body: CheckInRequest, at = body.at ?? checkInQueueTimestamp()): CheckInResponse {
   const checkin: CheckIn = {
     attendee_id: getAttendeeId(),
     session_id: body.session_id.trim(),
@@ -184,6 +190,13 @@ export function isNetworkFailure(err: unknown): boolean {
   return err instanceof TypeError;
 }
 
+/** 4xx from the check-in route will not succeed on retry; drop and continue the queue. */
+export function isPermanentCheckInFlushError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const status = (err as { status?: number }).status;
+  return typeof status === "number" && status >= 400 && status < 500;
+}
+
 export async function flushCheckInQueue(): Promise<number> {
   if (flushing || !checkInSender || !isOnline()) return 0;
   if (listQueuedCheckIns().length === 0) return 0;
@@ -195,7 +208,11 @@ export async function flushCheckInQueue(): Promise<number> {
         await checkInSender(item.body);
         removeQueuedCheckIn(item.id);
         sent += 1;
-      } catch {
+      } catch (err) {
+        if (isPermanentCheckInFlushError(err)) {
+          removeQueuedCheckIn(item.id);
+          continue;
+        }
         break;
       }
     }

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CheckInRequest } from "../../shared/api";
 import {
   checkInQueueId,
+  checkInQueueTimestamp,
   conferenceIsoFromDate,
   flushCheckInQueue,
   isCheckInRequest,
@@ -9,12 +10,15 @@ import {
   setCheckInSender,
   upsertQueuedCheckIn,
 } from "./offline";
+import { setDemoNow, syncDemoFromUrl } from "./clock";
 
 describe("src/lib/offline check-in queue", () => {
   const store = new Map<string, string>();
+  const location = { search: "" };
 
   beforeEach(() => {
     store.clear();
+    location.search = "";
     vi.stubGlobal("localStorage", {
       getItem: (key: string) => store.get(key) ?? null,
       setItem: (key: string, value: string) => {
@@ -27,6 +31,8 @@ describe("src/lib/offline check-in queue", () => {
     });
     vi.stubGlobal("navigator", { onLine: true });
     vi.stubGlobal("window", {
+      location,
+      history: { replaceState: () => undefined },
       dispatchEvent: () => true,
       addEventListener: () => undefined,
     });
@@ -69,6 +75,29 @@ describe("src/lib/offline check-in queue", () => {
     const entry = upsertQueuedCheckIn(sample, queuedAt);
     expect(entry.body.at).toBe(queuedAt);
     expect(listQueuedCheckIns()[0]?.body.at).toBe(queuedAt);
+  });
+
+  it("uses the demo clock for queue timestamps when demo mode is on", () => {
+    location.search = "?demo=1";
+    syncDemoFromUrl();
+    setDemoNow("2026-11-10T09:30:00-07:00");
+    expect(checkInQueueTimestamp()).toBe("2026-11-10T09:30:00-07:00");
+  });
+
+  it("drops permanent 4xx failures and flushes later items", async () => {
+    upsertQueuedCheckIn({ ...sample, session_id: "bad" });
+    upsertQueuedCheckIn({ ...sample, session_id: "good" });
+    setCheckInSender(async (body) => {
+      if (body.session_id === "bad") {
+        const err = new Error("bad request") as Error & { status: number };
+        err.status = 400;
+        throw err;
+      }
+    });
+
+    const count = await flushCheckInQueue();
+    expect(count).toBe(1);
+    expect(listQueuedCheckIns()).toHaveLength(0);
   });
 
   it("flushes in order and stops on the first failure", async () => {

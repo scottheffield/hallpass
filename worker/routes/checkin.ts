@@ -37,17 +37,11 @@ export function resolveCheckInAt(request: Request, body: Record<string, unknown>
   const serverNow = now(request);
   const defaultAt = conferenceIsoFromDate(serverNow);
   if (body.at === undefined) return defaultAt;
-  if (typeof body.at !== "string") {
-    throw new HttpError(400, "bad_request", "at must be a timestamp.");
-  }
+  if (typeof body.at !== "string") return defaultAt;
   const trimmed = body.at.trim();
   const parsed = parseOffsetDateTime(trimmed);
-  if (!parsed) {
-    throw new HttpError(400, "bad_request", "at must be ISO 8601 with a numeric offset.");
-  }
-  if (parsed.getTime() > serverNow.getTime()) {
-    throw new HttpError(400, "bad_request", "at cannot be in the future.");
-  }
+  if (!parsed) return defaultAt;
+  if (parsed.getTime() > serverNow.getTime()) return defaultAt;
   return trimmed;
 }
 
