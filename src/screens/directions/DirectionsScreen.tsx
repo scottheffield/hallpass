@@ -46,7 +46,8 @@ export function DirectionsScreen({
         </p>
       }
     >
-      <Stack gap="lg" as="section" aria-label="Walking directions">
+      <section aria-label="Walking directions">
+        <Stack gap="lg">
         <div>
           <h2 className="font-display text-lg font-semibold text-ink">Destination</h2>
           <dl className="mt-2 space-y-1 text-base leading-snug">
@@ -76,7 +77,8 @@ export function DirectionsScreen({
         {directions.stepFreeText ? <StepFreeOption text={directions.stepFreeText} /> : null}
 
         <SupplementaryFloorPlan />
-      </Stack>
+        </Stack>
+      </section>
     </Screen>
   );
 }

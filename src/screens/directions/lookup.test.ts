@@ -73,4 +73,27 @@ describe("directions lookup", () => {
     expect(content.knownRoom).toBe(false);
     expect(content.walkingText).toContain("not in the venue list");
   });
+
+  it("shows step-free unavailable when access needs mention step-free but the room has no hint", () => {
+    const content = buildDirectionsContent(
+      SAMPLE_ROOMS,
+      "Salt Palace | Level 2 | 250 A-C",
+      "Need a step-free path",
+    );
+    expect(content.stepFreeText).toContain("No verified step-free route");
+    expect(content.stepFreeText).toContain("Info Desk");
+  });
+
+  it("treats blank access needs like omitted for step-free hints", () => {
+    const withOmitted = buildDirectionsContent(SAMPLE_ROOMS, "Salt Palace | Level 1 | Grand Ballroom H");
+    const withBlank = buildDirectionsContent(
+      SAMPLE_ROOMS,
+      "Salt Palace | Level 1 | Grand Ballroom H",
+      "   ",
+    );
+    expect(withBlank.stepFreeText).toBe(withOmitted.stepFreeText);
+    expect(shouldShowStepFreeHint(findRoomByName(SAMPLE_ROOMS, "Salt Palace | Level 1 | Grand Ballroom H"), " ")).toBe(
+      true,
+    );
+  });
 });
