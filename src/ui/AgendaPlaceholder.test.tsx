@@ -1,11 +1,11 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PlanGeneratingMiniAgenda } from "./PlanGeneratingMiniAgenda";
+import { AgendaPlaceholder } from "./AgendaPlaceholder";
 
-describe("PlanGeneratingMiniAgenda", () => {
+describe("AgendaPlaceholder", () => {
   it("renders three decorative placeholder cards", () => {
-    const html = renderToStaticMarkup(<PlanGeneratingMiniAgenda />);
+    const html = renderToStaticMarkup(<AgendaPlaceholder />);
     expect(html).toContain('aria-hidden="true"');
     expect(html.match(/class="[^"]*card/g)?.length).toBe(3);
     expect(html).toContain("9:30");

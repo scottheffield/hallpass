@@ -22,7 +22,16 @@ import {
   type TodaySessionBlock,
   type TodayTimelineBlock,
 } from "../today/timeline";
-import { Button, ChangeList, Notice, Screen, SessionCard, Sheet, Stack } from "../../ui";
+import {
+  AgendaPlaceholder,
+  Button,
+  ChangeList,
+  Notice,
+  Screen,
+  SessionCard,
+  Sheet,
+  Stack,
+} from "../../ui";
 import {
   dayTabLabel,
   seedAttemptedDaysFromPlan,
@@ -40,7 +49,6 @@ import { presentPlanReason } from "./reason";
 import { planHasPreparedContent } from "../../ui/journeyPhase";
 import { planSessionStatusDetail } from "./statusLabel";
 import { isSelectedDayPlanReady, planDayReadyCopy } from "./nextStep";
-import { PlanGeneratingMiniAgenda } from "./PlanGeneratingMiniAgenda";
 
 export interface PlanScreenProps {
   onGoals?: () => void;
@@ -387,7 +395,7 @@ export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProp
                 {generating ? (
                   <Notice tone="loading" title="Plan generating">
                     <p>{genStage ?? PLAN_GENERATION_STAGES[0]}.</p>
-                    <PlanGeneratingMiniAgenda />
+                    <AgendaPlaceholder />
                   </Notice>
                 ) : null}
 

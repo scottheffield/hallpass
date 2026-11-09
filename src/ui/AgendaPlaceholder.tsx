@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
-import styles from "./planGenerating.module.css";
+import styles from "./agendaPlaceholder.module.css";
 
 /** Illustrative times for the decorative loading mini-agenda only. */
 const PLACEHOLDER_TIMES = ["9:30", "11:15", "2:00"] as const;
 
-export function PlanGeneratingMiniAgenda() {
+export function AgendaPlaceholder() {
   return (
     <div className={styles.root} aria-hidden="true">
       <div className={`${styles.agenda} ${styles.agendaAnimated}`}>
