@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type RefObject } from "react";
 import type { ApplyProposalRequest, CheckInResponse } from "../../../shared/api";
 import type { MovedGoal, PlanProposal, WorthIt } from "../../../shared/types";
 import { ApiFailure, post } from "../../lib/api";
@@ -20,6 +20,12 @@ import {
   proposalChangeTexts,
   WORTH_IT_OPTIONS,
 } from "./form";
+import {
+  CHECKIN_SAVED_LABEL,
+  CHECKIN_SESSION_HEADING_LEVEL,
+  checkInProposalHeadingId,
+  resolveSheetReturnFocus,
+} from "./a11y";
 
 export interface CheckInScreenProps {
   open: boolean;
@@ -31,6 +37,8 @@ export interface CheckInScreenProps {
   onClose: () => void;
   /** Called after feedback is saved or a proposal decision is made. */
   onFinished?: (result: { planUpdated: boolean }) => void;
+  /** When set, focus returns here on close if the element is still connected. */
+  returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
 type Phase = "form" | "saved" | "proposal" | "submitting" | "applying";
@@ -52,8 +60,11 @@ export function CheckInScreen({
   sessionRoom,
   onClose,
   onFinished,
+  returnFocusRef,
 }: CheckInScreenProps) {
-  const whyId = useId();
+  const sheetInstanceId = useId();
+  const proposalHeadingId = checkInProposalHeadingId(sheetInstanceId);
+  const incompleteHintId = useId();
   const reqRef = useRef(0);
   const [phase, setPhase] = useState<Phase>("form");
   const [worthIt, setWorthIt] = useState<WorthIt | "">("");
@@ -62,6 +73,17 @@ export function CheckInScreen({
   const [error, setError] = useState<string | null>(null);
   const [stub, setStub] = useState(false);
   const [proposal, setProposal] = useState<PlanProposal | null>(null);
+
+  useEffect(() => {
+    if (open || !returnFocusRef) return;
+    const opener = returnFocusRef.current;
+    const content = document.getElementById("content");
+    const target = resolveSheetReturnFocus(opener, content);
+    requestAnimationFrame(() => {
+      if (target === "opener" && opener) opener.focus();
+      else if (target === "content") content?.focus();
+    });
+  }, [open, returnFocusRef]);
 
   useEffect(() => {
     reqRef.current += 1;
@@ -79,6 +101,7 @@ export function CheckInScreen({
   const isSubmitting = phase === "submitting";
   const noteTooLong = note.length > NOTE_MAX;
   const canSave = payload !== null && phase === "form" && !noteTooLong;
+  const showIncompleteHint = phase === "form" && (!worthIt || !movedGoal);
 
   function setNoteCapped(value: string) {
     setNote(value.slice(0, NOTE_MAX));
@@ -141,7 +164,12 @@ export function CheckInScreen({
       {phase === "form" || phase === "submitting" ? (
         <Stack gap="md">
           <HelloMark compact />
-          <SessionCard title={sessionTitle} time={sessionTime ?? ""} room={sessionRoom} />
+          <SessionCard
+            title={sessionTitle}
+            time={sessionTime ?? ""}
+            room={sessionRoom}
+            headingLevel={CHECKIN_SESSION_HEADING_LEVEL}
+          />
           <Choice
             legend="Worth your time?"
             name="worth_it"
@@ -171,7 +199,17 @@ export function CheckInScreen({
               <p>{error}</p>
             </Notice>
           ) : null}
-          <Button variant="primary" disabled={!canSave || isSubmitting} onClick={saveCheckIn}>
+          {showIncompleteHint ? (
+            <p id={incompleteHintId} className="text-sm text-muted">
+              Choose both ratings before saving.
+            </p>
+          ) : null}
+          <Button
+            variant="primary"
+            disabled={!canSave || isSubmitting}
+            aria-describedby={showIncompleteHint ? incompleteHintId : undefined}
+            onClick={saveCheckIn}
+          >
             {isSubmitting ? "Saving…" : "Save check-in"}
           </Button>
           <div className="flex justify-center">
@@ -184,9 +222,9 @@ export function CheckInScreen({
 
       {phase === "saved" ? (
         <Stack gap="md">
-          <p className="flex items-center gap-2 font-semibold text-ink">
+          <p className="flex items-center gap-2 font-semibold text-ink" role="status">
             <SavedMark />
-            Check-in saved
+            {CHECKIN_SAVED_LABEL}
           </p>
           {stub ? (
             <Notice tone="stub" title="Demo fallback">
@@ -204,9 +242,9 @@ export function CheckInScreen({
 
       {phase === "proposal" || phase === "applying" ? (
         <Stack gap="md">
-          <p className="flex items-center gap-2 font-semibold text-ink">
+          <p className="flex items-center gap-2 font-semibold text-ink" role="status">
             <SavedMark />
-            Check-in saved
+            {CHECKIN_SAVED_LABEL}
           </p>
           {stub ? (
             <Notice tone="stub" title="Demo fallback">
@@ -214,10 +252,10 @@ export function CheckInScreen({
             </Notice>
           ) : null}
           <p className="text-base text-ink">Here is one way to adjust the rest of today.</p>
-          <h2 id={whyId} className="m-0 font-display text-xl font-semibold text-ink">
+          <h3 id={proposalHeadingId} className="m-0 font-display text-xl font-semibold text-ink">
             Why this fits
-          </h2>
-          <ChangeList labelId={whyId} items={proposalChangeTexts(proposal?.changes ?? [])} />
+          </h3>
+          <ChangeList labelId={proposalHeadingId} items={proposalChangeTexts(proposal?.changes ?? [])} />
           {error ? (
             <Notice tone="error" title="Plan not updated">
               <p>{error}</p>
