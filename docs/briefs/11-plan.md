@@ -35,9 +35,8 @@ The demo persona's first day shows at least 3 picks, one "picked over X because 
 
 ## Follow-up: tight transfers (added after the plan slice merged in PR #6)
 
-A small PR against `worker/plan/validate.ts` and `worker/plan/time.ts`, with tests. Use `public/rooms.json`, parsing room names as `Building | Level | Room`.
+A small PR against `worker/plan/validate.ts`, with tests. It depends on `shared/venue.ts` from the brief 21 follow-up, step 1, and uses `transferMinutes` from it, so the plan and Directions show the same walking times.
 
-- Minimum gap between consecutive picks: same room 0 minutes, same level 5, different level 8, different building 12.
-- When a gap is shorter, prefer a candidate in a closer room. If the pick stays, add a `clash_note` such as "Tight change: 255 BC to the Hyatt in 10 minutes. Leave on time."
-- Treat unknown rooms as the same level, so missing data never blocks a plan.
-- Pacing `light` doubles the minimums.
+- A gap between consecutive picks is tight when it's shorter than `transferMinutes(from.room, to.room)`. Pacing `light` doubles the minimum.
+- When a gap is tight, prefer a candidate in a closer room. If the pick stays, add a `clash_note` that uses the same minutes Directions will show, for example "Tight change: the Hyatt Regency is about 12 minutes from 255 BC, and you have 10."
+- Unknown and off-site rooms count as long transfers (see `transferMinutes`), so they're flagged rather than silently allowed.

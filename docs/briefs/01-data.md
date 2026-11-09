@@ -43,6 +43,6 @@ Write `scripts/search-check.mjs` that runs 6 goal-style queries (for example "we
 
 ## Follow-up: floor images (added after PR #8)
 
-The spec asks for an image, not only the PDF. Export the Salt Palace plan's pages to `public/floor/salt-palace-level-1.webp` and `-level-2.webp` (about 1600 px wide, under 300 KB each). Add a `public/floor/levels.json` mapping `{ building, level, image, alt }`, where `alt` is one sentence describing the level's main areas. Keep the credit in `public/floor/README.md`. The Hyatt Regency gets no image.
+The spec asks for an image, not only the PDF. Export the Salt Palace plan's pages to `public/floor/salt-palace-level-1.webp` and `-level-2.webp` (about 1600 px wide, under 300 KB each). Add a `public/floor/levels.json` mapping `{ building, level, image, alt }` (with `building` and `level` matching `parseRoom` in `shared/venue.ts`, for example "Salt Palace" and "Level 1"), where `alt` is one sentence describing the level's main areas. Keep the credit in `public/floor/README.md`. The Hyatt Regency gets no image.
 
 Optional, first to cut: for the rooms on the demo plan, add `x` and `y` (percent of image width and height) to `public/rooms.json` so Directions can pin the room. That needs optional `x` and `y` on `Room` in `shared/types.ts`, in its own small PR first.
