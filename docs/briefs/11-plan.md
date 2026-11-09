@@ -32,3 +32,12 @@ Timeline grouped by day, each item with time, room, title (from the agenda) and 
 ## Done when
 
 The demo persona's first day shows at least 3 picks, one "picked over X because Y" and one resolved clash, on the live URL, from real agenda data.
+
+## Follow-up: tight transfers (added after the plan slice merged in PR #6)
+
+A small PR against `worker/plan/validate.ts` and `worker/plan/time.ts`, with tests. Use `public/rooms.json`, parsing room names as `Building | Level | Room`.
+
+- Minimum gap between consecutive picks: same room 0 minutes, same level 5, different level 8, different building 12.
+- When a gap is shorter, prefer a candidate in a closer room. If the pick stays, add a `clash_note` such as "Tight change: 255 BC to the Hyatt in 10 minutes. Leave on time."
+- Treat unknown rooms as the same level, so missing data never blocks a plan.
+- Pacing `light` doubles the minimums.
