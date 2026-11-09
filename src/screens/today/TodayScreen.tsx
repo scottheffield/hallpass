@@ -28,7 +28,7 @@ export interface TodayScreenProps {
   onBreak?: () => void;
   onAsk?: () => void;
   planUpdated?: boolean;
-  onUndoPlanUpdate?: () => void;
+  onDismissPlanUpdate?: () => void;
   onBuildPlan?: () => void;
 }
 
@@ -48,7 +48,7 @@ export function TodayScreen({
   onBreak,
   onAsk,
   planUpdated = false,
-  onUndoPlanUpdate,
+  onDismissPlanUpdate,
   onBuildPlan,
 }: TodayScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
@@ -189,10 +189,10 @@ export function TodayScreen({
             {planUpdated ? (
               <Notice tone="info" title="Plan updated">
                 <p>Your plan changed after the last check-in.</p>
-                {onUndoPlanUpdate ? (
+                {onDismissPlanUpdate ? (
                   <div className="mt-2">
-                    <Button variant="quiet" onClick={onUndoPlanUpdate}>
-                      Undo
+                    <Button variant="quiet" onClick={onDismissPlanUpdate}>
+                      Dismiss
                     </Button>
                   </div>
                 ) : null}
