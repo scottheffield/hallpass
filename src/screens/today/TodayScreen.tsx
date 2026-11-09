@@ -131,7 +131,7 @@ export function TodayScreen({
   return (
     <Screen
       brand
-      heading={screenHeading}
+      heading="Your day"
       headerEnd={
         <time dateTime={dayKey} className="font-semibold text-muted">
           {headerDate}
@@ -139,6 +139,7 @@ export function TodayScreen({
       }
     >
       <Stack>
+        {!loading ? <p className="font-display text-xl font-semibold text-ink">{screenHeading}</p> : null}
         {loading ? (
           <Notice tone="loading" title="Loading your plan">
             <p>Pulling today&apos;s schedule.</p>

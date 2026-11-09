@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Notice } from "./Notice";
+import styles from "./delight.module.css";
 
 export type AppTab = "today" | "plan" | "goals";
 
@@ -47,7 +48,7 @@ export function AppFrame({ tab, onTabChange, showTabs = true, demoBar, ask, chil
       <a className="skip-link" href="#content">
         Skip to content
       </a>
-      <div className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col bg-surface sm:border-x sm:border-line">
+      <div className={`${styles.frame} mx-auto flex min-h-dvh w-full max-w-[420px] flex-col bg-surface`}>
         {demoBar ? demoBar : null}
         {online ? null : (
           <div className="px-4 pt-3">
@@ -71,7 +72,7 @@ export function AppFrame({ tab, onTabChange, showTabs = true, demoBar, ask, chil
                 <button
                   key={item.id}
                   type="button"
-                  className={`min-h-12 flex-1 px-2 text-base font-semibold ${selected ? "text-action-quiet underline decoration-2 underline-offset-8" : "text-muted"}`}
+                  className={`${styles.tab} min-h-12 flex-1 px-2 text-base font-semibold ${selected ? "text-action-quiet" : "text-muted"}`}
                   aria-current={selected ? "page" : undefined}
                   onClick={() => onTabChange(item.id)}
                 >

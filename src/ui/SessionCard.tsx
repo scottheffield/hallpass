@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { formatRoomDisplay } from "../lib/roomDisplay";
+import styles from "./delight.module.css";
 
 export type SessionCardKind = "session" | "break" | "current" | "suggested";
 
@@ -47,7 +48,7 @@ export function SessionCard({
 
   if (kind === "break") {
     return (
-      <article className="rounded-xl bg-butter px-3 py-3 text-on-butter">
+      <article className={`${styles.breakCard} rounded-xl bg-butter px-3 py-3 text-on-butter`}>
         <div className="flex items-start gap-3">
           <p className="flex min-h-11 items-center gap-2 pt-0.5 font-semibold">
             <PauseMark />

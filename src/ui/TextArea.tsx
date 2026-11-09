@@ -1,4 +1,5 @@
 import { useId } from "react";
+import styles from "./delight.module.css";
 
 export interface TextAreaProps {
   label: string;
@@ -48,7 +49,7 @@ export function TextArea({
         placeholder={placeholder}
         aria-describedby={hintId}
         onChange={(event) => onChange(event.target.value)}
-        className="min-h-28 w-full resize-y rounded-xl border-2 border-line bg-surface px-3 py-3 text-base leading-relaxed text-ink"
+        className={`${styles.writingField} min-h-28 w-full resize-y rounded-xl border-2 border-line px-3 py-3 text-base leading-relaxed text-ink`}
       />
       {hint ? (
         <p id={hintId} className="text-sm text-muted">

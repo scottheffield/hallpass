@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import styles from "./delight.module.css";
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "quiet";
@@ -16,7 +17,7 @@ export function Button({ variant = "primary", className, type = "button", childr
   return (
     <button
       type={type}
-      className={`inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-center text-base font-semibold disabled:cursor-not-allowed disabled:border-transparent disabled:bg-disabled disabled:text-ink ${VARIANT[variant]} ${className ?? ""}`}
+      className={`${styles.button} ${variant === "primary" ? styles.primary : ""} inline-flex min-h-12 items-center justify-center gap-2 rounded-xl px-4 text-center text-base font-semibold disabled:cursor-not-allowed disabled:border-transparent disabled:bg-disabled disabled:text-ink ${VARIANT[variant]} ${className ?? ""}`}
       {...rest}
     >
       {children}
