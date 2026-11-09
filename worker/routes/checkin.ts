@@ -5,7 +5,7 @@ import { diffPlanDay } from "../checkin/diff";
 import { conferenceIsoFromDate } from "../checkin/time";
 import type { Env } from "../env";
 import { getSession } from "../lib/agenda";
-import { now } from "../lib/clock";
+import { now, parseOffsetDateTime } from "../lib/clock";
 import { fixturePlan, fixtureProfile } from "../lib/fixtures";
 import { HttpError, json } from "../lib/http";
 import { getPlan, getProfile, putCheckIn, putPlan } from "../lib/store";
@@ -31,6 +31,18 @@ function markSessionDone(plan: Plan, day: string, sessionId: string): Plan {
   }
   copy.updated_at = conferenceIsoFromDate(new Date());
   return copy;
+}
+
+export function resolveCheckInAt(request: Request, body: Record<string, unknown>): string {
+  const serverNow = now(request);
+  const defaultAt = conferenceIsoFromDate(serverNow);
+  if (body.at === undefined) return defaultAt;
+  if (typeof body.at !== "string") return defaultAt;
+  const trimmed = body.at.trim();
+  const parsed = parseOffsetDateTime(trimmed);
+  if (!parsed) return defaultAt;
+  if (parsed.getTime() > serverNow.getTime()) return defaultAt;
+  return trimmed;
 }
 
 async function resolveDay(env: Env, plan: Plan, sessionId: string): Promise<string | null> {
@@ -59,7 +71,7 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
   const worthIt = requiredChoice(body.worth_it, WORTH, "worth_it");
   const movedGoal = requiredChoice(body.moved_goal, MOVED, "moved_goal");
 
-  const at = conferenceIsoFromDate(now(request));
+  const at = resolveCheckInAt(request, body);
   const checkinBody: CheckIn = {
     attendee_id: attendeeId,
     session_id: sessionId,

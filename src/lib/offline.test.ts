@@ -1,0 +1,147 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { CheckInRequest } from "../../shared/api";
+import {
+  checkInQueueId,
+  checkInQueueTimestamp,
+  conferenceIsoFromDate,
+  flushCheckInQueue,
+  isPermanentCheckInFlushError,
+  isCheckInRequest,
+  listQueuedCheckIns,
+  setCheckInSender,
+  upsertQueuedCheckIn,
+} from "./offline";
+import { setDemoNow, syncDemoFromUrl } from "./clock";
+
+describe("src/lib/offline check-in queue", () => {
+  const store = new Map<string, string>();
+  const location = { search: "" };
+
+  beforeEach(() => {
+    store.clear();
+    location.search = "";
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => store.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        store.set(key, value);
+      },
+      removeItem: (key: string) => {
+        store.delete(key);
+      },
+      clear: () => store.clear(),
+    });
+    vi.stubGlobal("navigator", { onLine: true });
+    vi.stubGlobal("window", {
+      location,
+      history: { replaceState: () => undefined },
+      dispatchEvent: () => true,
+      addEventListener: () => undefined,
+    });
+    vi.stubGlobal("setInterval", () => 0);
+    vi.stubGlobal("clearInterval", () => undefined);
+    setCheckInSender(async () => {});
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const sample: CheckInRequest = {
+    session_id: "sess-1",
+    worth_it: "yes",
+    moved_goal: "a_little",
+    note: "Concrete examples would help.",
+  };
+
+  it("validates check-in bodies without echoing them", () => {
+    expect(isCheckInRequest(sample)).toBe(true);
+    expect(isCheckInRequest({ ...sample, worth_it: "maybe" })).toBe(false);
+    expect(isCheckInRequest({ session_id: "" })).toBe(false);
+  });
+
+  it("uses attendee and session for a stable queue id", () => {
+    expect(checkInQueueId("sess-1", "att-a")).toBe("att-a:sess-1");
+  });
+
+  it("overwrites the same session instead of duplicating", () => {
+    upsertQueuedCheckIn(sample);
+    upsertQueuedCheckIn({ ...sample, worth_it: "mixed" });
+    const queue = listQueuedCheckIns();
+    expect(queue).toHaveLength(1);
+    expect(queue[0]?.body.worth_it).toBe("mixed");
+  });
+
+  it("stores the original conference time on queued bodies", () => {
+    const queuedAt = "2026-11-10T10:05:00-07:00";
+    const entry = upsertQueuedCheckIn(sample, queuedAt);
+    expect(entry.body.at).toBe(queuedAt);
+    expect(listQueuedCheckIns()[0]?.body.at).toBe(queuedAt);
+  });
+
+  it("uses the demo clock for queue timestamps when demo mode is on", () => {
+    location.search = "?demo=1";
+    syncDemoFromUrl();
+    setDemoNow("2026-11-10T09:30:00-07:00");
+    expect(checkInQueueTimestamp()).toBe("2026-11-10T09:30:00-07:00");
+  });
+
+  it("does not treat 408 or 429 as permanent flush errors", () => {
+    const rateLimited = new Error("rate limited") as Error & { status: number };
+    rateLimited.status = 429;
+    const timeout = new Error("timeout") as Error & { status: number };
+    timeout.status = 408;
+    expect(isPermanentCheckInFlushError(rateLimited)).toBe(false);
+    expect(isPermanentCheckInFlushError(timeout)).toBe(false);
+    expect(isPermanentCheckInFlushError({ status: 400 })).toBe(true);
+  });
+
+  it("keeps the queue when flush hits 429 and retries later", async () => {
+    upsertQueuedCheckIn(sample);
+    setCheckInSender(async () => {
+      const err = new Error("rate limited") as Error & { status: number };
+      err.status = 429;
+      throw err;
+    });
+
+    const count = await flushCheckInQueue();
+    expect(count).toBe(0);
+    expect(listQueuedCheckIns()).toHaveLength(1);
+  });
+
+  it("drops permanent 4xx failures and flushes later items", async () => {
+    upsertQueuedCheckIn({ ...sample, session_id: "bad" });
+    upsertQueuedCheckIn({ ...sample, session_id: "good" });
+    setCheckInSender(async (body) => {
+      if (body.session_id === "bad") {
+        const err = new Error("bad request") as Error & { status: number };
+        err.status = 400;
+        throw err;
+      }
+    });
+
+    const count = await flushCheckInQueue();
+    expect(count).toBe(1);
+    expect(listQueuedCheckIns()).toHaveLength(0);
+  });
+
+  it("flushes in order and stops on the first failure", async () => {
+    upsertQueuedCheckIn(sample);
+    upsertQueuedCheckIn({ ...sample, session_id: "sess-2" });
+    const sent: string[] = [];
+    setCheckInSender(async (body) => {
+      if (body.session_id === "sess-2") throw new TypeError("offline");
+      sent.push(body.session_id);
+    });
+
+    const count = await flushCheckInQueue();
+    expect(count).toBe(1);
+    expect(sent).toEqual(["sess-1"]);
+    expect(listQueuedCheckIns().map((item) => item.body.session_id)).toEqual(["sess-2"]);
+  });
+
+  it("formats conference timestamps with the event offset", () => {
+    const iso = conferenceIsoFromDate(new Date("2026-11-10T16:00:00.000Z"));
+    expect(iso.endsWith("-07:00")).toBe(true);
+    expect(iso.startsWith("2026-11-10T")).toBe(true);
+  });
+});
