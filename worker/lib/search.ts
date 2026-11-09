@@ -49,7 +49,7 @@ function scoreField(haystack: string, needles: string[]): number {
 export async function searchSessions(env: Env, query: SearchQuery): Promise<SearchResult> {
   const agenda = await loadAgenda(env);
   const fallback = agenda.source === "fixture"
-    ? "Keyword match on the illustrative agenda because Elastic search is not configured."
+    ? "Keyword match on the bundled agenda sample because Elastic search is not configured."
     : "Keyword match on the agenda because Elastic search is not configured.";
   const field: SearchField = query.field === "speaker_text" ? "speaker_text" : "search_text";
   const size = Math.min(60, Math.max(1, Math.floor(query.size ?? 20)));

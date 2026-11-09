@@ -19,7 +19,7 @@ export async function readout(request: Request, env: Env, ctx: ExecutionContext,
       helped_sessions: [],
       gaps: ["Not enough feedback to tell"],
       gap_themes: [],
-      followups: ["Check in after Debugging a Kubernetes incident in 251 A-C."],
+      followups: ["Check in after Ask Your Platform in Grand Ballroom H at 11:30."],
     },
   };
   return json(response);

@@ -25,7 +25,7 @@ describe("store memory fallback", () => {
 
     const checkin: CheckIn = {
       attendee_id: attendeeId,
-      session_id: "illustrative-incident-debugging",
+      session_id: "1246200",
       at: "2026-11-10T10:40:00-07:00",
       worth_it: "yes",
       moved_goal: "a_little",

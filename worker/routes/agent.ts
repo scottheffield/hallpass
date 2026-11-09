@@ -13,7 +13,7 @@ export async function agent(request: Request, env: Env, ctx: ExecutionContext, a
   if (problem) throw new HttpError(400, "bad_request", problem);
   const payload = JSON.stringify({
     stub: true,
-    text: "Next: Debugging a Kubernetes incident, 251 A-C at 10:00.",
+    text: "Next: Ask Your Platform, Grand Ballroom H at 11:30.",
   });
   return new Response(`data: ${payload}\n\n`, {
     headers: {

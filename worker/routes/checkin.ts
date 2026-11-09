@@ -31,7 +31,7 @@ export async function checkin(request: Request, env: Env, ctx: ExecutionContext,
     throw new HttpError(400, "bad_request", "Note must be at most 280 characters.");
   }
 
-  const sessionId = typeof body.session_id === "string" && body.session_id ? body.session_id : "illustrative-incident-debugging";
+  const sessionId = typeof body.session_id === "string" && body.session_id ? body.session_id : "1246200";
   const worthIt = choice(body.worth_it, WORTH, "worth_it", "yes");
   const movedGoal = choice(body.moved_goal, MOVED, "moved_goal", "a_little");
   const checkinBody: CheckIn = {

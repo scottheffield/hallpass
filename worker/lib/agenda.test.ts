@@ -30,10 +30,10 @@ describe("overlaps", () => {
 describe("agenda fixture", () => {
   it("loads the illustrative sample when agenda.json is missing", async () => {
     const env = fixtureEnv();
-    const session = await getSession(env, "illustrative-incident-debugging");
-    expect(session?.room).toBe("251 A-C");
+    const session = await getSession(env, "1246200");
+    expect(session?.room).toContain("Grand Ballroom H");
     const tuesday = await sessionsByDay(env, "2026-11-10");
-    expect(tuesday.some((item) => item.id === "illustrative-incident-debugging")).toBe(true);
-    expect(tuesday.some((item) => item.id === "illustrative-contrib-first-pr")).toBe(false);
+    expect(tuesday.some((item) => item.id === "1246200")).toBe(true);
+    expect(tuesday.some((item) => item.id === "1228453")).toBe(false);
   });
 });
