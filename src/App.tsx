@@ -1,39 +1,120 @@
-import { useEffect, useState } from "react";
-import { get } from "./lib/api";
+import { useState } from "react";
+import { AppFrame, Button, Choice, Field, Notice, Sheet, Stack, type AppTab } from "./ui";
+import { AdjustPreview, EntryPreview, ILLUSTRATIVE_ANSWER, StubPreview, TodayPreview } from "./ui/preview-screens";
 
-interface Health {
-  ok: boolean;
-  model: string;
-  configured: { claude: boolean; elastic: boolean };
-}
+type Place = "entry" | "today" | "adjust" | "plan" | "goals";
+type Overlay = "explore" | "directions" | "break" | "ask" | null;
 
-// Skeleton screen. The UX shell slice replaces this with the real views.
+/**
+ * App frame only: tabs, page column, and slots.
+ * Entry, Today, and plan adjustment are illustrative compositions.
+ * The demo clock slot is left empty; that call lives outside this slice.
+ */
 export default function App() {
-  const [health, setHealth] = useState<Health | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [place, setPlace] = useState<Place>("entry");
+  const [tab, setTab] = useState<AppTab>("today");
+  const [answer, setAnswer] = useState(ILLUSTRATIVE_ANSWER);
+  const [updated, setUpdated] = useState(false);
+  const [overlay, setOverlay] = useState<Overlay>(null);
+  const [breakChoice, setBreakChoice] = useState("");
+  const [ask, setAsk] = useState("");
 
-  useEffect(() => {
-    get<Health>("/api/health")
-      .then(setHealth)
-      .catch((e: unknown) => setError(e instanceof Error ? e.message : "API unavailable"));
-  }, []);
+  function showToday() {
+    setTab("today");
+    setPlace("today");
+    setOverlay(null);
+  }
+
+  function onTabChange(next: AppTab) {
+    setTab(next);
+    setPlace(next);
+  }
+
+  const showTabs = place !== "entry" && place !== "adjust";
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-4 py-10">
-      <p className="text-2xl">Why are you here?</p>
-      <h1 className="text-5xl font-semibold tracking-tight">Hallpass</h1>
-      <p className="opacity-80">Your pass to the conference you actually wanted.</p>
+    <AppFrame tab={tab} onTabChange={onTabChange} showTabs={showTabs}>
+      {place === "entry" ? (
+        <EntryPreview
+          answer={answer}
+          onAnswer={setAnswer}
+          onMakePlan={showToday}
+          onExplore={() => setOverlay("explore")}
+        />
+      ) : null}
+      {place === "today" ? (
+        <TodayPreview
+          updated={updated}
+          onUndo={() => setUpdated(false)}
+          onDirections={() => setOverlay("directions")}
+          onChangeSession={() => setPlace("adjust")}
+          onBreak={() => setOverlay("break")}
+          onAsk={() => setOverlay("ask")}
+        />
+      ) : null}
+      {place === "adjust" ? (
+        <AdjustPreview
+          onClose={() => setPlace("today")}
+          onApply={() => {
+            setUpdated(true);
+            setPlace("today");
+          }}
+          onKeep={() => {
+            setUpdated(false);
+            setPlace("today");
+          }}
+        />
+      ) : null}
+      {place === "plan" ? <StubPreview which="plan" /> : null}
+      {place === "goals" ? <StubPreview which="goals" /> : null}
 
-      <section aria-live="polite" className="text-sm opacity-70">
-        {error && <p>API: {error}</p>}
-        {health && (
-          <p>
-            API ok · Claude {health.configured.claude ? "configured" : "not configured"} · Elastic{" "}
-            {health.configured.elastic ? "configured" : "not configured"}
-          </p>
-        )}
-        {!health && !error && <p>Checking API…</p>}
-      </section>
-    </main>
+      <Sheet open={overlay === "explore"} title="Help me think it through" onClose={() => setOverlay(null)}>
+        <Stack>
+          <Notice tone="info" title="Start from what you already wrote">
+            A guided conversation is not part of this shell. You can make a plan from your answer, or go back and
+            change it.
+          </Notice>
+          <Button
+            variant="primary"
+            onClick={() => {
+              showToday();
+            }}
+          >
+            Make my plan
+          </Button>
+        </Stack>
+      </Sheet>
+
+      <Sheet open={overlay === "directions"} title="Directions" onClose={() => setOverlay(null)}>
+        <Notice tone="stub" title="Directions aren't in this shell">
+          Room A is illustrative. No route is shown, and this preview does not know where you are.
+        </Notice>
+      </Sheet>
+
+      <Sheet open={overlay === "break"} title="I need a break" onClose={() => setOverlay(null)}>
+        <Choice
+          legend="How long?"
+          name="break-length"
+          value={breakChoice}
+          onChange={setBreakChoice}
+          hint="Illustrative. Choosing a duration does not change a plan."
+          options={[
+            { value: "15", label: "15 minutes", description: "A short pause." },
+            { value: "30", label: "30 minutes", description: "Room to breathe." },
+            { value: "rest", label: "Rest of today", description: "Leave the rest of the day open." },
+          ]}
+        />
+      </Sheet>
+
+      <Sheet open={overlay === "ask"} title="Ask Hallpass" onClose={() => setOverlay(null)}>
+        <Field
+          label="What do you need?"
+          name="ask"
+          value={ask}
+          onChange={setAsk}
+          hint="Illustrative. This stays on the page and is not sent."
+        />
+      </Sheet>
+    </AppFrame>
   );
 }
