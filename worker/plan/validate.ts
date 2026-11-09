@@ -1,5 +1,6 @@
 import { EVENT_OFFSET } from "../../shared/event";
 import type { Pacing, PlanBreak, PlanItem, Session } from "../../shared/types";
+import { parseRoom, transferMinutes } from "../../shared/venue";
 import { overlaps } from "../lib/agenda";
 
 export interface RawPick {
@@ -57,6 +58,141 @@ function sortByStart(items: PlanItem[], sessions: Map<string, Session>): PlanIte
     const bStart = sessions.get(b.session_id)?.start ?? "";
     return aStart.localeCompare(bStart) || a.session_id.localeCompare(b.session_id);
   });
+}
+
+/** Minutes between the end of one session and the start of the next. */
+export function gapMinutesBetween(prevEnd: string, nextStart: string): number {
+  const gapMs = Date.parse(nextStart) - Date.parse(prevEnd);
+  if (!Number.isFinite(gapMs)) return 0;
+  return Math.max(0, Math.round(gapMs / 60_000));
+}
+
+/** Minimum gap needed before the next pick; light pacing doubles walking time. */
+export function requiredTransferMinutes(pacing: Pacing, fromRoom: string, toRoom: string): number {
+  const walk = transferMinutes(fromRoom, toRoom);
+  return pacing === "light" ? walk * 2 : walk;
+}
+
+export function isTightTransfer(
+  pacing: Pacing,
+  prev: Session,
+  next: Session,
+): boolean {
+  const gap = gapMinutesBetween(prev.end, next.start);
+  const needed = requiredTransferMinutes(pacing, prev.room, next.room);
+  return gap < needed;
+}
+
+function destinationLabel(room: string): string {
+  const parsed = parseRoom(room);
+  if (parsed.building === "Hyatt Regency") return "the Hyatt Regency";
+  if (parsed.building === "Salt Palace" && parsed.room) return parsed.room;
+  if (parsed.kind === "off-site") return "Off-Site Location";
+  if (parsed.room) return parsed.room;
+  const trimmed = room.trim();
+  return trimmed || "the next room";
+}
+
+function originLabel(room: string): string {
+  const parsed = parseRoom(room);
+  if (parsed.building === "Salt Palace" && parsed.room) return parsed.room;
+  if (parsed.building === "Hyatt Regency") return "the Hyatt Regency";
+  if (parsed.kind === "off-site") return "Off-Site Location";
+  if (parsed.room) return parsed.room;
+  const trimmed = room.trim();
+  return trimmed || "the prior room";
+}
+
+/** Same minute estimate Directions uses, in plan copy. */
+export function formatTightChangeNote(
+  pacing: Pacing,
+  fromRoom: string,
+  toRoom: string,
+  gapMinutes: number,
+): string {
+  const walk = transferMinutes(fromRoom, toRoom);
+  const needed = requiredTransferMinutes(pacing, fromRoom, toRoom);
+  const dest = destinationLabel(toRoom);
+  const orig = originLabel(fromRoom);
+  if (gapMinutes < walk) {
+    return `Tight change: ${dest} is about ${walk} minutes from ${orig}, and you have ${gapMinutes}.`;
+  }
+  return `Tight change: you asked for a relaxed pace. ${dest} is about ${walk} minutes from ${orig}, and you have ${gapMinutes}; allow about ${needed} minutes between sessions.`;
+}
+
+function reasonAfterRoomSwap(session: Session, fromLabel: string): string {
+  const snippet = session.abstract.trim().slice(0, 120);
+  const abstractBit = snippet
+    ? ` The abstract mentions ${snippet}${snippet.length >= 120 ? "…" : "."}`
+    : "";
+  return sanitizeText(`Closer room for the walk from ${fromLabel}: ${session.title}.${abstractBit}`, 600);
+}
+
+function canSchedule(session: Session, items: PlanItem[], skipId: string, sessions: Map<string, Session>): boolean {
+  for (const item of items) {
+    if (item.session_id === skipId) continue;
+    const other = sessions.get(item.session_id);
+    if (other && overlaps(session, other)) return false;
+  }
+  return true;
+}
+
+function findCloserOverlappingCandidate(
+  prev: Session,
+  current: Session,
+  items: PlanItem[],
+  options: ValidateOptions,
+): Session | null {
+  const currentWalk = transferMinutes(prev.room, current.room);
+  let best: Session | null = null;
+  let bestWalk = currentWalk;
+
+  for (const id of options.candidateIds) {
+    if (id === current.id) continue;
+    const alt = options.sessions.get(id);
+    if (!alt) continue;
+    if (!overlaps(alt, current)) continue;
+    if (!canSchedule(alt, items, current.id, options.sessions)) continue;
+    if (isTightTransfer(options.pacing, prev, alt)) continue;
+    const walk = transferMinutes(prev.room, alt.room);
+    if (walk >= bestWalk) continue;
+    bestWalk = walk;
+    best = alt;
+  }
+
+  return best;
+}
+
+function applyTightTransferPasses(items: PlanItem[], options: ValidateOptions): void {
+  for (let i = 1; i < items.length; i++) {
+    const prevSession = options.sessions.get(items[i - 1].session_id);
+    const item = items[i];
+    if (!prevSession || item.pinned) continue;
+
+    let currSession = options.sessions.get(item.session_id);
+    if (!currSession) continue;
+
+    if (!isTightTransfer(options.pacing, prevSession, currSession)) continue;
+
+    const closer = findCloserOverlappingCandidate(prevSession, currSession, items, options);
+    if (closer) {
+      const fromLabel = originLabel(prevSession.room);
+      item.session_id = closer.id;
+      delete item.beat_alternative;
+      delete item.clash_note;
+      item.reason = reasonAfterRoomSwap(closer, fromLabel);
+      currSession = closer;
+    }
+
+    if (!isTightTransfer(options.pacing, prevSession, currSession)) continue;
+
+    const gap = gapMinutesBetween(prevSession.end, currSession.start);
+    const note = sanitizeText(
+      formatTightChangeNote(options.pacing, prevSession.room, currSession.room, gap),
+      400,
+    );
+    if (note.length >= 8) item.clash_note = note;
+  }
 }
 
 /**
@@ -120,7 +256,9 @@ export function validateDayPlan(
   if (breaks.some((br) => !isValidPlanBreak(br))) errors.push("Invalid break times.");
   const cappedBreaks = normalizePlanBreaks(options.pacing, breaks);
 
-  return { items: sortByStart(accepted, options.sessions), breaks: cappedBreaks, errors };
+  const items = sortByStart(accepted, options.sessions);
+  applyTightTransferPasses(items, options);
+  return { items, breaks: cappedBreaks, errors };
 }
 
 /** True when any pair in the list overlaps. */
