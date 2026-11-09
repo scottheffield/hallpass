@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { ProfileResponse } from "../shared/api";
 import type { Profile } from "../shared/types";
 import { AskHallpass } from "./components/AskHallpass";
@@ -39,6 +39,7 @@ export default function App() {
   const [breakChoice, setBreakChoice] = useState("");
   const [askOpen, setAskOpen] = useState(false);
   const [auxReturn, setAuxReturn] = useState<ShellPlace>("today");
+  const checkInOpenerRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,6 +108,8 @@ export default function App() {
   }
 
   function openCheckIn(target: CheckInTarget) {
+    const active = document.activeElement;
+    checkInOpenerRef.current = active instanceof HTMLElement ? active : null;
     setCheckIn(target);
     setCheckInOpen(true);
   }
@@ -212,6 +215,7 @@ export default function App() {
           sessionTitle={checkIn.sessionTitle}
           sessionTime={checkIn.sessionTime}
           sessionRoom={checkIn.sessionRoom}
+          returnFocusRef={checkInOpenerRef}
           onClose={closeCheckIn}
           onFinished={({ planUpdated: updated }) => {
             if (updated) setPlanUpdated(true);
