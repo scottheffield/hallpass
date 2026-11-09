@@ -10,7 +10,7 @@ export function HelloMark({ compact = false, onActivate }: HelloMarkProps) {
   if (compact) {
     if (onActivate) {
       return (
-        <button type="button" className="hello-mark hello-mark-btn" onClick={onActivate} aria-label="Hallpass, go to Today">
+        <button type="button" className="hello-mark hello-mark-btn" onClick={onActivate} aria-label="Hallpass, go home">
           Hallpass
         </button>
       );

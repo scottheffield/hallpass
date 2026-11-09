@@ -17,7 +17,7 @@ import {
   TodayRoute,
   pickHomeShell,
   shellBackLabel,
-  showShellTabs,
+  shellChromeForPlace,
   tabToPlace,
   type CheckInTarget,
   type DirectionsTarget,
@@ -121,8 +121,7 @@ export default function App() {
   }
 
   const sheetOpen = breakOpen || checkInOpen || askOpen;
-  const showTabs = showShellTabs(place) && !sheetOpen;
-  const showAsk = showTabs;
+  const { showTabs, showAsk } = shellChromeForPlace(place, sheetOpen);
 
   const goHome = useCallback(() => {
     const nowIso = demoNowForRequests();

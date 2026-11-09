@@ -5,6 +5,7 @@ export { ShellUtilityLinks } from "./ShellUtilityLinks";
 export { pickHomeShell, pickHomeTab, pickInitialPlace } from "./home";
 export { ShellNavProvider, useShellNav, type ShellNavValue } from "./ShellNavContext";
 export { shellBackLabel } from "./shellBack";
+export { shellChromeForPlace } from "./shellChrome";
 export { showShellTabs } from "./tabs";
 export type { CheckInTarget, DirectionsTarget, ShellPlace } from "./types";
 export { isTabPlace, tabToPlace } from "./types";
