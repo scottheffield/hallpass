@@ -1,0 +1,52 @@
+{
+  "Salt Palace | Level 1 | Grand Ballroom H": {
+    "landmark": "Grand Ballroom",
+    "walking_hint": "From the 200 South entrance, cross the south foyer into the Grand Ballroom on Level 1. Section H is in that ballroom, with ACE, BDF, GI, and J.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 1 | Grand Ballroom GI": {
+    "landmark": "Grand Ballroom",
+    "walking_hint": "From the 200 South entrance, cross the south foyer into the Grand Ballroom on Level 1. Section GI is in that ballroom. Follow the GI signs.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 1 | Grand Ballroom ACE": {
+    "landmark": "Grand Ballroom",
+    "walking_hint": "From the 200 South entrance, cross the south foyer into the Grand Ballroom on Level 1. Section ACE is in that ballroom. Follow the ACE signs.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 1 | 151": {
+    "landmark": "South foyer meeting rooms",
+    "walking_hint": "Room 151 is on Level 1, by the south foyer and the Grand Ballroom. From the 200 South entrance, stay on Level 1 and follow the 151 signs before the exhibit halls.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 2 | 255 BC": {
+    "landmark": "Level 2 meeting rooms, 255 block",
+    "walking_hint": "Room 255 BC is on Level 2, sections B and C. From Level 1, take a marked elevator or escalator, then follow signs to 255 BC.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 2 | 255 EF": {
+    "landmark": "Level 2 meeting rooms, 255 block",
+    "walking_hint": "Room 255 EF is on Level 2, sections E and F, in the same block as 255 BC. From Level 1, take a marked elevator or escalator, then follow signs to 255 EF.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 1 | Hall DE": {
+    "landmark": "Exhibit halls D and E",
+    "walking_hint": "Hall DE is on Level 1, on the exhibit-hall side, and the venue map marks it for keynotes. From the 200 South entrance, follow Hall DE rather than staying in the Grand Ballroom.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Hyatt Regency | Level 2 | Salt Lake Ballroom C": {
+    "landmark": "Hyatt Salt Lake Ballroom",
+    "walking_hint": "Salt Lake Ballroom C is on Level 2 of the Hyatt Regency. Use the indoor connection from the Salt Palace, take the elevator or escalator to Level 2, and follow the Salt Lake Ballroom signs.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Salt Palace | Level 1 | Solutions Showcase | Halls 5 | Cosmic Canyon Zone | Cloud Native Theater": {
+    "landmark": "Cosmic Canyon, Halls 5",
+    "walking_hint": "The Cloud Native Theater is in the Solutions Showcase on Level 1, Halls 5, Cosmic Canyon zone. From the Grand Ballroom, walk into the exhibit halls and follow the Cloud Native Theater signs.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  },
+  "Hyatt Regency | Level 4 | Regency Ballroom B": {
+    "landmark": "Hyatt Regency Ballroom",
+    "walking_hint": "Regency Ballroom B is on Level 4 of the Hyatt Regency. Use the indoor connection from the Salt Palace, take the elevator or escalator to Level 4, and follow the Regency Ballroom signs. B is the single section.",
+    "step_free_hint": "The KubeCon venue map marks elevators in the Salt Palace and in the Hyatt elevator lobbies. It does not give a measured step-free route. Confirm the path at an Info Desk."
+  }
+}
