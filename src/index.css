@@ -78,6 +78,8 @@
   --color-on-suggest: #172b40;
   --color-danger: #8c2f27;
   --color-disabled: #e6dfd4;
+  /* Sheet scrim: fixed navy, not --color-ink (which flips to ivory in dark mode). */
+  --color-scrim: rgb(23 43 64 / 0.6);
 }
 
 :root {

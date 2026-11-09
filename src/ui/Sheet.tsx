@@ -101,7 +101,7 @@ export function Sheet({ open, title, onClose, children }: SheetProps) {
   if (!open) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-ink/50" onClick={onClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-scrim" onClick={onClose}>
       <div
         ref={panelRef}
         role="dialog"
