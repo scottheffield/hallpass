@@ -3,7 +3,7 @@ import type { PlanResponse } from "../../../shared/api";
 import type { Plan } from "../../../shared/types";
 import { loadAgenda } from "../../lib/agenda";
 import { ApiFailure, post } from "../../lib/api";
-import { demoNowForRequests } from "../../lib/clock";
+import { useConferenceNow } from "./useConferenceNow";
 import { Button, Notice, Screen, SessionCard, Stack } from "../../ui";
 import {
   activeBreak,
@@ -17,7 +17,6 @@ import {
   formatTime,
   formatTimeRange,
   nextPlannedSession,
-  nowInstant,
   resolveTodayHeading,
   type TodayTimelineBlock,
 } from "./timeline";
@@ -82,7 +81,7 @@ export function TodayScreen({
     void reload();
   }, [reload]);
 
-  const now = useMemo(() => nowInstant(demoNowForRequests(), new Date()), [loading, plan]);
+  const now = useConferenceNow();
   const dayKey = useMemo(() => conferenceDateKey(now), [now]);
   const headerDate = useMemo(() => formatHeaderDate(dayKey), [dayKey]);
 
@@ -241,7 +240,7 @@ export function TodayScreen({
                           kind="break"
                           title={breakTitle(block.planBreak.note)}
                           time={formatTime(block.start)}
-                          detail={breakDetail(block.planBreak.note) ?? block.planBreak.note}
+                          detail={breakDetail(block.planBreak.note)}
                         />
                       );
                     }
