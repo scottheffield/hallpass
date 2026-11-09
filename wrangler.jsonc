@@ -37,14 +37,17 @@
   // go in .dev.vars locally and `wrangler secret put` for the deployed Worker.
   "vars": {
     "ELASTIC_INDEX_PREFIX": "hallpass",
-    "CLAUDE_MODEL": "claude-opus-5-5"
+    "CLAUDE_MODEL": "claude-opus-5-5",
+    // Shared read-only agenda. Writable indexes use ELASTIC_INDEX_PREFIX.
+    "SESSIONS_INDEX": "hallpass-sessions"
   },
 
   // `wrangler preview` needs bindings and vars listed again. Previews don't inherit secrets.
   "previews": {
     "vars": {
       "ELASTIC_INDEX_PREFIX": "hallpass-preview",
-      "CLAUDE_MODEL": "claude-opus-5-5"
+      "CLAUDE_MODEL": "claude-opus-5-5",
+      "SESSIONS_INDEX": "hallpass-sessions"
     },
     "ratelimits": [
       {

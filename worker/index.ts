@@ -1,25 +1,37 @@
 import { ATTENDEE_HEADER } from "../shared/types";
 import type { Env } from "./env";
 import { apiError, HttpError } from "./lib/http";
+import { agent } from "./routes/agent";
+import { caseForAttending } from "./routes/case";
+import { applyProposal, checkin } from "./routes/checkin";
+import { demoLoad } from "./routes/demo";
 import { health } from "./routes/health";
-import { notImplemented } from "./routes/stub";
+import { insights } from "./routes/insights";
+import { interview } from "./routes/interview";
+import { planEdit, planGenerate, planGet } from "./routes/plan";
+import { profileGet, profileSave } from "./routes/profile";
+import { readout } from "./routes/readout";
 
 type Handler = (request: Request, env: Env, ctx: ExecutionContext, attendeeId: string) => Promise<Response>;
 
 /**
- * Route table. Each slice owns one handler file in worker/routes/ and swaps its stub here.
- * Everything that carries attendee text is POST, so goals and questions never land in URLs or traces.
+ * Route table. Each slice owns its handler file and replaces the stub in that file.
+ * This table stays put so slices do not edit it. Attendee text is POST-only.
  */
 const routes: Record<string, Handler> = {
-  "POST /api/interview": notImplemented("Interview"),
-  "POST /api/profile": notImplemented("Profile save"),
-  "POST /api/plan": notImplemented("Plan generation"),
-  "POST /api/plan/get": notImplemented("Plan read"),
-  "POST /api/checkin": notImplemented("Check-in"),
-  "POST /api/case": notImplemented("Case for attending"),
-  "POST /api/readout": notImplemented("Readout"),
-  "POST /api/agent": notImplemented("Corner agent"),
-  "GET /api/insights": notImplemented("Organizer insights"),
+  "POST /api/interview": interview,
+  "POST /api/profile": profileSave,
+  "POST /api/profile/get": profileGet,
+  "POST /api/plan": planGenerate,
+  "POST /api/plan/get": planGet,
+  "POST /api/plan/edit": planEdit,
+  "POST /api/checkin": checkin,
+  "POST /api/plan/apply": applyProposal,
+  "POST /api/case": caseForAttending,
+  "POST /api/readout": readout,
+  "POST /api/agent": agent,
+  "GET /api/insights": insights,
+  "POST /api/demo/load": demoLoad,
 };
 
 const ATTENDEE_ID = /^[A-Za-z0-9_-]{8,64}$/;

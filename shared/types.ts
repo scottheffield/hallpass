@@ -39,6 +39,8 @@ export interface Profile {
   why_summary: string;
   /** 1 to 3 goals for the whole conference. */
   goals: string[];
+  /** Theme ids from shared/event.ts. Insights counts these. Never free text. */
+  goal_themes?: string[];
   role: string;
   problems: string[];
   topics: string[];
@@ -76,6 +78,22 @@ export interface Plan {
   /** "ai" or the labeled fallback "basic plan (AI unavailable)". */
   source: "ai" | "basic";
   updated_at: IsoDateTime;
+  /** Set when a check-in proposed a change the attendee has not answered. */
+  pending?: PlanProposal;
+}
+
+export interface PlanChange {
+  kind: "added" | "removed" | "moved" | "break";
+  session_id?: string;
+  text: string;
+}
+
+/** Proposed replacement for one or more days. `days` is the plan if the attendee accepts. */
+export interface PlanProposal {
+  id: string;
+  day: string;
+  changes: PlanChange[];
+  days: Plan["days"];
 }
 
 export type WorthIt = "yes" | "mixed" | "no";
@@ -108,6 +126,8 @@ export interface Readout {
   goals_missed: string[];
   helped_sessions: string[];
   gaps: string[];
+  /** Theme ids from shared/event.ts. Insights counts these. Never free text. */
+  gap_themes?: string[];
   followups: string[];
 }
 
@@ -138,3 +158,6 @@ export interface ApiError {
 }
 
 export const ATTENDEE_HEADER = "X-Hallpass-Attendee";
+
+/** Demo clock. Honored only when the value is ISO 8601 with a numeric offset. */
+export const NOW_HEADER = "X-Hallpass-Now";

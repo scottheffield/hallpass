@@ -1,5 +1,6 @@
 import { ATTENDEE_HEADER, type ApiError } from "../../shared/types";
 import { getAttendeeId } from "./attendee";
+import { demoNowHeader } from "./clock";
 
 export class ApiFailure extends Error {
   constructor(
@@ -20,11 +21,13 @@ export async function get<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 async function request<T>(path: string, init: RequestInit): Promise<T> {
+  const demo = demoNowHeader();
   const res = await fetch(path, {
     ...init,
     headers: {
       "content-type": "application/json",
       [ATTENDEE_HEADER]: getAttendeeId(),
+      ...(demo ? { [demo.name]: demo.value } : {}),
       ...init.headers,
     },
   });
