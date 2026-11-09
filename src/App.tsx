@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ProfileResponse } from "../shared/api";
+import type { PlanResponse, ProfileResponse } from "../shared/api";
 import type { Profile } from "../shared/types";
 import { AskHallpass } from "./components/AskHallpass";
 import { DemoBar } from "./components/DemoBar";
 import { post } from "./lib/api";
+import { readCachedPlan } from "./lib/offline";
 import { demoNowForRequests, isDemoMode } from "./lib/clock";
 import { CheckInScreen } from "./screens/checkin";
 import { CaseScreen } from "./screens/case";
@@ -27,12 +28,14 @@ import { GoalsView } from "./views/GoalsView";
 import { IntakeFlow } from "./views/IntakeFlow";
 import { AppFrame, Button, Choice, Sheet, type AppTab } from "./ui";
 import { Journey } from "./ui/JourneyIndicator";
+import { planHasPreparedContent } from "./ui/journeyPhase";
 import { useConferenceNow } from "./screens/today/useConferenceNow";
 
 export default function App() {
   const conferenceNow = useConferenceNow();
   const [booting, setBooting] = useState(true);
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [hasPreparedPlan, setHasPreparedPlan] = useState(false);
   const [place, setPlace] = useState<ShellPlace>("entry");
   const [tab, setTab] = useState<AppTab>("today");
   const [planUpdated, setPlanUpdated] = useState(false);
@@ -58,6 +61,15 @@ export default function App() {
           setProfile(res.profile);
           setTab(home.tab);
           setPlace(home.place);
+          try {
+            const planRes = await post<PlanResponse>("/api/plan/get", {});
+            if (!cancelled) setHasPreparedPlan(planHasPreparedContent(planRes.plan));
+          } catch {
+            if (!cancelled) {
+              const cached = readCachedPlan();
+              setHasPreparedPlan(planHasPreparedContent(cached?.body.plan ?? null));
+            }
+          }
         }
       } catch {
         /* Stay on intake when the profile is missing or the request fails. */
@@ -70,6 +82,10 @@ export default function App() {
     };
   }, []);
 
+  const onPreparedPlanChange = useCallback((prepared: boolean) => {
+    setHasPreparedPlan(prepared);
+  }, []);
+
   const enterApp = useCallback(() => {
     void (async () => {
       try {
@@ -80,6 +96,7 @@ export default function App() {
       }
       setTab("plan");
       setPlace("plan");
+      setHasPreparedPlan(false);
     })();
   }, []);
 
@@ -161,7 +178,9 @@ export default function App() {
         demoBar={demoBar}
         ask={askTrigger}
       >
-      {place !== "insights" ? <Journey now={conferenceNow} /> : null}
+      {place !== "insights" ? (
+        <Journey now={conferenceNow} hasProfile={profile !== null} hasPreparedPlan={hasPreparedPlan} />
+      ) : null}
       {place === "entry" ? <IntakeFlow onFinished={enterApp} /> : null}
 
       {place === "today" ? (
@@ -204,6 +223,7 @@ export default function App() {
               setPlace("goals");
             }}
             onCase={() => openFocusedScreen("case")}
+            onPlanChange={onPreparedPlanChange}
           />
           <ShellUtilityLinks
             onReadout={() => openFocusedScreen("readout")}

@@ -35,11 +35,13 @@ import {
 } from "./accessibility";
 import { planFocusLine } from "./focus";
 import { presentPlanReason } from "./reason";
+import { planHasPreparedContent } from "../../ui/journeyPhase";
 import { planSessionStatusDetail } from "./statusLabel";
 
 export interface PlanScreenProps {
   onGoals?: () => void;
   onCase?: () => void;
+  onPlanChange?: (prepared: boolean) => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -57,7 +59,7 @@ function blockKey(block: TodayTimelineBlock, index: number): string {
   return `break-${block.start}-${index}`;
 }
 
-export function PlanScreen({ onCase }: PlanScreenProps) {
+export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -77,6 +79,11 @@ export function PlanScreen({ onCase }: PlanScreenProps) {
   const generatingRef = useRef(false);
   const attemptedDaysRef = useRef(new Set<string>());
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (loading) return;
+    onPlanChange?.(planHasPreparedContent(plan));
+  }, [plan, loading, onPlanChange]);
 
   const reload = useCallback(async () => {
     setLoading(true);
