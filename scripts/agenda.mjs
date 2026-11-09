@@ -284,6 +284,8 @@ export function deriveRoom(name) {
     landmark = "200 South entrance";
   } else if (/upper mezzanine/i.test(name)) {
     landmark = "Upper mezzanine";
+  } else if (/north grand ballroom foyer/i.test(name)) {
+    landmark = "North Grand Ballroom foyer";
   } else if (/grand ballroom/i.test(name)) {
     landmark = "Grand Ballroom";
   } else if (/solutions showcase/i.test(name)) {
@@ -297,8 +299,6 @@ export function deriveRoom(name) {
     landmark = parts[parts.length - 1] || "Hyatt Regency";
   } else if (/east registration/i.test(name)) {
     landmark = "East registration";
-  } else if (/north grand ballroom foyer/i.test(name)) {
-    landmark = "North Grand Ballroom foyer";
   }
 
   if (!level) level = "Unspecified";

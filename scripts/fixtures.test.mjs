@@ -65,5 +65,5 @@ test("demo fixtures use real agenda ids and hinted rooms", async () => {
 });
 
 function overlaps(a, b) {
-  return a.start < b.end && b.start < a.end;
+  return Date.parse(a.start) < Date.parse(b.end) && Date.parse(b.start) < Date.parse(a.end);
 }
