@@ -3,12 +3,14 @@ import type { Env } from "../env";
 import { loadAgenda } from "../lib/agenda";
 import { elastic, indexName } from "../lib/elastic";
 import { HttpError } from "../lib/http";
+import { agendaIsAuthoritative } from "./agenda-guard";
 import { checkInsOnAgenda } from "./filter";
 import type { CheckInRow, OrganizerRows, ProfileRow, ReadoutRow } from "./rows";
 import { EMPTY_ROWS } from "./rows";
 import { seedOrganizerRows } from "./seed";
 
 const PAGE_SIZE = 500;
+const PIT_KEEP_ALIVE = "2m";
 
 interface EsHit<T> {
   _source?: T;
@@ -67,12 +69,35 @@ async function countDocuments(env: Env, kind: "plans"): Promise<number | "failed
   }
 }
 
+async function openPit(env: Env, index: string): Promise<string | null | "failed"> {
+  try {
+    const result = await elastic<{ id?: string }>(env, "POST", `/${index}/_pit?keep_alive=${PIT_KEEP_ALIVE}`);
+    if (!result.id) return "failed";
+    return result.id;
+  } catch (err) {
+    if (isMissingIndex(err)) return null;
+    return "failed";
+  }
+}
+
+async function closePit(env: Env, pitId: string): Promise<void> {
+  try {
+    await elastic(env, "DELETE", "/_pit", { id: pitId });
+  } catch (err) {
+    console.error("insights_pit_close", { name: err instanceof Error ? err.name : "unknown" });
+  }
+}
+
 async function searchAll<T>(
   env: Env,
   kind: "profiles" | "checkins" | "readouts",
   fields: string[],
 ): Promise<T[] | "failed"> {
   const index = indexName(env, kind);
+  const pitId = await openPit(env, index);
+  if (pitId === "failed") return "failed";
+  if (pitId === null) return [];
+
   const all: T[] = [];
   let searchAfter: unknown[] | undefined;
   try {
@@ -80,12 +105,13 @@ async function searchAll<T>(
       const body: Record<string, unknown> = {
         size: PAGE_SIZE,
         query: { match_all: {} },
-        sort: [{ _shard_doc: "desc" }],
+        sort: [{ _shard_doc: "asc" }],
+        pit: { id: pitId, keep_alive: PIT_KEEP_ALIVE },
         _source: fields,
       };
       if (searchAfter) body.search_after = searchAfter;
 
-      const result = await elastic<EsSearch<T>>(env, "POST", `/${index}/_search`, body);
+      const result = await elastic<EsSearch<T>>(env, "POST", "/_search", body);
       const hits = result.hits?.hits ?? [];
       all.push(...hits.flatMap((hit) => (hit._source ? [hit._source] : [])));
       if (hits.length < PAGE_SIZE) break;
@@ -96,8 +122,9 @@ async function searchAll<T>(
     return all;
   } catch (err) {
     if (isMissingIndex(err) && all.length === 0) return [];
-    if (isMissingIndex(err)) return all;
     return "failed";
+  } finally {
+    await closePit(env, pitId);
   }
 }
 
@@ -108,6 +135,12 @@ function logFetchFailure(kind: string): void {
 /** Load organizer rows. Elastic results are aggregated in memory; without Elastic, seeded demo rows are used. */
 export async function loadOrganizerRows(env: Env): Promise<{ rows: OrganizerRows; stub: boolean }> {
   if (!elasticOn(env)) {
+    return { rows: seedOrganizerRows(), stub: true };
+  }
+
+  const agenda = await loadAgenda(env);
+  if (!agendaIsAuthoritative(agenda)) {
+    console.error("insights_agenda", { source: agenda.source });
     return { rows: seedOrganizerRows(), stub: true };
   }
 
@@ -131,7 +164,6 @@ export async function loadOrganizerRows(env: Env): Promise<{ rows: OrganizerRows
     return row ? [row] : [];
   });
 
-  const agenda = await loadAgenda(env);
   const agendaIds = new Set(agenda.sessions.map((session) => session.id));
   const checkins = checkInsOnAgenda(
     checkinsRaw.flatMap((doc) => {
