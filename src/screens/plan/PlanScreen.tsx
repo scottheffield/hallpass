@@ -22,7 +22,16 @@ import {
   type TodaySessionBlock,
   type TodayTimelineBlock,
 } from "../today/timeline";
-import { Button, ChangeList, Notice, Screen, SessionCard, Sheet, Stack } from "../../ui";
+import {
+  AgendaPlaceholder,
+  Button,
+  ChangeList,
+  Notice,
+  Screen,
+  SessionCard,
+  Sheet,
+  Stack,
+} from "../../ui";
 import {
   dayTabLabel,
   seedAttemptedDaysFromPlan,
@@ -386,6 +395,7 @@ export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProp
                 {generating ? (
                   <Notice tone="loading" title="Plan generating">
                     <p>{genStage ?? PLAN_GENERATION_STAGES[0]}.</p>
+                    <AgendaPlaceholder />
                   </Notice>
                 ) : null}
 

@@ -1,5 +1,6 @@
 // Shared Hallpass primitives. Keep these props stable; other slices build on them.
 
+export { AgendaPlaceholder } from "./AgendaPlaceholder";
 export { AppFrame } from "./AppFrame";
 export type { AppFrameProps, AppTab } from "./AppFrame";
 export { Button } from "./Button";
