@@ -48,6 +48,7 @@ export function agentSseResponse(
         return;
       }
 
+      let sent = false;
       try {
         const system = buildSystemPrompt(ctx);
         for await (const chunk of claudeStream(env, {
@@ -56,7 +57,10 @@ export function agentSseResponse(
           maxTokens: AGENT_MAX_TOKENS,
           timeoutMs: AGENT_TIMEOUT_MS,
         })) {
-          if (chunk) send({ text: chunk });
+          if (chunk) {
+            send({ text: chunk });
+            sent = true;
+          }
         }
         close();
       } catch (err) {
@@ -66,7 +70,7 @@ export function agentSseResponse(
           return;
         }
         console.error("agent_stream", { name: err instanceof Error ? err.name : "unknown" });
-        send({ fallback: true, text: fallbackAnswer(ctx, messages, rooms) });
+        send(sent ? { error: "truncated" } : { fallback: true, text: fallbackAnswer(ctx, messages, rooms) });
         close();
       }
     },
