@@ -18,7 +18,23 @@ const room151: Room = {
   walking_hint: "South foyer, north side of Level 1.",
 };
 
+const regencyB: Room = {
+  name: "Hyatt Regency | Level 4 | Regency Ballroom B",
+  level: "Level 4",
+  landmark: "Hyatt Regency Ballroom",
+  walking_hint: "Single section B on Level 4.",
+};
+
+const regencyBd: Room = {
+  name: "Hyatt Regency | Level 4 | Regency Ballroom B-D",
+  level: "Level 4",
+  landmark: "Regency Ballroom B-D",
+  walking_hint: "Combined sections B through D on Level 4.",
+};
+
 const rooms = [grandBallroom, room151];
+
+const regencyRooms = [regencyB, regencyBd];
 
 const nextRow: PlanRow = {
   session_id: "1250865",
@@ -89,5 +105,11 @@ describe("fallbackAnswer", () => {
     const answer = fallbackAnswer(ctx(), user("How do I get there?"), rooms);
     expect(answer).toContain("Grand Ballroom H");
     expect(answer).toContain("escalators");
+  });
+
+  it("prefers the longest matching room label for Regency Ballroom B-D", () => {
+    const answer = fallbackAnswer(ctx(), user("Where is Regency Ballroom B-D?"), regencyRooms);
+    expect(answer).toContain("Combined sections B through D");
+    expect(answer).not.toContain("Single section B");
   });
 });

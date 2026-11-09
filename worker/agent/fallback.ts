@@ -36,12 +36,15 @@ function directionAnswer(room: Room | null, roomName: string, accessNeeds?: stri
 
 function roomFromQuestion(text: string, ctx: AgentContext, rooms: Room[]): string | null {
   const lower = text.toLowerCase();
+  let best: { name: string; len: number } | null = null;
   for (const room of rooms) {
-    const short = shortRoom(room.name).toLowerCase();
-    if (short && lower.includes(short)) return room.name;
-    if (room.landmark && lower.includes(room.landmark.toLowerCase())) return room.name;
+    const labels = [shortRoom(room.name).toLowerCase(), room.landmark?.toLowerCase() ?? ""];
+    for (const label of labels) {
+      if (!label || !lower.includes(label)) continue;
+      if (!best || label.length > best.len) best = { name: room.name, len: label.length };
+    }
   }
-  return ctx.next?.room ?? null;
+  return best?.name ?? ctx.next?.room ?? null;
 }
 
 /** Rule-based reply when Claude is unavailable. Labeled fallback in the SSE payload. */
