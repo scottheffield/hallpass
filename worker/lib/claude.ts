@@ -2,7 +2,7 @@ import { APIError, Anthropic } from "@anthropic-ai/sdk";
 import type { Env } from "../env";
 import { HttpError } from "./http";
 import { captureInput, captureOutput, contentCaptureOn } from "./telemetry";
-import { startSpan, withSpan, type SpanLike } from "./trace";
+import { startSpan, withActiveSpan, withSpan, type SpanLike } from "./trace";
 
 export interface ClaudeJsonInput {
   system: string;
@@ -161,16 +161,18 @@ export async function* claudeStream(env: Env, input: ClaudeStreamInput): AsyncGe
   // Stays "cancelled" if the reader stops early, for example when the browser disconnects.
   let status = "cancelled";
   try {
-    const stream = await anthropic.messages.create(
-      {
-        model: env.CLAUDE_MODEL,
-        max_tokens: maxTokens,
-        system: input.system,
-        messages: input.messages,
-        output_config: { effort: "low" },
-        stream: true,
-      },
-      { timeout: timeoutMs, signal: AbortSignal.timeout(timeoutMs) },
+    const stream = await withActiveSpan(span, () =>
+      anthropic.messages.create(
+        {
+          model: env.CLAUDE_MODEL,
+          max_tokens: maxTokens,
+          system: input.system,
+          messages: input.messages,
+          output_config: { effort: "low" },
+          stream: true,
+        },
+        { timeout: timeoutMs, signal: AbortSignal.timeout(timeoutMs) },
+      ),
     );
     for await (const event of stream) {
       if (event.type === "message_start") {
