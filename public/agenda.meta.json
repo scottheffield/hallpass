@@ -1,0 +1,6 @@
+{
+  "companion": "public/agenda.json",
+  "source": "https://events.linuxfoundation.org/kubecon-cloudnativecon-north-america/program/schedule/",
+  "pulled_at": "2026-11-09T12:41:25-07:00",
+  "attribution": "The Linux Foundation, KubeCon + CloudNativeCon North America 2026 schedule. Used with attribution. No affiliation or endorsement."
+}

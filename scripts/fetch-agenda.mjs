@@ -33,6 +33,20 @@ const sample = sessionsSample(agenda);
 await mkdir(join(root, "public"), { recursive: true });
 await mkdir(join(root, "shared", "fixtures"), { recursive: true });
 await writeFile(join(root, "public", "agenda.json"), `${JSON.stringify(agenda, null, 2)}\n`);
+await writeFile(
+  join(root, "public", "agenda.meta.json"),
+  `${JSON.stringify(
+    {
+      companion: "public/agenda.json",
+      source: agenda.source,
+      pulled_at: agenda.pulled_at,
+      attribution:
+        "The Linux Foundation, KubeCon + CloudNativeCon North America 2026 schedule. Used with attribution. No affiliation or endorsement.",
+    },
+    null,
+    2,
+  )}\n`,
+);
 await writeFile(join(root, "public", "rooms.json"), `${JSON.stringify(rooms, null, 2)}\n`);
 await writeFile(join(root, "shared", "fixtures", "sessions-sample.json"), `${JSON.stringify(sample, null, 2)}\n`);
 

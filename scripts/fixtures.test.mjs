@@ -8,6 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("demo fixtures use real agenda ids and hinted rooms", async () => {
   const agenda = JSON.parse(await readFile(join(root, "public", "agenda.json"), "utf8"));
+  const meta = JSON.parse(await readFile(join(root, "public", "agenda.meta.json"), "utf8"));
   const rooms = JSON.parse(await readFile(join(root, "public", "rooms.json"), "utf8"));
   const profile = JSON.parse(await readFile(join(root, "shared", "fixtures", "demo-profile.json"), "utf8"));
   const plan = JSON.parse(await readFile(join(root, "shared", "fixtures", "demo-plan.json"), "utf8"));
@@ -59,6 +60,8 @@ test("demo fixtures use real agenda ids and hinted rooms", async () => {
   assert.equal(new Set(planIds).size, planIds.length);
   assert.equal(agenda.attribution.includes("The Linux Foundation"), true);
   assert.equal(JSON.stringify(agenda).includes("ELASTIC_API_KEY"), false);
+  assert.equal(meta.pulled_at, agenda.pulled_at);
+  assert.equal(meta.source, agenda.source);
 });
 
 function overlaps(a, b) {
