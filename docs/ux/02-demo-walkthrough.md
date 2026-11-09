@@ -12,6 +12,10 @@ Demo attendee: a first-timer interested in practical platform engineering and AI
 
 The accompanying grayscale board shows eight numbered screens. The direct path is 01 → 03 → 04 → 05 → 06 → 07 → 08. Screen 02 demonstrates optional exploration. It is a static review artifact, not a clickable prototype.
 
+[Open the wireframe board](hallpass-wireframes-v1.png). Generated with the built-in image-generation tool; the generation prompt is saved in `wireframe-generation-prompt.txt`.
+
+Visual review notes: the board is readable and shows all eight states. In the next revision, remove the duplicate Hallpass label on the entry screen and move “Make the case for attending” outside the second session card so it clearly applies to the entire plan. The readout's deployment question is conditional sample content, not a fact inferred from the initial answer; use “Not enough feedback” unless supporting feedback is supplied. The behavioral notes below govern these details.
+
 ### 01 — Start your way
 
 “Why are you here?” immediately precedes Hallpass. One question: “What would make this trip worth it?”
