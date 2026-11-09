@@ -1,4 +1,4 @@
-import { EVENT_CITY } from "../../shared/event";
+import { EVENT_CITY, INTAKE } from "../../shared/event";
 import { HelloMark } from "./HelloMark";
 import { Button } from "./Button";
 import { ChangeList } from "./ChangeList";
@@ -30,7 +30,7 @@ export function EntryPreview({
       <Stack gap="lg">
         <HelloMark />
         <TextArea
-          label="What would make this trip worth it?"
+          label={INTAKE.purpose.prompt}
           labelAppearance="title"
           name="purpose"
           value={answer}
