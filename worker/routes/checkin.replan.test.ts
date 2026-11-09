@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { CheckInResponse } from "../../shared/api";
 import type { Env } from "../env";
+import * as replan from "../checkin/replan";
 import { fixturePlan, fixtureProfile } from "../lib/fixtures";
 import * as store from "../lib/store";
+import * as agendaCache from "../plan/agenda-cache";
 import { resetAgendaCacheForTests } from "../plan/agenda-cache";
 import { checkin } from "./checkin";
 
@@ -51,5 +53,41 @@ describe("check-in route proposal copy", () => {
     if (change?.kind === "moved") {
       expect(change.text).toMatch(/^Swapped in /);
     }
+  });
+
+  it("warms the agenda cache before adjustDayAfterCheckin", async () => {
+    const attendeeId = "cache-order";
+    const order: string[] = [];
+    const originalEnsure = agendaCache.ensureAgendaCache;
+    const originalAdjust = replan.adjustDayAfterCheckin;
+    vi.spyOn(agendaCache, "ensureAgendaCache").mockImplementation(async (env) => {
+      order.push("ensure");
+      return originalEnsure(env);
+    });
+    vi.spyOn(replan, "adjustDayAfterCheckin").mockImplementation((...args) => {
+      order.push("adjust");
+      return originalAdjust(...args);
+    });
+    vi.spyOn(store, "getPlan").mockResolvedValue(fixturePlan(attendeeId));
+    vi.spyOn(store, "getProfile").mockResolvedValue(fixtureProfile(attendeeId));
+    vi.spyOn(store, "putCheckIn").mockImplementation(async (_env, row) => row);
+    vi.spyOn(store, "putPlan").mockImplementation(async (_env, row) => row);
+
+    const request = new Request("https://hallpass.local/api/checkin", {
+      method: "POST",
+      headers: {
+        "X-Hallpass-Attendee": attendeeId,
+        "X-Hallpass-Now": "2026-11-10T12:05:00-07:00",
+      },
+      body: JSON.stringify({
+        session_id: "1246200",
+        worth_it: "mixed",
+        moved_goal: "no",
+      }),
+    });
+
+    await checkin(request, memoryEnv(), {} as ExecutionContext, attendeeId);
+    expect(order.indexOf("ensure")).toBeGreaterThanOrEqual(0);
+    expect(order.indexOf("adjust")).toBeGreaterThan(order.indexOf("ensure"));
   });
 });

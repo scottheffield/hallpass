@@ -181,6 +181,8 @@ export interface NextStepPick {
   title: string;
   time: string;
   room: string;
+  /** Parsed session start for ordering; omitted when surfaced to clients. */
+  startMs?: number;
 }
 
 export function pickNextStepSessions(
@@ -218,10 +220,14 @@ export function pickNextStepSessions(
           title: meta.title,
           time: formatAgendaTime(meta.start),
           room: meta.room,
+          startMs: Number.isFinite(startMs) ? startMs : 0,
         });
       }
     }
-    forGoal.sort((a, b) => a.time.localeCompare(b.time) || a.session_id.localeCompare(b.session_id));
+    forGoal.sort(
+      (a, b) =>
+        (a.startMs ?? 0) - (b.startMs ?? 0) || a.session_id.localeCompare(b.session_id),
+    );
     for (const row of forGoal.slice(0, maxPerGoal)) {
       used.add(row.session_id);
       picks.push(row);

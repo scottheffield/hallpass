@@ -208,6 +208,48 @@ describe("goal cards from profile", () => {
 });
 
 describe("next steps from agenda ids", () => {
+  it("orders picks by parsed start time so 11:00 does not sort ahead of 9:00", () => {
+    const profile = fixtureProfile("test-attendee");
+    const plan = planWithSessions();
+    const meta = new Map<string, { title: string; start: string; room: string }>([
+      ["s-late", { title: "Late morning", start: "2026-11-12T11:00:00-07:00", room: "A" }],
+      ["s-early", { title: "Early morning", start: "2026-11-10T09:00:00-07:00", room: "B" }],
+    ]);
+    plan.days = {
+      "2026-11-10": {
+        items: [
+          {
+            session_id: "s-early",
+            status: "planned",
+            reason: 'Matches your goal "inference" through the session topic in Early.',
+          },
+        ],
+        breaks: [],
+      },
+      "2026-11-12": {
+        items: [
+          {
+            session_id: "s-late",
+            status: "planned",
+            reason: 'Matches your goal "inference" through the session topic in Late.',
+          },
+        ],
+        breaks: [],
+      },
+    };
+    const ids = new Set(["s-early", "s-late"]);
+    const picks = pickNextStepSessions(
+      plan,
+      profile,
+      [0],
+      Date.parse("2026-11-10T08:00:00-07:00"),
+      meta,
+      ids,
+      2,
+    );
+    expect(picks.map((pick) => pick.session_id)).toEqual(["s-early", "s-late"]);
+  });
+
   it("references only session ids that remain on the plan", () => {
     const profile = fixtureProfile("test-attendee");
     const plan = planWithSessions();
