@@ -4,6 +4,8 @@
 
 Built at the Cloud Native Hackathon, Salt Lake City, 2026-11-09, for KubeCon + CloudNativeCon North America 2026.
 
+Slice boundaries, the API contract, and the order of work are in [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md).
+
 ## Stack
 
 - **Front end:** Vite, React, TypeScript, Tailwind CSS. Mobile-first.
