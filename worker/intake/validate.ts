@@ -30,6 +30,7 @@ export function repairProfileDraft(draft: ProfileDraft, purposeFallback: string)
     MAX_WHY,
   );
 
+  // Enforce 1–3 goals in code; Claude schema must not use minItems/maxItems.
   let goals = (draft.goals ?? [])
     .map((goal) => goal.trim().slice(0, MAX_GOAL_LEN))
     .filter(Boolean)

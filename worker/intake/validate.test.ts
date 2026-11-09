@@ -25,6 +25,28 @@ describe("repairProfileDraft", () => {
     expect(draft.goal_themes).toEqual(["observability"]);
   });
 
+  it("keeps at least one goal after trimming blanks", () => {
+    const draft = repairProfileDraft(
+      {
+        why_summary: "KubeCon focus",
+        goals: ["  ", ""],
+        role: "SRE",
+        problems: [],
+        topics: [],
+        tools: [],
+        people_to_see: [],
+        expertise_to_see: [],
+        energy: "medium",
+        pacing: "balanced",
+        breaks: "",
+      },
+      "Platform inference in production.",
+    );
+    expect(draft.goals.length).toBeGreaterThanOrEqual(1);
+    expect(draft.goals.length).toBeLessThanOrEqual(3);
+    expect(draft.goals[0]).toBe("KubeCon focus");
+  });
+
   it("creates a goal from purpose when goals are empty", () => {
     const draft = repairProfileDraft(
       {

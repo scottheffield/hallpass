@@ -52,16 +52,14 @@ export async function runInterview(env: Env, answers: IntakeAnswers): Promise<In
   return { profile: repairProfileDraft(draft, merged.purpose), basic };
 }
 
-async function interviewWithClaude(env: Env, answers: IntakeAnswers): Promise<ProfileDraft> {
-  const system =
-    "You turn conference intake answers into a short profile for session planning. Return JSON only. Use the attendee's words for goals. Do not invent disabilities or access needs.";
-  const user = JSON.stringify(answers);
-  const schema = {
+/** JSON Schema for Claude structured output on interview profiles. */
+export function interviewProfileJsonSchema(): Record<string, unknown> {
+  return {
     type: "object",
     additionalProperties: false,
     properties: {
       why_summary: { type: "string" },
-      goals: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 3 },
+      goals: { type: "array", items: { type: "string" } },
       role: { type: "string" },
       problems: { type: "array", items: { type: "string" } },
       topics: { type: "array", items: { type: "string" } },
@@ -76,6 +74,13 @@ async function interviewWithClaude(env: Env, answers: IntakeAnswers): Promise<Pr
     },
     required: ["why_summary", "goals", "role", "problems", "topics", "tools", "people_to_see", "expertise_to_see", "energy", "pacing", "breaks"],
   };
+}
+
+async function interviewWithClaude(env: Env, answers: IntakeAnswers): Promise<ProfileDraft> {
+  const system =
+    "You turn conference intake answers into a short profile for session planning. Return JSON only. Use the attendee's words for goals. Do not invent disabilities or access needs.";
+  const user = JSON.stringify(answers);
+  const schema = interviewProfileJsonSchema();
 
   const parsed = await claudeJson<ProfileDraft>(env, {
     system,
