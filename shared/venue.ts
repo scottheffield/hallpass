@@ -80,15 +80,22 @@ function isSameRoom(a: ParsedRoom, b: ParsedRoom, from: string, to: string): boo
 
 /** Walking-time estimates shared by Directions, plan, and the corner agent. */
 export function transferMinutes(from: string, to: string): number {
+  const fromTrim = from.trim();
+  const toTrim = to.trim();
   const fromParsed = parseRoom(from);
   const toParsed = parseRoom(to);
 
-  if (isSameRoom(fromParsed, toParsed, from, to)) {
+  if (fromParsed.kind === "off-site" || toParsed.kind === "off-site") {
+    return 30;
+  }
+
+  const eitherEmpty = !fromTrim || !toTrim;
+  if (!eitherEmpty && isSameRoom(fromParsed, toParsed, from, to)) {
     return 0;
   }
 
-  if (fromParsed.kind === "off-site" || toParsed.kind === "off-site") {
-    return 30;
+  if (eitherEmpty) {
+    return 12;
   }
 
   if (fromParsed.kind === "unknown" || toParsed.kind === "unknown") {

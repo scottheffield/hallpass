@@ -93,6 +93,16 @@ describe("transferMinutes", () => {
     expect(transferMinutes(offSite, hyattBallroom)).toBe(30);
   });
 
+  it("returns 30 for off-site to off-site, not same room", () => {
+    expect(transferMinutes(offSite, offSite)).toBe(30);
+  });
+
+  it("returns 12 for empty names, not same room", () => {
+    expect(transferMinutes("", "")).toBe(12);
+    expect(transferMinutes("  ", "  ")).toBe(12);
+    expect(transferMinutes("", room151)).toBe(12);
+  });
+
   it("returns 12 when either side is an unknown room", () => {
     expect(transferMinutes(room151, mystery)).toBe(12);
     expect(transferMinutes(mystery, room151)).toBe(12);
