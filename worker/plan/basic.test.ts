@@ -38,9 +38,38 @@ describe("basicDayPlan", () => {
       { session: s4, score: 6, matched_field: "search_text", matched_goal: "platform" },
     ];
     const pinned: PlanItem[] = [];
-    const { items } = basicDayPlan(candidates, sessions, pinned);
+    const { items } = basicDayPlan("2026-11-10", "balanced", candidates, sessions, pinned);
     expect(items.length).toBeGreaterThanOrEqual(3);
     expect(items.every((item) => item.reason.includes("goal"))).toBe(true);
     expect(hasOverlaps(items, sessions)).toBe(false);
+  });
+
+  it("fills only from the requested day when candidates are empty", () => {
+    const day10 = session("10a", "2026-11-10T10:00:00-07:00", "2026-11-10T10:40:00-07:00", "Day ten talk.");
+    const day11 = session("11a", "2026-11-11T10:00:00-07:00", "2026-11-11T10:40:00-07:00", "Day eleven talk.");
+    const day10b = session("10b", "2026-11-10T11:00:00-07:00", "2026-11-10T11:40:00-07:00", "Another ten.");
+    const day10c = session("10c", "2026-11-10T12:00:00-07:00", "2026-11-10T13:00:00-07:00", "Third ten.");
+    const allAccess = {
+      ...day10,
+      id: "aa",
+      start: "2026-11-10T09:00:00-07:00",
+      end: "2026-11-10T17:00:00-07:00",
+      all_access: true,
+    };
+    const sessions = new Map<string, Session>([
+      [day10.id, day10],
+      [day11.id, day11],
+      [day10b.id, day10b],
+      [day10c.id, day10c],
+      [allAccess.id, allAccess],
+    ]);
+    const { items } = basicDayPlan("2026-11-10", "balanced", [], sessions, []);
+    expect(items.length).toBeGreaterThanOrEqual(3);
+    for (const item of items) {
+      const row = sessions.get(item.session_id);
+      expect(row?.start.slice(0, 10)).toBe("2026-11-10");
+      expect(row?.all_access).not.toBe(true);
+    }
+    expect(items.some((item) => item.session_id === "11a")).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import type { PlanBreak, PlanItem, Session } from "../../shared/types";
+import type { Pacing, PlanBreak, PlanItem, Session } from "../../shared/types";
 import { overlaps } from "../lib/agenda";
 import type { PlanCandidate } from "./candidates";
 import { validateDayPlan } from "./validate";
@@ -17,8 +17,18 @@ function templateReason(candidate: PlanCandidate): string {
   return `Matches your goal "${candidate.matched_goal}" through ${field} in ${candidate.session.title}.${abstractBit}`;
 }
 
+function daySessionIds(sessions: Map<string, Session>, day: string): Set<string> {
+  const ids = new Set<string>();
+  for (const session of sessions.values()) {
+    if (session.start.slice(0, 10) === day) ids.add(session.id);
+  }
+  return ids;
+}
+
 /** Greedy non-overlapping picks when Claude or Elastic is unavailable. */
 export function basicDayPlan(
+  day: string,
+  pacing: Pacing,
   candidates: PlanCandidate[],
   sessions: Map<string, Session>,
   pinned: PlanItem[],
@@ -44,10 +54,9 @@ export function basicDayPlan(
   }
 
   if (picks.length < MIN_PICKS) {
-    const dayKey = ranked[0]?.session.start.slice(0, 10) ?? candidates[0]?.session.start.slice(0, 10) ?? "";
     const fillers = [...sessions.values()]
-      .filter((session) => !dayKey || session.start.slice(0, 10) === dayKey)
-      .sort((a, b) => a.start.localeCompare(b.start));
+      .filter((session) => session.start.slice(0, 10) === day && !session.all_access)
+      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
     for (const session of fillers) {
       if (picks.length >= MIN_PICKS) break;
       if (pinned.some((item) => item.session_id === session.id)) continue;
@@ -61,12 +70,14 @@ export function basicDayPlan(
     }
   }
 
+  const candidateIds = daySessionIds(sessions, day);
+  for (const id of candidates.map((row) => row.session.id)) candidateIds.add(id);
+
   const validated = validateDayPlan(picks, [], {
-    pacing: "balanced",
-    candidateIds: new Set([...sessions.keys()]),
+    pacing,
+    candidateIds,
     sessions,
     pinned,
   });
-
   return { items: validated.items, breaks: validated.breaks };
 }

@@ -54,6 +54,17 @@ describe("validateDayPlan", () => {
     );
     expect(result.items[0].session_id).toBe("a");
     expect(result.errors.some((err) => err.includes("Break count"))).toBe(true);
+    expect(result.breaks).toHaveLength(1);
+  });
+
+  it("rejects breaks without the conference offset", () => {
+    const result = validateDayPlan(
+      [{ session_id: "b", reason: 'Matches your goal "platform" from the abstract on service ownership.' }],
+      [{ start: "2026-11-10T12:00:00Z", end: "2026-11-10T13:00:00Z", note: "Lunch" }],
+      { pacing: "light", candidateIds: new Set(["a", "b"]), sessions, pinned: [] },
+    );
+    expect(result.breaks).toHaveLength(0);
+    expect(result.errors.some((err) => err.includes("Invalid break"))).toBe(true);
   });
 });
 

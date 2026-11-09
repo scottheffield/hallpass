@@ -5,6 +5,11 @@ import { loadAgenda } from "../lib/agenda";
 
 let cached: Session[] | null = null;
 
+/** Clears the in-isolate cache. Tests only. */
+export function resetAgendaCacheForTests(): void {
+  cached = null;
+}
+
 function sampleSessions(): Session[] {
   const body = sample as { sessions?: Session[] };
   return Array.isArray(body.sessions) ? body.sessions : [];
@@ -18,8 +23,8 @@ export function getCachedSessions(): Session[] {
 export async function ensureAgendaCache(env: Env): Promise<Session[]> {
   if (cached) return cached;
   const agenda = await loadAgenda(env);
-  cached = agenda.sessions;
-  return cached;
+  if (agenda.source === "agenda") cached = agenda.sessions;
+  return agenda.sessions;
 }
 
 export function sessionById(id: string): Session | undefined {

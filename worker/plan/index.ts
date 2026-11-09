@@ -87,22 +87,9 @@ async function buildDay(
     };
   }
 
-  const basic = basicDayPlan(candidates, map, pinned);
-  const validated = validateDayPlan(
-    basic.items
-      .filter((item) => !item.pinned)
-      .map((item) => ({ session_id: item.session_id, reason: item.reason }) satisfies RawPick),
-    basic.breaks,
-    {
-      pacing: profile.pacing,
-      candidateIds: new Set(candidates.map((row) => row.session.id)),
-      sessions: map,
-      pinned,
-    },
-  );
-
-  const items = validated.items.length >= 1 ? validated.items : basic.items;
-  const breaks = validated.breaks.length > 0 ? validated.breaks : defaultBreaks(day, items, map);
+  const basic = basicDayPlan(day, profile.pacing, candidates, map, pinned);
+  const items = basic.items;
+  const breaks = basic.breaks.length > 0 ? basic.breaks : defaultBreaks(day, items, map);
 
   return { day: { items, breaks }, source: "basic" };
 }
@@ -127,12 +114,19 @@ export async function generateDay(
 export function replanDay(profile: Profile, plan: Plan, day: string, from: string, signal: ReplanSignal): PlanDay {
   const current = plan.days[day] ?? { items: [], breaks: [] };
   const kept = keptBeforeReplen(from, current.items);
-  const sessions = getCachedSessions().filter((row) => row.start.slice(0, 10) === day && !row.all_access);
+  const fromMs = Date.parse(from);
+  const sessions = getCachedSessions().filter(
+    (row) =>
+      row.start.slice(0, 10) === day &&
+      !row.all_access &&
+      Number.isFinite(fromMs) &&
+      Date.parse(row.start) >= fromMs,
+  );
   const map = sessionsMap(sessions);
 
   const steerAway = signal.moved_goal === "no" ? signal.session_id : undefined;
   const candidates = gatherCandidatesSync(profile, day, plan, sessions, steerAway);
-  const basic = basicDayPlan(candidates, map, kept);
+  const basic = basicDayPlan(day, profile.pacing, candidates, map, kept);
 
   const combined = validateDayPlan(
     basic.items
@@ -152,6 +146,7 @@ export function replanDay(profile: Profile, plan: Plan, day: string, from: strin
     if (merged.some((row) => row.session_id === item.session_id)) continue;
     const session = map.get(item.session_id);
     if (!session) continue;
+    if (Number.isFinite(fromMs) && Date.parse(session.start) < fromMs) continue;
     const clashes = merged.some((row) => {
       const other = map.get(row.session_id);
       return other ? overlaps(session, other) : false;

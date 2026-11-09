@@ -1,3 +1,4 @@
+import { EVENT_OFFSET } from "../../shared/event";
 import type { Pacing, PlanBreak, PlanItem, Session } from "../../shared/types";
 import { overlaps } from "../lib/agenda";
 
@@ -51,6 +52,8 @@ export function validateDayPlan(
     .map((item) => options.sessions.get(item.session_id))
     .filter((session): session is Session => Boolean(session));
 
+  const breakCap =
+    options.pacing === "packed" ? 1 : options.pacing === "balanced" ? 2 : Number.POSITIVE_INFINITY;
   if (!breakCountOk(options.pacing, breaks.length)) {
     errors.push(`Break count ${breaks.length} does not fit pacing ${options.pacing}.`);
   }
@@ -93,12 +96,20 @@ export function validateDayPlan(
   }
 
   const validBreaks = breaks.filter((br) => {
-    const ok = Number.isFinite(Date.parse(br.start)) && Number.isFinite(Date.parse(br.end));
+    const startMs = Date.parse(br.start);
+    const endMs = Date.parse(br.end);
+    const ok =
+      Number.isFinite(startMs) &&
+      Number.isFinite(endMs) &&
+      startMs < endMs &&
+      br.start.endsWith(EVENT_OFFSET) &&
+      br.end.endsWith(EVENT_OFFSET);
     if (!ok) errors.push("Invalid break times.");
-    return ok && br.start < br.end;
+    return ok;
   });
+  const cappedBreaks = validBreaks.slice(0, breakCap);
 
-  return { items: sortByStart(accepted, options.sessions), breaks: validBreaks, errors };
+  return { items: sortByStart(accepted, options.sessions), breaks: cappedBreaks, errors };
 }
 
 /** True when any pair in the list overlaps. */
