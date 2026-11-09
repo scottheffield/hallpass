@@ -54,7 +54,7 @@ describe("check-in left_early guard", () => {
     vi.spyOn(store, "getPlan").mockResolvedValue(plan);
     vi.spyOn(store, "getProfile").mockResolvedValue(fixtureProfile(attendeeId));
     vi.spyOn(store, "putCheckIn").mockImplementation(async (_env, row) => row);
-    vi.spyOn(store, "putPlan").mockImplementation(async (_env, row) => row);
+    const putPlanSpy = vi.spyOn(store, "putPlan").mockImplementation(async (_env, row) => row);
 
     const request = new Request("https://hallpass.local/api/checkin", {
       method: "POST",
@@ -74,7 +74,8 @@ describe("check-in left_early guard", () => {
     expect(response.status).toBe(200);
     const body = (await response.json()) as CheckInResponse;
     expect(body.checkin.left_early).toBe(true);
-    const saved = day?.items.find((row) => row.session_id === "1246200");
+    const savedPlan = putPlanSpy.mock.calls[0]?.[1];
+    const saved = savedPlan?.days["2026-11-10"]?.items.find((row) => row.session_id === "1246200");
     expect(saved?.status).toBe("left_early");
   });
 });
