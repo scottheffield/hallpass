@@ -14,7 +14,7 @@ export interface TodayRouteProps {
   /** Bumped after every completed check-in flow so plan + offer refresh. */
   planVersion: number;
   planUpdated: boolean;
-  onUndoPlanUpdate: () => void;
+  onDismissPlanUpdate: () => void;
   onDirections: (target: DirectionsTarget) => void;
   onOpenCheckIn: (target: CheckInTarget) => void;
   onBreak: () => void;
@@ -30,7 +30,7 @@ async function fetchPlan(): Promise<Plan | null> {
 export function TodayRoute({
   planVersion,
   planUpdated,
-  onUndoPlanUpdate,
+  onDismissPlanUpdate,
   onDirections,
   onOpenCheckIn,
   onBreak,
@@ -97,8 +97,9 @@ export function TodayRoute({
         </div>
       ) : null}
       <TodayScreen
+        key={planVersion}
         planUpdated={planUpdated}
-        onUndoPlanUpdate={onUndoPlanUpdate}
+        onDismissPlanUpdate={onDismissPlanUpdate}
         onDirections={(sessionId) => void onDirectionsById(sessionId)}
         onBreak={onBreak}
         onAsk={onAsk}

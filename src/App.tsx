@@ -150,7 +150,7 @@ export default function App() {
           <TodayRoute
             planVersion={planVersion}
             planUpdated={planUpdated}
-            onUndoPlanUpdate={() => setPlanUpdated(false)}
+            onDismissPlanUpdate={() => setPlanUpdated(false)}
             onDirections={openDirections}
             onOpenCheckIn={openCheckIn}
             onBreak={() => setBreakOpen(true)}
