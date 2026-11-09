@@ -51,7 +51,7 @@ describe("check-in route proposal copy", () => {
     expect(change?.text).toBeTruthy();
     expect(change?.text).not.toMatch(/\b1250865\b/);
     if (change?.kind === "moved") {
-      expect(change.text).toMatch(/^Swapped in /);
+      expect(change.text).toMatch(/^Swapped /);
     }
   });
 

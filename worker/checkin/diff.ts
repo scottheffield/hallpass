@@ -1,12 +1,18 @@
+import { GOAL_THEMES } from "../../shared/event";
 import type { PlanBreak, PlanChange, PlanItem } from "../../shared/types";
+import { formatDisplayTime } from "../../shared/time";
+import { formatRoomDisplay } from "../../shared/venue";
 import { sessionById } from "../plan/agenda-cache";
 import type { ReplanSignal } from "../plan";
+import { goalForPlanReason } from "./goal";
 
 export type PlanDay = { items: PlanItem[]; breaks: PlanBreak[] };
 
 export type DiffPlanDayOptions = {
   /** Check-in signal for why the rest of today was adjusted. */
   signal?: ReplanSignal;
+  /** Profile goals for swap copy tied to the checked-in session. */
+  profileGoals?: readonly string[];
 };
 
 const MAX_CHANGES = 3;
@@ -30,26 +36,20 @@ function breakSetsEqual(a: PlanBreak[], b: PlanBreak[]): boolean {
   return true;
 }
 
-/** Conference wall time as shown in change copy, e.g. "12:20". */
-function formatAgendaTime(iso: string): string {
-  const match = /T(\d{2}):(\d{2})/.exec(iso);
-  if (!match) return "";
-  const hour = Number(match[1]);
-  const minute = match[2];
-  if (minute === "00") return String(hour);
-  return `${hour}:${minute}`;
-}
-
 function sessionLabel(sessionId: string): { title: string; time: string; room: string } {
   const session = sessionById(sessionId);
   if (!session) return { title: "a later session", time: "", room: "" };
-  return { title: session.title, time: formatAgendaTime(session.start), room: session.room };
+  return {
+    title: session.title,
+    time: formatDisplayTime(session.start),
+    room: formatRoomDisplay(session.room),
+  };
 }
 
-function swapPairs(before: PlanDay, after: PlanDay): Array<{ from: string; to: string; reason: string }> {
+function swapPairs(before: PlanDay, after: PlanDay): Array<{ from: string; to: string }> {
   const beforePlanned = new Set(plannedIds(before));
   const afterPlanned = new Set(plannedIds(after));
-  const pairs: Array<{ from: string; to: string; reason: string }> = [];
+  const pairs: Array<{ from: string; to: string }> = [];
   const limit = Math.min(before.items.length, after.items.length);
   for (let index = 0; index < limit; index++) {
     const prev = before.items[index];
@@ -58,20 +58,56 @@ function swapPairs(before: PlanDay, after: PlanDay): Array<{ from: string; to: s
     if (prev.session_id === next.session_id) continue;
     if (!beforePlanned.has(prev.session_id) || !afterPlanned.has(next.session_id)) continue;
     if (afterPlanned.has(prev.session_id) || beforePlanned.has(next.session_id)) continue;
-    pairs.push({ from: prev.session_id, to: next.session_id, reason: next.reason });
+    pairs.push({ from: prev.session_id, to: next.session_id });
   }
   return pairs;
 }
 
-function swapChangeText(sessionId: string, reason: string): string {
-  const { title, time, room } = sessionLabel(sessionId);
-  const roomPhrase = room ? ` in ${room}` : "";
+function goalTopicPhrase(goal: string): string | null {
+  const lower = goal.toLowerCase();
+  for (const theme of GOAL_THEMES) {
+    if (lower.includes(theme.label.toLowerCase())) return theme.label.toLowerCase();
+    if (lower.includes(theme.id.replace(/-/g, " "))) return theme.label.toLowerCase();
+  }
+  return null;
+}
+
+function checkedInGoal(before: PlanDay, options?: DiffPlanDayOptions): string | null {
+  const signal = options?.signal;
+  const goals = options?.profileGoals;
+  if (!signal || !goals?.length) return null;
+  const item = before.items.find((row) => row.session_id === signal.session_id);
+  if (!item) return null;
+  return goalForPlanReason(item.reason, goals);
+}
+
+function swapCheckinReason(signal: ReplanSignal | undefined, checkedInGoalText: string | null): string {
+  if (!signal) return "";
+  const topic = checkedInGoalText ? goalTopicPhrase(checkedInGoalText) : null;
+  const topicBit = topic ? `${topic} ` : "";
+  if (signal.moved_goal === "no") {
+    return `you said the last ${topicBit}session didn't help, so this tries a different angle`;
+  }
+  if (signal.worth_it === "no") {
+    return `you said the last ${topicBit}session wasn't worth it, so this tries a different angle`;
+  }
+  if (signal.worth_it === "mixed" || signal.moved_goal === "a_little") {
+    return topic ? `you wanted a different angle on ${topic}` : "you wanted a lighter rest of the day";
+  }
+  return "";
+}
+
+function swapChangeText(fromId: string, toId: string, options?: DiffPlanDayOptions, before?: PlanDay): string {
+  const from = sessionLabel(fromId);
+  const to = sessionLabel(toId);
+  const roomPhrase = to.room ? ` in ${to.room}` : "";
+  const timePhrase = to.time ? ` at ${to.time}` : "";
   const base =
-    title === "a later session"
-      ? `Swapped in a session for the rest of today`
-      : `Swapped in ${title}${atTimePhrase(time)}${roomPhrase}`;
-  const detail = trimReason(reason);
-  return withReasonClause(base, detail);
+    from.title === "a later session" || to.title === "a later session"
+      ? `Swapped a session for another in the rest of today`
+      : `Swapped ${from.title} for ${to.title}${timePhrase}${roomPhrase}`;
+  const reason = swapCheckinReason(options?.signal, before ? checkedInGoal(before, options) : null);
+  return withReasonClause(base, trimReason(reason));
 }
 
 function atTimePhrase(time: string): string {
@@ -121,7 +157,7 @@ export function diffPlanDay(before: PlanDay, after: PlanDay, options?: DiffPlanD
     changes.push({
       kind: "moved",
       session_id: pair.to,
-      text: swapChangeText(pair.to, pair.reason),
+      text: swapChangeText(pair.from, pair.to, options, before),
     });
   }
 

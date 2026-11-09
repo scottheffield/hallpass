@@ -4,6 +4,7 @@ import type { CheckIn, Plan } from "../../shared/types";
 import {
   buildFallbackReadout,
   enforceGoalEvidence,
+  formatNextStepLine,
   goalListsFromProfile,
   helpedSessionIds,
   isReadoutFinal,
@@ -248,6 +249,47 @@ describe("next steps from agenda ids", () => {
       2,
     );
     expect(picks.map((pick) => pick.session_id)).toEqual(["s-early", "s-late"]);
+  });
+
+  it("formats next step times and rooms for follow-up copy", () => {
+    const profile = fixtureProfile("test-attendee");
+    const plan = structuredClone(fixturePlan("test-attendee"));
+    plan.days = {
+      "2026-11-10": {
+        items: [
+          {
+            session_id: "s-incident",
+            status: "planned",
+            reason:
+              "SREs describe AI incident response stalling on missing context: a recent deploy, an owner change, an upstream dependency.",
+          },
+        ],
+        breaks: [],
+      },
+    };
+    const picks = pickNextStepSessions(
+      plan,
+      profile,
+      [1],
+      Date.parse("2026-11-10T12:00:00-07:00"),
+      new Map([
+        [
+          "s-incident",
+          {
+            title: "Debugging a Kubernetes incident",
+            start: "2026-11-10T15:40:00-07:00",
+            room: "Salt Palace | Level 1 | 151",
+          },
+        ],
+      ]),
+      new Set(["s-incident"]),
+    );
+    expect(picks[0]?.time).toBe("3:40 PM");
+    expect(picks[0]?.room).toBe("151 · Level 1 · Salt Palace");
+    const line = formatNextStepLine(picks[0]!, "still on context gaps");
+    expect(line).toContain(" at 3:40 PM");
+    expect(line).toContain(" in 151 · Level 1 · Salt Palace");
+    expect(line).not.toContain("|");
   });
 
   it("references only session ids that remain on the plan", () => {

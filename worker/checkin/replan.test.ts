@@ -74,9 +74,10 @@ describe("adjustDayAfterCheckin", () => {
     expect(after.items.length).toBe(before.items.length);
     const changes = diffPlanDay(before, after, {
       signal: { session_id: "1246200", worth_it: "mixed", moved_goal: "no" },
+      profileGoals: demoProfile.goals,
     });
     const moved = changes.find((change) => change.kind === "moved");
-    expect(moved?.text).toMatch(/^Swapped in /);
+    expect(moved?.text).toMatch(/^Swapped /);
     expect(changes.some((change) => change.kind === "removed" && change.session_id === "1250770")).toBe(false);
   });
 });
