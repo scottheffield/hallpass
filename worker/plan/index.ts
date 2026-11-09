@@ -29,7 +29,7 @@ function pinnedFrom(day: PlanDay | undefined): PlanItem[] {
 function keptBeforeReplen(fromIso: string, items: PlanItem[]): PlanItem[] {
   const fromMs = Date.parse(fromIso);
   return items.filter((item) => {
-    if (item.pinned || item.status === "done") return true;
+    if (item.pinned || item.status === "done" || item.status === "left_early") return true;
     const session = sessionById(item.session_id);
     if (!session) return false;
     const endMs = Date.parse(session.end);

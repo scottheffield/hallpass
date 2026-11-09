@@ -139,8 +139,19 @@ export interface CheckInRequest {
   worth_it: WorthIt;
   moved_goal: MovedGoal;
   note?: string;
+  /** Feedback after an early departure; keeps the plan item as left_early, not done. */
+  left_early?: boolean;
   /** Original check-in time from an offline queue flush. Server accepts only when in the past. */
   at?: string;
+}
+
+export interface LeaveSessionRequest {
+  session_id: string;
+}
+
+export interface LeaveSessionResponse {
+  plan: Plan;
+  stub?: boolean;
 }
 
 export interface CheckInResponse {

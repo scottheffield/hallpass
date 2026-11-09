@@ -39,6 +39,8 @@ export interface CheckInScreenProps {
   onFinished?: (result: { planUpdated: boolean }) => void;
   /** When set, focus returns here on close if the element is still connected. */
   returnFocusRef?: RefObject<HTMLElement | null>;
+  /** Keeps feedback tied to an early departure, not a full session. */
+  earlyDeparture?: boolean;
 }
 
 type Phase = "form" | "saved" | "proposal" | "submitting" | "applying";
@@ -61,6 +63,7 @@ export function CheckInScreen({
   onClose,
   onFinished,
   returnFocusRef,
+  earlyDeparture = false,
 }: CheckInScreenProps) {
   const sheetInstanceId = useId();
   const proposalHeadingId = checkInProposalHeadingId(sheetInstanceId);
@@ -97,7 +100,7 @@ export function CheckInScreen({
     setProposal(null);
   }, [open, sessionId]);
 
-  const payload = buildCheckInRequest(sessionId, worthIt, movedGoal, note);
+  const payload = buildCheckInRequest(sessionId, worthIt, movedGoal, note, earlyDeparture);
   const isSubmitting = phase === "submitting";
   const noteTooLong = note.length > NOTE_MAX;
   const canSave = payload !== null && phase === "form" && !noteTooLong;

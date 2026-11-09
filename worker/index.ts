@@ -4,6 +4,7 @@ import { apiError, HttpError } from "./lib/http";
 import { agent } from "./routes/agent";
 import { caseForAttending } from "./routes/case";
 import { applyProposal, checkin } from "./routes/checkin";
+import { leaveSession } from "./routes/leave";
 import { demoLoad } from "./routes/demo";
 import { health } from "./routes/health";
 import { insights } from "./routes/insights";
@@ -26,6 +27,7 @@ const routes: Record<string, Handler> = {
   "POST /api/plan/get": planGet,
   "POST /api/plan/edit": planEdit,
   "POST /api/checkin": checkin,
+  "POST /api/session/leave": leaveSession,
   "POST /api/plan/apply": applyProposal,
   "POST /api/case": caseForAttending,
   "POST /api/readout": readout,

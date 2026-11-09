@@ -8,6 +8,7 @@ export function todaySessionStatusDetail(
   item: Pick<PlanItem, "status">,
 ): string | undefined {
   if (item.status === "done") return "Status: Done";
+  if (item.status === "left_early") return "Status: Left early";
   if (item.status === "skipped") return "Status: Skipped";
   return undefined;
 }

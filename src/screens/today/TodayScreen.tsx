@@ -21,6 +21,7 @@ import {
 } from "./timeline";
 import { presentPlanReason } from "../plan/reason";
 import { TODAY_PLAN_HEADING_ID, todaySessionStatusDetail } from "./accessibility";
+import { sessionBlockInProgress } from "./inProgress";
 
 export interface TodayScreenProps {
   onDirections?: (sessionId: string) => void;
@@ -30,6 +31,8 @@ export interface TodayScreenProps {
   planUpdated?: boolean;
   onDismissPlanUpdate?: () => void;
   onBuildPlan?: () => void;
+  onLeaveSession?: (sessionId: string) => void;
+  leaveSessionBusy?: boolean;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -50,6 +53,8 @@ export function TodayScreen({
   planUpdated = false,
   onDismissPlanUpdate,
   onBuildPlan,
+  onLeaveSession,
+  leaveSessionBusy = false,
 }: TodayScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [sessions, setSessions] = useState<Awaited<ReturnType<typeof loadAgenda>>["sessions"]>([]);
@@ -99,7 +104,11 @@ export function TodayScreen({
     [plan, dayKey, timeline, now, sessions],
   );
 
-  const next = useMemo(() => nextPlannedSession(timeline, now.getTime()), [timeline, now]);
+  const nowMs = now.getTime();
+  const next = useMemo(() => nextPlannedSession(timeline, nowMs), [timeline, nowMs]);
+  const showLeaveSession = Boolean(
+    next && onLeaveSession && sessionBlockInProgress(next.block, nowMs),
+  );
   const nextPresented = useMemo(
     () => (next ? presentPlanReason(next.block.item.reason) : null),
     [next],
@@ -230,6 +239,15 @@ export function TodayScreen({
                   <Button variant="primary" onClick={() => onDirections(next.block.session.id)}>
                     Get directions
                     <span aria-hidden="true">→</span>
+                  </Button>
+                ) : null}
+                {showLeaveSession ? (
+                  <Button
+                    variant="secondary"
+                    disabled={leaveSessionBusy}
+                    onClick={() => onLeaveSession?.(next.block.session.id)}
+                  >
+                    Leave session
                   </Button>
                 ) : null}
                 {onChangeSession ? (

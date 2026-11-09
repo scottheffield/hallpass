@@ -10,6 +10,7 @@ describe("TODAY_PLAN_HEADING_ID", () => {
 describe("todaySessionStatusDetail", () => {
   it("labels done and skipped with a status prefix", () => {
     expect(todaySessionStatusDetail({ status: "done" })).toBe("Status: Done");
+    expect(todaySessionStatusDetail({ status: "left_early" })).toBe("Status: Left early");
     expect(todaySessionStatusDetail({ status: "skipped" })).toBe("Status: Skipped");
   });
 
