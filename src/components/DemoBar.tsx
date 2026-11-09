@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { EVENT_DAYS, EVENT_OFFSET, EVENT_TIME_ZONE, type EventDay } from "../../shared/event";
 import type { IsoDateTime } from "../../shared/types";
 import {
@@ -10,8 +10,8 @@ import {
 } from "../lib/clock";
 import type { DemoLoadResponse } from "../../shared/api";
 import { post } from "../lib/api";
+import { clearDemoAttendeeLocalStorage } from "../lib/reset";
 import { Button } from "../ui/Button";
-import { HelloMark } from "../ui/HelloMark";
 import { Stack } from "../ui/Stack";
 import {
   buildDemoIso,
@@ -58,8 +58,22 @@ export function DemoBar() {
   const [loadingDemo, setLoadingDemo] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [startOverOpen, setStartOverOpen] = useState(false);
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const wasExpandedRef = useRef(expanded);
 
   const summaryLabel = buildDemoBarSummaryLabel(picker.iso);
+
+  const collapsePanel = useCallback(() => {
+    setExpanded(false);
+  }, []);
+
+  useEffect(() => {
+    if (wasExpandedRef.current && !expanded) {
+      toggleRef.current?.focus();
+    }
+    wasExpandedRef.current = expanded;
+  }, [expanded]);
 
   const loadDemoAttendee = useCallback(async () => {
     setDemoError(null);
@@ -81,6 +95,15 @@ export function DemoBar() {
     setDemoNow(iso);
     setPicker({ day, time, iso });
     setStatus(formatDemoNowLabel(iso));
+  }, []);
+
+  const confirmStartOver = useCallback(() => {
+    try {
+      clearDemoAttendeeLocalStorage(localStorage);
+    } catch {
+      /* private mode */
+    }
+    window.location.reload();
   }, []);
 
   useEffect(() => {
@@ -111,6 +134,7 @@ export function DemoBar() {
   return (
     <Stack gap="sm">
       <button
+        ref={toggleRef}
         type="button"
         className="flex w-full min-h-10 items-center rounded-xl border border-line bg-canvas px-3 py-2 text-left text-sm font-semibold text-ink"
         aria-expanded={expanded}
@@ -123,13 +147,10 @@ export function DemoBar() {
       {expanded ? (
         <Panel id={panelId}>
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-2">
-              <HelloMark compact />
-              <p className="text-sm leading-snug text-muted" role="status" aria-live="polite">
-                <span className="font-semibold text-ink">Demo time</span> {status}. Times are Mountain Time (
-                <abbr title={EVENT_TIME_ZONE}>MT</abbr>, {EVENT_OFFSET}).
-              </p>
-            </div>
+            <p className="min-w-0 text-sm leading-snug text-muted" role="status" aria-live="polite">
+              <span className="font-semibold text-ink">Demo time</span> {status}. Times are Mountain Time (
+              <abbr title={EVENT_TIME_ZONE}>MT</abbr>, {EVENT_OFFSET}).
+            </p>
             {stored ? null : (
               <p className="text-xs text-muted">Using default start until you pick a time.</p>
             )}
@@ -150,6 +171,7 @@ export function DemoBar() {
                       onClick={() => {
                         if (day === picker.day) return;
                         commit(day, picker.time);
+                        collapsePanel();
                       }}
                     >
                       <span className="sr-only">{formatDayLong(day)}</span>
@@ -163,14 +185,33 @@ export function DemoBar() {
 
           <CardRow>
             <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-              <Button
-                type="button"
-                variant="secondary"
-                disabled={loadingDemo}
-                onClick={() => void loadDemoAttendee()}
-              >
-                {loadingDemo ? "Loading demo attendee…" : "Load demo attendee"}
-              </Button>
+              {startOverOpen ? (
+                <div className="flex flex-col gap-2" role="group" aria-label="Start over confirmation">
+                  <p className="text-sm text-ink">Start over? This clears this browser&apos;s attendee.</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" variant="secondary" onClick={confirmStartOver}>
+                      Start over
+                    </Button>
+                    <Button type="button" variant="quiet" onClick={() => setStartOverOpen(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={loadingDemo}
+                    onClick={() => void loadDemoAttendee()}
+                  >
+                    {loadingDemo ? "Loading demo attendee…" : "Load demo attendee"}
+                  </Button>
+                  <Button type="button" variant="quiet" disabled={loadingDemo} onClick={() => setStartOverOpen(true)}>
+                    Start over
+                  </Button>
+                </div>
+              )}
               {demoError ? (
                 <p className="text-sm text-error" role="alert">
                   {demoError}
@@ -191,6 +232,7 @@ export function DemoBar() {
                 value={picker.time}
                 className="min-h-12 w-full max-w-[11rem] rounded-xl border-2 border-line bg-surface px-3 text-base text-ink"
                 onChange={(event) => commit(picker.day, event.target.value)}
+                onBlur={() => collapsePanel()}
               />
             </div>
           </CardRow>
