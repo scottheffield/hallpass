@@ -465,7 +465,7 @@ export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProp
                                     setDetail(block);
                                   }}
                                 >
-                                  Details and alternatives
+                                  Change this session
                                 </Button>
                               ) : null}
                             </SessionCard>
@@ -520,22 +520,16 @@ export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProp
               reason={detailPresented.reason}
               headingLevel={3}
             />
-            {detailBullets.length > 0 ? (
-              <>
-                <h3 className="font-display text-lg font-semibold text-ink">Alternatives and clashes</h3>
-                <ChangeList items={detailBullets} />
-              </>
-            ) : (
-              <p className="text-sm text-muted">No alternative pick or clash note for this session.</p>
-            )}
-
-            {editError ? (
-              <Notice tone="error" title="Could not update plan">
-                <p>{editError}</p>
-              </Notice>
-            ) : null}
-
-            <section aria-label="Change this session" className="flex flex-col gap-3">
+            <section
+              aria-labelledby="plan-change-session-heading"
+              className="flex flex-col gap-3 border-b border-line pb-4"
+            >
+              <h3
+                id="plan-change-session-heading"
+                className="font-display text-lg font-semibold text-ink"
+              >
+                Change this session
+              </h3>
               {detail.item.pinned ? (
                 <p className="text-sm font-semibold text-ink">This session is kept on your plan.</p>
               ) : (
@@ -552,7 +546,7 @@ export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProp
                 disabled={isEditing}
                 onClick={() => void runEdit(detail.session.id, "swap")}
               >
-                Find another
+                Swap for another session
               </Button>
               <Button
                 variant="quiet"
@@ -562,6 +556,21 @@ export function PlanScreen({ onCase, onPlanChange, onOpenToday }: PlanScreenProp
                 Remove from plan
               </Button>
             </section>
+
+            {editError ? (
+              <Notice tone="error" title="Could not update plan">
+                <p>{editError}</p>
+              </Notice>
+            ) : null}
+
+            {detailBullets.length > 0 ? (
+              <>
+                <h3 className="font-display text-lg font-semibold text-ink">Why and alternatives</h3>
+                <ChangeList items={detailBullets} />
+              </>
+            ) : (
+              <p className="text-sm text-muted">No alternative pick or clash note for this session.</p>
+            )}
           </Stack>
         ) : null}
       </Sheet>
