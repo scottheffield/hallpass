@@ -1,31 +1,14 @@
-const SHELL_CACHE = "hallpass-shell-v1";
-const RUNTIME_CACHE = "hallpass-runtime-v1";
-
-const PRECACHE_URLS = [
-  "/",
-  "/index.html",
-  "/agenda.json",
-  "/rooms.json",
-  "/floor/salt-palace-flat-map.pdf",
-];
+const RUNTIME_CACHE = "hallpass-runtime-v2";
 
 self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(SHELL_CACHE).then((cache) =>
-      cache.addAll(PRECACHE_URLS).catch(() => undefined),
-    ),
-  );
+  event.waitUntil(caches.open(RUNTIME_CACHE));
   self.skipWaiting();
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((key) => key !== SHELL_CACHE && key !== RUNTIME_CACHE)
-          .map((key) => caches.delete(key)),
-      ),
+      Promise.all(keys.filter((key) => key !== RUNTIME_CACHE).map((key) => caches.delete(key))),
     ),
   );
   self.clients.claim();
@@ -43,6 +26,34 @@ function networkFirst(request) {
     .catch(() => caches.match(request));
 }
 
+function cacheFirstRuntime(request) {
+  return caches.match(request).then((cached) => {
+    if (cached) return cached;
+    return fetch(request).then((response) => {
+      if (response.ok) {
+        const copy = response.clone();
+        void caches.open(RUNTIME_CACHE).then((cache) => cache.put(request, copy));
+      }
+      return response;
+    });
+  });
+}
+
+function isHtmlNavigation(request) {
+  return (
+    request.mode === "navigate" ||
+    (request.method === "GET" && request.headers.get("accept")?.includes("text/html"))
+  );
+}
+
+function isStaticDataOrFloor(pathname) {
+  return (
+    pathname === "/agenda.json" ||
+    pathname === "/rooms.json" ||
+    pathname.startsWith("/floor/")
+  );
+}
+
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
@@ -54,16 +65,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  if (url.pathname.startsWith("/assets/")) {
+    event.respondWith(cacheFirstRuntime(event.request));
+    return;
+  }
+
   if (
+    isHtmlNavigation(event.request) ||
     url.pathname === "/" ||
     url.pathname === "/index.html" ||
-    url.pathname === "/agenda.json" ||
-    url.pathname === "/rooms.json" ||
-    url.pathname.startsWith("/floor/")
+    isStaticDataOrFloor(url.pathname)
   ) {
-    event.respondWith(
-      caches.match(event.request).then((cached) => cached ?? networkFirst(event.request)),
-    );
+    event.respondWith(networkFirst(event.request));
     return;
   }
 

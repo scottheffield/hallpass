@@ -11,6 +11,7 @@ import {
   offlineCheckInResponse,
   readCachedPlan,
   readCachedProfile,
+  flushCheckInQueueSoon,
   setCheckInSender,
   upsertQueuedCheckIn,
 } from "./offline";
@@ -28,15 +29,17 @@ export class ApiFailure extends Error {
 export async function post<T>(path: string, body: unknown, init: RequestInit = {}): Promise<T> {
   if (path === "/api/checkin" && isCheckInRequest(body)) {
     if (!isOnline()) {
-      upsertQueuedCheckIn(body);
-      return offlineCheckInResponse(body) as T;
+      const queued = upsertQueuedCheckIn(body);
+      return offlineCheckInResponse(queued.body) as T;
     }
     try {
-      return await deliverCheckIn(body) as T;
+      const response = await deliverCheckIn(body);
+      flushCheckInQueueSoon();
+      return response as T;
     } catch (err) {
       if (isNetworkFailure(err)) {
-        upsertQueuedCheckIn(body);
-        return offlineCheckInResponse(body) as T;
+        const queued = upsertQueuedCheckIn(body);
+        return offlineCheckInResponse(queued.body) as T;
       }
       throw err;
     }
@@ -58,11 +61,14 @@ export async function post<T>(path: string, body: unknown, init: RequestInit = {
   const result = await request<T>(path, { ...init, method: "POST", body: JSON.stringify(body) });
   if (path === "/api/plan/get") cachePlanResponse(result as PlanResponse);
   if (path === "/api/profile/get") cacheProfileResponse(result as ProfileResponse);
+  flushCheckInQueueSoon();
   return result;
 }
 
 export async function get<T>(path: string, init: RequestInit = {}): Promise<T> {
-  return request<T>(path, { ...init, method: "GET" });
+  const result = await request<T>(path, { ...init, method: "GET" });
+  flushCheckInQueueSoon();
+  return result;
 }
 
 async function deliverCheckIn(body: CheckInRequest): Promise<CheckInResponse> {

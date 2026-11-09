@@ -139,6 +139,8 @@ export interface CheckInRequest {
   worth_it: WorthIt;
   moved_goal: MovedGoal;
   note?: string;
+  /** Original check-in time from an offline queue flush. Server accepts only when in the past. */
+  at?: string;
 }
 
 export interface CheckInResponse {

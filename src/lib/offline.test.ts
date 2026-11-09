@@ -30,6 +30,8 @@ describe("src/lib/offline check-in queue", () => {
       dispatchEvent: () => true,
       addEventListener: () => undefined,
     });
+    vi.stubGlobal("setInterval", () => 0);
+    vi.stubGlobal("clearInterval", () => undefined);
     setCheckInSender(async () => {});
   });
 
@@ -60,6 +62,13 @@ describe("src/lib/offline check-in queue", () => {
     const queue = listQueuedCheckIns();
     expect(queue).toHaveLength(1);
     expect(queue[0]?.body.worth_it).toBe("mixed");
+  });
+
+  it("stores the original conference time on queued bodies", () => {
+    const queuedAt = "2026-11-10T10:05:00-07:00";
+    const entry = upsertQueuedCheckIn(sample, queuedAt);
+    expect(entry.body.at).toBe(queuedAt);
+    expect(listQueuedCheckIns()[0]?.body.at).toBe(queuedAt);
   });
 
   it("flushes in order and stops on the first failure", async () => {

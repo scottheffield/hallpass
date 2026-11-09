@@ -9,6 +9,7 @@ export const OFFLINE_CHECKIN_SAVED_COPY =
 const CACHE_PLAN_KEY = "hallpass.cache.plan";
 const CACHE_PROFILE_KEY = "hallpass.cache.profile";
 const CHECKIN_QUEUE_KEY = "hallpass.checkin.queue";
+const QUEUE_FLUSH_MS = 30_000;
 
 const WORTH_IT: readonly WorthIt[] = ["yes", "mixed", "no"];
 const MOVED_GOAL: readonly MovedGoal[] = ["yes", "a_little", "no"];
@@ -29,6 +30,8 @@ type CheckInSender = (body: CheckInRequest) => Promise<void>;
 
 let checkInSender: CheckInSender | null = null;
 let syncStarted = false;
+let flushing = false;
+let flushTimer: ReturnType<typeof setInterval> | null = null;
 
 /** Shared browser online flag for the corner agent (Brief 21). */
 export function isOnline(): boolean {
@@ -47,6 +50,16 @@ export function checkInQueueId(sessionId: string, attendeeId = getAttendeeId()):
   return `${attendeeId}:${sessionId.trim()}`;
 }
 
+const OFFSET_ISO =
+  /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.(\d{1,3}))?([+-])(\d{2}):(\d{2})$/;
+
+export function isOffsetIsoDateTime(value: unknown): value is IsoDateTime {
+  if (typeof value !== "string") return false;
+  const trimmed = value.trim();
+  if (!OFFSET_ISO.test(trimmed)) return false;
+  return Number.isFinite(Date.parse(trimmed));
+}
+
 export function isCheckInRequest(body: unknown): body is CheckInRequest {
   if (!body || typeof body !== "object") return false;
   const candidate = body as CheckInRequest;
@@ -58,6 +71,7 @@ export function isCheckInRequest(body: unknown): body is CheckInRequest {
     if (typeof candidate.note !== "string") return false;
     if (candidate.note.length > 280) return false;
   }
+  if (candidate.at !== undefined && !isOffsetIsoDateTime(candidate.at)) return false;
   return true;
 }
 
@@ -117,15 +131,27 @@ function writeQueue(queue: QueuedCheckIn[]): void {
   writeJson(CHECKIN_QUEUE_KEY, queue);
 }
 
+function payloadForQueue(body: CheckInRequest, queuedAt: IsoDateTime): CheckInRequest {
+  const payload: CheckInRequest = {
+    session_id: body.session_id,
+    worth_it: body.worth_it,
+    moved_goal: body.moved_goal,
+    at: queuedAt,
+  };
+  if (body.note) payload.note = body.note;
+  return payload;
+}
+
 /** Upserts by queue id so the same session check-in is not duplicated. */
 export function upsertQueuedCheckIn(body: CheckInRequest, queuedAt = conferenceIsoFromDate(new Date())): QueuedCheckIn {
   const id = checkInQueueId(body.session_id);
-  const entry: QueuedCheckIn = { id, body, queuedAt };
+  const entry: QueuedCheckIn = { id, body: payloadForQueue(body, queuedAt), queuedAt };
   const queue = readQueue().filter((item) => item.id !== id);
   queue.push(entry);
   queue.sort((a, b) => a.queuedAt.localeCompare(b.queuedAt));
   writeQueue(queue);
   notifyCheckInQueued();
+  updateFlushTimer();
   return entry;
 }
 
@@ -135,9 +161,10 @@ export function listQueuedCheckIns(): QueuedCheckIn[] {
 
 export function removeQueuedCheckIn(id: string): void {
   writeQueue(readQueue().filter((item) => item.id !== id));
+  updateFlushTimer();
 }
 
-export function offlineCheckInResponse(body: CheckInRequest, at = conferenceIsoFromDate(new Date())): CheckInResponse {
+export function offlineCheckInResponse(body: CheckInRequest, at = body.at ?? conferenceIsoFromDate(new Date())): CheckInResponse {
   const checkin: CheckIn = {
     attendee_id: getAttendeeId(),
     session_id: body.session_id.trim(),
@@ -158,18 +185,46 @@ export function isNetworkFailure(err: unknown): boolean {
 }
 
 export async function flushCheckInQueue(): Promise<number> {
-  if (!checkInSender || !isOnline()) return 0;
+  if (flushing || !checkInSender || !isOnline()) return 0;
+  if (listQueuedCheckIns().length === 0) return 0;
+  flushing = true;
   let sent = 0;
-  for (const item of listQueuedCheckIns()) {
-    try {
-      await checkInSender(item.body);
-      removeQueuedCheckIn(item.id);
-      sent += 1;
-    } catch {
-      break;
+  try {
+    for (const item of listQueuedCheckIns()) {
+      try {
+        await checkInSender(item.body);
+        removeQueuedCheckIn(item.id);
+        sent += 1;
+      } catch {
+        break;
+      }
     }
+  } finally {
+    flushing = false;
+    updateFlushTimer();
   }
   return sent;
+}
+
+/** Fire-and-forget flush after any successful network round-trip. */
+export function flushCheckInQueueSoon(): void {
+  if (listQueuedCheckIns().length === 0) return;
+  void flushCheckInQueue();
+}
+
+function updateFlushTimer(): void {
+  if (typeof window === "undefined") return;
+  const hasQueue = listQueuedCheckIns().length > 0;
+  if (!hasQueue && flushTimer !== null) {
+    clearInterval(flushTimer);
+    flushTimer = null;
+    return;
+  }
+  if (hasQueue && flushTimer === null) {
+    flushTimer = setInterval(() => {
+      void flushCheckInQueue();
+    }, QUEUE_FLUSH_MS);
+  }
 }
 
 function notifyCheckInQueued(): void {
@@ -189,5 +244,9 @@ export function startOfflineSync(): void {
     void flushCheckInQueue();
   };
   window.addEventListener("online", run);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") run();
+  });
+  updateFlushTimer();
   if (isOnline()) run();
 }
