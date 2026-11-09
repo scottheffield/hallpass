@@ -9,16 +9,40 @@ import { HttpError } from "../lib/http";
 const FALLBACK_LABEL = "Summary built from your check-ins (AI unavailable).";
 const NOT_ENOUGH = "Not enough feedback to tell";
 
-export function helpedSessionIds(checkins: CheckIn[]): string[] {
+export function helpedSessionIds(checkins: CheckIn[], resolvableSessionIds: ReadonlySet<string>): string[] {
   const seen = new Set<string>();
   const ids: string[] = [];
   for (const row of checkins) {
     if (row.moved_goal !== "yes" && row.moved_goal !== "a_little") continue;
+    if (!resolvableSessionIds.has(row.session_id)) continue;
     if (seen.has(row.session_id)) continue;
     seen.add(row.session_id);
     ids.push(row.session_id);
   }
   return ids;
+}
+
+export function hasPositiveMovedGoal(checkins: CheckIn[]): boolean {
+  return checkins.some((c) => c.moved_goal === "yes" || c.moved_goal === "a_little");
+}
+
+export function hasNegativeMovedGoal(checkins: CheckIn[]): boolean {
+  return checkins.some((c) => c.moved_goal === "no");
+}
+
+/** Goals lists stay empty when check-ins do not support hit/miss claims. */
+export function enforceGoalEvidence(
+  checkins: CheckIn[],
+  goals_hit: string[],
+  goals_missed: string[],
+): { goals_hit: string[]; goals_missed: string[] } {
+  let hit = goals_hit;
+  let missed = goals_missed;
+  if (!hasPositiveMovedGoal(checkins)) hit = [];
+  if (!hasNegativeMovedGoal(checkins)) missed = [];
+  if (hit.length === 0) return { goals_hit: hit, goals_missed: missed };
+  const hitSet = new Set(hit);
+  return { goals_hit: hit, goals_missed: missed.filter((g) => !hitSet.has(g)) };
 }
 
 /** Latest end time among planned sessions and breaks. Uses Date.parse. */
@@ -215,10 +239,11 @@ export function buildFallbackReadout(input: ReadoutInputs): Readout {
   const as_of = toConferenceIso(asOf);
   const asOfMs = Date.parse(as_of);
   const final = Number.isFinite(asOfMs) && isReadoutFinal(asOfMs, plan, sessionEndById);
-  const helped_sessions = helpedSessionIds(checkins);
+  const resolvable = new Set(sessionTextById.keys());
+  const helped_sessions = helpedSessionIds(checkins, resolvable);
 
-  const goals_hit: string[] = [];
-  const goals_missed: string[] = [];
+  let goals_hit: string[] = [];
+  let goals_missed: string[] = [];
   const gaps: string[] = [FALLBACK_LABEL];
 
   if (checkins.length === 0) {
@@ -236,6 +261,7 @@ export function buildFallbackReadout(input: ReadoutInputs): Readout {
       else if (negative) goals_missed.push(goal);
       else gaps.push(`${NOT_ENOUGH}: ${goal.replace(/\.$/, "")}`);
     }
+    ({ goals_hit, goals_missed } = enforceGoalEvidence(checkins, goals_hit, goals_missed));
   }
 
   const gap_themes = inferGapThemes(profile, goals_missed);
@@ -291,11 +317,17 @@ function trimLines(values: unknown, max: number, maxLen: number): string[] {
   return out;
 }
 
-function validateClaudeReadout(draft: ClaudeReadoutDraft, profile: Profile, helped_sessions: string[]): Omit<Readout, "attendee_id" | "as_of" | "final"> | null {
-  const goals_hit = alignGoals(trimLines(draft.goals_hit, 3, 400), profile.goals);
-  const goals_missed = alignGoals(trimLines(draft.goals_missed, 3, 400), profile.goals);
-  const hitSet = new Set(goals_hit);
-  const goals_missed_deduped = goals_missed.filter((g) => !hitSet.has(g));
+function validateClaudeReadout(
+  draft: ClaudeReadoutDraft,
+  profile: Profile,
+  checkins: CheckIn[],
+  helped_sessions: string[],
+): Omit<Readout, "attendee_id" | "as_of" | "final"> | null {
+  let { goals_hit, goals_missed } = enforceGoalEvidence(
+    checkins,
+    alignGoals(trimLines(draft.goals_hit, 3, 400), profile.goals),
+    alignGoals(trimLines(draft.goals_missed, 3, 400), profile.goals),
+  );
 
   let gaps = trimLines(draft.gaps, 6, 500);
   if (gaps.length === 0) gaps = ["Some goals still lack enough session feedback to judge."];
@@ -310,7 +342,7 @@ function validateClaudeReadout(draft: ClaudeReadoutDraft, profile: Profile, help
 
   return {
     goals_hit,
-    goals_missed: goals_missed_deduped,
+    goals_missed,
     helped_sessions,
     gaps,
     gap_themes,
@@ -330,11 +362,13 @@ function checkinSummary(checkins: CheckIn[], sessionTextById: ReadonlyMap<string
 async function sessionMaps(
   env: Env,
   plan: Plan,
+  checkins: CheckIn[],
 ): Promise<{ sessionTextById: Map<string, string>; sessionEndById: Map<string, string> }> {
   const ids = new Set<string>();
   for (const day of Object.values(plan.days)) {
     for (const item of day.items) ids.add(item.session_id);
   }
+  for (const row of checkins) ids.add(row.session_id);
   const sessionTextById = new Map<string, string>();
   const sessionEndById = new Map<string, string>();
   for (const id of ids) {
@@ -360,7 +394,7 @@ export async function generateReadout(
   checkins: CheckIn[],
   asOf: Date,
 ): Promise<GeneratedReadout> {
-  const { sessionTextById, sessionEndById } = await sessionMaps(env, plan);
+  const { sessionTextById, sessionEndById } = await sessionMaps(env, plan, checkins);
   const baseInput: ReadoutInputs = {
     attendeeId,
     profile,
@@ -371,7 +405,7 @@ export async function generateReadout(
     sessionEndById,
   };
 
-  const helped_sessions = helpedSessionIds(checkins);
+  const helped_sessions = helpedSessionIds(checkins, new Set(sessionTextById.keys()));
   const as_of: IsoDateTime = toConferenceIso(asOf);
   const asOfMs = Date.parse(as_of);
   const final = Number.isFinite(asOfMs) && isReadoutFinal(asOfMs, plan, sessionEndById);
@@ -407,7 +441,7 @@ export async function generateReadout(
       maxTokens: 900,
       timeoutMs: 15_000,
     });
-    const validated = validateClaudeReadout(draft, profile, helped_sessions);
+    const validated = validateClaudeReadout(draft, profile, checkins, helped_sessions);
     if (!validated) {
       return { readout: buildFallbackReadout(baseInput), stub: true };
     }

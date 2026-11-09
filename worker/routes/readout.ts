@@ -7,19 +7,27 @@ import { generateReadout } from "../summary/readout";
 import { now } from "../lib/clock";
 import { readObject } from "./body";
 
-/** Builds a readout from stored profile, plan and check-ins. Saves to the readouts index. */
+export function shouldPersistReadout(storedProfile: unknown, storedPlan: unknown): boolean {
+  return Boolean(storedProfile && storedPlan);
+}
+
+/** Builds a readout from stored profile, plan and check-ins. Saves only when both came from the store. */
 export async function readout(request: Request, env: Env, ctx: ExecutionContext, attendeeId: string): Promise<Response> {
   void ctx;
   await readObject(request);
 
-  const profile = (await getProfile(env, attendeeId)) ?? fixtureProfile(attendeeId);
+  const storedProfile = await getProfile(env, attendeeId);
+  const storedPlan = await getPlan(env, attendeeId);
+  const profile = storedProfile ?? fixtureProfile(attendeeId);
   profile.attendee_id = attendeeId;
-  const plan = (await getPlan(env, attendeeId)) ?? fixturePlan(attendeeId);
+  const plan = storedPlan ?? fixturePlan(attendeeId);
   plan.attendee_id = attendeeId;
   const checkins = await listCheckIns(env, attendeeId);
 
   const { readout: generated, stub } = await generateReadout(env, attendeeId, profile, plan, checkins, now(request));
-  await putReadout(env, generated);
+  if (shouldPersistReadout(storedProfile, storedPlan)) {
+    await putReadout(env, generated);
+  }
 
   const response: ReadoutResponse = { readout: generated };
   if (stub) response.stub = true;

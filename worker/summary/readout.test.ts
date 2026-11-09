@@ -3,6 +3,7 @@ import { fixturePlan, fixtureProfile } from "../lib/fixtures";
 import type { CheckIn, Plan } from "../../shared/types";
 import {
   buildFallbackReadout,
+  enforceGoalEvidence,
   helpedSessionIds,
   isReadoutFinal,
   lastPlannedBlockEndMs,
@@ -18,6 +19,8 @@ const sessionEnd = new Map<string, string>([
   ["s-incident", "2026-11-10T16:00:00-07:00"],
   ["s-inference", "2026-11-12T14:00:00-07:00"],
 ]);
+
+const resolvable = new Set(sessionText.keys());
 
 function planWithSessions(): Plan {
   const plan = structuredClone(fixturePlan("test-attendee"));
@@ -41,7 +44,36 @@ describe("helpedSessionIds", () => {
       { attendee_id: "a", session_id: "s2", at: "2026-11-10T13:00:00-07:00", worth_it: "mixed", moved_goal: "a_little" },
       { attendee_id: "a", session_id: "s3", at: "2026-11-10T14:00:00-07:00", worth_it: "no", moved_goal: "no" },
     ];
-    expect(helpedSessionIds(checkins)).toEqual(["s1", "s2"]);
+    const known = new Set(["s1", "s2", "s3"]);
+    expect(helpedSessionIds(checkins, known)).toEqual(["s1", "s2"]);
+  });
+
+  it("drops session ids that do not resolve on the agenda", () => {
+    const checkins: CheckIn[] = [
+      { attendee_id: "a", session_id: "s-incident", at: "2026-11-10T12:00:00-07:00", worth_it: "yes", moved_goal: "yes" },
+      { attendee_id: "a", session_id: "unknown-id", at: "2026-11-10T13:00:00-07:00", worth_it: "yes", moved_goal: "yes" },
+    ];
+    expect(helpedSessionIds(checkins, resolvable)).toEqual(["s-incident"]);
+  });
+});
+
+describe("enforceGoalEvidence", () => {
+  it("clears goals_hit when there are no positive moved_goal check-ins", () => {
+    const checkins: CheckIn[] = [
+      { attendee_id: "a", session_id: "s1", at: "2026-11-10T12:00:00-07:00", worth_it: "no", moved_goal: "no" },
+    ];
+    const result = enforceGoalEvidence(checkins, ["goal one"], ["goal one"]);
+    expect(result.goals_hit).toEqual([]);
+    expect(result.goals_missed).toEqual(["goal one"]);
+  });
+
+  it("clears goals_missed when there are no moved_goal no check-ins", () => {
+    const checkins: CheckIn[] = [
+      { attendee_id: "a", session_id: "s1", at: "2026-11-10T12:00:00-07:00", worth_it: "yes", moved_goal: "yes" },
+    ];
+    const result = enforceGoalEvidence(checkins, [], ["goal one"]);
+    expect(result.goals_hit).toEqual([]);
+    expect(result.goals_missed).toEqual([]);
   });
 });
 
@@ -110,5 +142,30 @@ describe("buildFallbackReadout", () => {
     expect(readout.goals_hit.length).toBeGreaterThan(0);
     expect(readout.followups[0]?.length).toBeGreaterThan(20);
     expect((readout.gap_themes ?? []).every((id) => typeof id === "string")).toBe(true);
+  });
+
+  it("leaves goals_hit empty when every check-in is moved_goal no", () => {
+    const profile = fixtureProfile("test-attendee");
+    const plan = planWithSessions();
+    const checkins: CheckIn[] = [
+      {
+        attendee_id: "test-attendee",
+        session_id: "s-incident",
+        at: "2026-11-10T16:30:00-07:00",
+        worth_it: "no",
+        moved_goal: "no",
+      },
+    ];
+    const readout = buildFallbackReadout({
+      attendeeId: "test-attendee",
+      profile,
+      plan,
+      checkins,
+      asOf: new Date("2026-11-10T18:00:00-07:00"),
+      sessionTextById: sessionText,
+      sessionEndById: sessionEnd,
+    });
+    expect(readout.goals_hit).toEqual([]);
+    expect(readout.helped_sessions).toEqual([]);
   });
 });
