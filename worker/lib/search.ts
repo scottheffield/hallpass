@@ -93,10 +93,31 @@ interface ElasticSearchResponse {
   hits?: { hits?: ElasticSearchHit[] };
 }
 
-function fallbackMessage(agenda: LoadedAgenda): string {
+export type ElasticSearchFallbackReason = "error" | "timeout" | "empty";
+
+function agendaLabel(agenda: LoadedAgenda): string {
+  return agenda.source === "fixture" ? "the bundled agenda sample" : "the agenda";
+}
+
+function fallbackMessage(agenda: LoadedAgenda, elasticReason?: ElasticSearchFallbackReason): string {
+  const target = agendaLabel(agenda);
+  if (elasticReason === "timeout") {
+    return `Keyword match on ${target} because Elastic search timed out.`;
+  }
+  if (elasticReason === "empty") {
+    return `Keyword match on ${target} because Elastic search returned no hits.`;
+  }
+  if (elasticReason === "error") {
+    return `Keyword match on ${target} because Elastic search failed.`;
+  }
   return agenda.source === "fixture"
     ? "Keyword match on the bundled agenda sample because Elastic search is not configured."
     : "Keyword match on the agenda because Elastic search is not configured.";
+}
+
+function normalizeElasticScore(raw: number, top: number): number {
+  if (top <= 0 || raw <= 0) return 0;
+  return (raw / top) * 5;
 }
 
 function keywordSearch(
@@ -130,8 +151,13 @@ function elasticFallbackStatus(err: unknown): number {
   return 0;
 }
 
-async function tryElasticSearch(env: Env, query: SearchQuery, agenda: LoadedAgenda): Promise<SearchResult | null> {
-  if (!env.ELASTIC_URL || !env.ELASTIC_API_KEY) return null;
+type ElasticAttempt =
+  | { kind: "elastic"; result: SearchResult }
+  | { kind: "fallback"; reason: ElasticSearchFallbackReason }
+  | { kind: "unconfigured" };
+
+async function tryElasticSearch(env: Env, query: SearchQuery, agenda: LoadedAgenda): Promise<ElasticAttempt> {
+  if (!env.ELASTIC_URL || !env.ELASTIC_API_KEY) return { kind: "unconfigured" };
 
   try {
     const response = await elastic<ElasticSearchResponse>(
@@ -144,30 +170,34 @@ async function tryElasticSearch(env: Env, query: SearchQuery, agenda: LoadedAgen
     const rawHits = response.hits?.hits ?? [];
     if (rawHits.length === 0) {
       console.error("search_fallback", { status: 200 });
-      return null;
+      return { kind: "fallback", reason: "empty" };
     }
 
+    const top = Math.max(...rawHits.map((hit) => (typeof hit._score === "number" ? hit._score : 0)), 0);
     const byId = new Map(agenda.sessions.map((session) => [session.id, session]));
     const hits: SearchHit[] = [];
     for (const hit of rawHits) {
       const session = byId.get(hit._id);
       if (!session) continue;
+      const raw = typeof hit._score === "number" ? hit._score : 0;
       hits.push({
         session,
-        score: typeof hit._score === "number" ? hit._score : 0,
+        score: normalizeElasticScore(raw, top),
         source: "elastic",
       });
     }
 
     if (hits.length === 0) {
       console.error("search_fallback", { status: 200 });
-      return null;
+      return { kind: "fallback", reason: "empty" };
     }
 
-    return { hits, source: "elastic" };
+    return { kind: "elastic", result: { hits, source: "elastic" } };
   } catch (err) {
-    console.error("search_fallback", { status: elasticFallbackStatus(err) });
-    return null;
+    const status = elasticFallbackStatus(err);
+    console.error("search_fallback", { status });
+    const reason: ElasticSearchFallbackReason = status === 504 ? "timeout" : "error";
+    return { kind: "fallback", reason };
   }
 }
 
@@ -183,8 +213,10 @@ export async function searchSessions(env: Env, query: SearchQuery): Promise<Sear
     return { hits: [], source: "fallback", fallback: "Day filter must be YYYY-MM-DD." };
   }
 
-  const elasticResult = await tryElasticSearch(env, query, agenda);
-  if (elasticResult) return elasticResult;
+  const attempt = await tryElasticSearch(env, query, agenda);
+  if (attempt.kind === "elastic") return attempt.result;
 
-  return keywordSearch(agenda, query, field, size, fallback);
+  const fallbackText =
+    attempt.kind === "fallback" ? fallbackMessage(agenda, attempt.reason) : fallback;
+  return keywordSearch(agenda, query, field, size, fallbackText);
 }

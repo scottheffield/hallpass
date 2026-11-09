@@ -100,7 +100,7 @@ describe("searchSessions", () => {
       hits: {
         hits: [
           { _id: "1246200", _score: 14.2 },
-          { _id: "not-in-agenda", _score: 99 },
+          { _id: "not-in-agenda", _score: 7 },
         ],
       },
     });
@@ -127,8 +127,29 @@ describe("searchSessions", () => {
     expect(result.source).toBe("elastic");
     expect(result.hits).toHaveLength(1);
     expect(result.hits[0]?.session.id).toBe("1246200");
-    expect(result.hits[0]?.score).toBe(14.2);
+    expect(result.hits[0]?.score).toBe(5);
     expect(result.hits[0]?.source).toBe("elastic");
+  });
+
+  it("normalises Elastic scores into 0–5 relative to the top hit", async () => {
+    mockedElastic.mockResolvedValue({
+      hits: {
+        hits: [
+          { _id: "1246200", _score: 20 },
+          { _id: "1233585", _score: 10 },
+        ],
+      },
+    });
+
+    const result = await searchSessions(elasticEnv(), {
+      text: "agent platform",
+      field: "search_text",
+      day: "2026-11-10",
+      size: 10,
+    });
+
+    expect(result.source).toBe("elastic");
+    expect(result.hits.map((hit) => hit.score)).toEqual([5, 2.5]);
   });
 
   it("falls back to keyword results when Elastic errors", async () => {
@@ -142,6 +163,7 @@ describe("searchSessions", () => {
     });
 
     expect(result.source).toBe("fallback");
+    expect(result.fallback).toBe("Keyword match on the bundled agenda sample because Elastic search failed.");
     expect(result.hits.length).toBeGreaterThan(0);
     expect(result.hits.every((hit) => hit.source === "fallback")).toBe(true);
   });
@@ -156,6 +178,7 @@ describe("searchSessions", () => {
     });
 
     expect(result.source).toBe("fallback");
+    expect(result.fallback).toBe("Keyword match on the bundled agenda sample because Elastic search timed out.");
     expect(result.hits.some((hit) => hit.session.id === "1250770" || hit.session.id === "1244963")).toBe(true);
   });
 
@@ -170,6 +193,18 @@ describe("searchSessions", () => {
     });
 
     expect(result.source).toBe("fallback");
+    expect(result.fallback).toBe("Keyword match on the bundled agenda sample because Elastic search returned no hits.");
     expect(result.hits.length).toBeGreaterThan(0);
+  });
+
+  it("labels unconfigured Elastic with not-configured fallback text", async () => {
+    const result = await searchSessions(fixtureEnv(), {
+      text: "kubernetes incident",
+      field: "search_text",
+      size: 5,
+    });
+
+    expect(result.fallback).toContain("not configured");
+    expect(result.fallback).not.toContain("failed");
   });
 });
