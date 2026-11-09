@@ -238,3 +238,12 @@ body {
   font-weight: 700;
   line-height: 1;
 }
+
+button.hello-mark-btn {
+  border: none;
+  cursor: pointer;
+}
+
+button.hello-mark-btn:hover {
+  filter: brightness(1.05);
+}

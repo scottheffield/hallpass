@@ -15,6 +15,7 @@ export interface DirectionsRouteProps {
   target: DirectionsTarget;
   accessNeeds?: string;
   onBack: () => void;
+  backLabel?: string;
   /** Bumped after check-in so done sessions feed the from-line. */
   planVersion?: number;
 }
@@ -32,6 +33,7 @@ export function DirectionsRoute({
   target,
   accessNeeds,
   onBack,
+  backLabel,
   planVersion = 0,
 }: DirectionsRouteProps) {
   const now = useConferenceNow();
@@ -79,7 +81,7 @@ export function DirectionsRoute({
 
   if (loading) {
     return (
-      <Screen heading="Directions" brand onBack={onBack} backLabel="Back to Today">
+      <Screen heading="Directions" brand onBack={onBack} backLabel={backLabel}>
         <Notice tone="loading" title="Loading floor info">
           <p>Pulling room hints.</p>
         </Notice>
@@ -94,6 +96,7 @@ export function DirectionsRoute({
       roomName={target.roomName}
       rooms={rooms}
       onBack={onBack}
+      backLabel={backLabel}
       accessNeeds={accessNeeds}
       previousRoomName={previousRoomName}
     />

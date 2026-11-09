@@ -1,7 +1,6 @@
 import type { ShellPlace } from "./types";
-import { isTabPlace } from "./types";
 
-/** Bottom tab bar visibility. Hide on intake and focused auxiliary screens. */
+/** Bottom tab bar visibility. Hide during intake only; auxiliary screens keep the bar. */
 export function showShellTabs(place: ShellPlace): boolean {
-  return isTabPlace(place);
+  return place !== "entry";
 }

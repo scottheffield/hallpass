@@ -12,10 +12,12 @@ import { ReadoutScreen } from "./screens/readout";
 import {
   DirectionsRoute,
   PlanRoute,
+  ShellNavProvider,
   ShellUtilityLinks,
   TodayRoute,
   pickHomeShell,
-  showShellTabs,
+  shellBackLabel,
+  shellChromeForPlace,
   tabToPlace,
   type CheckInTarget,
   type DirectionsTarget,
@@ -118,8 +120,20 @@ export default function App() {
     setCheckInOpen(false);
   }
 
-  const showTabs = showShellTabs(place);
-  const showAsk = showTabs;
+  const sheetOpen = breakOpen || checkInOpen || askOpen;
+  const { showTabs, showAsk } = shellChromeForPlace(place, sheetOpen);
+
+  const goHome = useCallback(() => {
+    const nowIso = demoNowForRequests();
+    const now = nowIso ? new Date(nowIso) : new Date();
+    const home = pickHomeShell(now, profile);
+    setTab(home.tab);
+    setPlace(home.place);
+    setDirections(null);
+    setAskOpen(false);
+  }, [profile]);
+
+  const backLabel = shellBackLabel(auxReturn);
   const demoBar = isDemoMode() ? <DemoBar /> : undefined;
   const askTrigger = showAsk ? (
     <Button type="button" variant="quiet" onClick={() => setAskOpen(true)}>
@@ -136,13 +150,14 @@ export default function App() {
   }
 
   return (
-    <AppFrame
-      tab={tab}
-      onTabChange={onTabChange}
-      showTabs={showTabs}
-      demoBar={demoBar}
-      ask={askTrigger}
-    >
+    <ShellNavProvider value={{ onGoHome: goHome }}>
+      <AppFrame
+        tab={tab}
+        onTabChange={onTabChange}
+        showTabs={showTabs}
+        demoBar={demoBar}
+        ask={askTrigger}
+      >
       {place === "entry" ? <IntakeFlow onFinished={enterApp} /> : null}
 
       {place === "today" ? (
@@ -173,6 +188,7 @@ export default function App() {
           accessNeeds={profile?.access_needs}
           planVersion={planVersion}
           onBack={closeDirections}
+          backLabel={backLabel}
         />
       ) : null}
 
@@ -202,9 +218,9 @@ export default function App() {
         </>
       ) : null}
 
-      {place === "case" ? <CaseScreen onBack={closeFocusedScreen} /> : null}
-      {place === "readout" ? <ReadoutScreen onBack={closeFocusedScreen} /> : null}
-      {place === "insights" ? <InsightsScreen onBack={closeFocusedScreen} /> : null}
+      {place === "case" ? <CaseScreen onBack={closeFocusedScreen} backLabel={backLabel} /> : null}
+      {place === "readout" ? <ReadoutScreen onBack={closeFocusedScreen} backLabel={backLabel} /> : null}
+      {place === "insights" ? <InsightsScreen onBack={closeFocusedScreen} backLabel={backLabel} /> : null}
 
       {showAsk ? <AskHallpass open={askOpen} onClose={() => setAskOpen(false)} /> : null}
 
@@ -239,6 +255,7 @@ export default function App() {
           ]}
         />
       </Sheet>
-    </AppFrame>
+      </AppFrame>
+    </ShellNavProvider>
   );
 }

@@ -17,6 +17,7 @@ import { MetricBar } from "./MetricBar";
 
 export interface InsightsScreenProps {
   onBack?: () => void;
+  backLabel?: string;
 }
 
 type LoadState =
@@ -144,7 +145,7 @@ function InsightsSections({
   );
 }
 
-export function InsightsScreen({ onBack }: InsightsScreenProps) {
+export function InsightsScreen({ onBack, backLabel }: InsightsScreenProps) {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [sessionTitles, setSessionTitles] = useState<ReadonlyMap<string, string>>(new Map());
 
@@ -197,7 +198,7 @@ export function InsightsScreen({ onBack }: InsightsScreenProps) {
         kicker={EVENT_NAME}
         brand
         onBack={onBack}
-        backLabel="Back"
+        backLabel={backLabel}
         lead={sampleLead}
         headerEnd={
           state.kind === "ready" ? (

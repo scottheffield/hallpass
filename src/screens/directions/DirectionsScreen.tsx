@@ -34,6 +34,7 @@ export interface DirectionsScreenProps {
   roomName: string;
   rooms: Room[];
   onBack?: () => void;
+  backLabel?: string;
   /** When set, step-free text appears only if this mentions step-free and the room has a hint. */
   accessNeeds?: string;
   /** Optional starting landmark when the attendee chose one (no live location). */
@@ -48,6 +49,7 @@ export function DirectionsScreen({
   roomName,
   rooms,
   onBack,
+  backLabel,
   accessNeeds,
   startingLandmark,
   previousRoomName,
@@ -75,7 +77,7 @@ export function DirectionsScreen({
       heading="Directions"
       brand
       onBack={onBack}
-      backLabel="Back to Today"
+      backLabel={backLabel}
       headerEnd={
         sessionTime ? (
           <>

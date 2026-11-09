@@ -8,11 +8,14 @@ describe("showShellTabs", () => {
     expect(showShellTabs("goals")).toBe(true);
   });
 
-  it("hides tabs on intake, directions, and auxiliary screens", () => {
+  it("shows tabs on directions and focused auxiliary screens", () => {
+    expect(showShellTabs("directions")).toBe(true);
+    expect(showShellTabs("case")).toBe(true);
+    expect(showShellTabs("readout")).toBe(true);
+    expect(showShellTabs("insights")).toBe(true);
+  });
+
+  it("hides tabs during intake only", () => {
     expect(showShellTabs("entry")).toBe(false);
-    expect(showShellTabs("directions")).toBe(false);
-    expect(showShellTabs("case")).toBe(false);
-    expect(showShellTabs("readout")).toBe(false);
-    expect(showShellTabs("insights")).toBe(false);
   });
 });

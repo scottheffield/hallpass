@@ -18,6 +18,7 @@ import {
 
 export interface ReadoutScreenProps {
   onBack?: () => void;
+  backLabel?: string;
 }
 
 type LoadPhase = "loading" | "ready" | "error";
@@ -43,7 +44,7 @@ function GoalBlock({ goal, status }: { goal: string; status: "hit" | "missed" | 
   );
 }
 
-export function ReadoutScreen({ onBack }: ReadoutScreenProps) {
+export function ReadoutScreen({ onBack, backLabel }: ReadoutScreenProps) {
   const [phase, setPhase] = useState<LoadPhase>("loading");
   const [readout, setReadout] = useState<Readout | null>(null);
   const [helpedSessions, setHelpedSessions] = useState<Session[]>([]);
@@ -107,7 +108,7 @@ export function ReadoutScreen({ onBack }: ReadoutScreenProps) {
         headingSize="md"
         brand
         onBack={onBack}
-        backLabel="Back"
+        backLabel={backLabel}
         kicker={readout ? readoutEvidenceLine(readout) : undefined}
         lead={
           phase === "loading" ? (
