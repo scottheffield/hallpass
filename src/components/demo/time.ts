@@ -2,7 +2,6 @@ import { EVENT_DAYS, EVENT_OFFSET, EVENT_TIME_ZONE, type EventDay } from "../../
 import type { IsoDateTime } from "../../../shared/types";
 
 const WALL_TIME = /^(\d{2}):(\d{2})$/;
-const DEMO_PARTS = /^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})/;
 
 export function isEventDay(value: string): value is EventDay {
   return (EVENT_DAYS as readonly string[]).includes(value);
@@ -29,14 +28,29 @@ export function buildDemoIso(day: EventDay, hour: number, minute: number): IsoDa
   return `${day}T${formatDemoWallTime(hour, minute)}:00${EVENT_OFFSET}`;
 }
 
-/** Read the conference wall clock embedded in a demo timestamp. */
+/** Conference wall clock in America/Denver, regardless of how the ISO offset is stored. */
 export function splitDemoIso(iso: IsoDateTime): { day: EventDay; hour: number; minute: number } | null {
-  const match = DEMO_PARTS.exec(iso);
-  if (!match) return null;
-  const day = match[1];
+  const ms = Date.parse(iso);
+  if (!Number.isFinite(ms)) return null;
+
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat("en-CA", {
+      timeZone: EVENT_TIME_ZONE,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+    })
+      .formatToParts(new Date(ms))
+      .map((part) => [part.type, part.value]),
+  );
+
+  const day = `${parts.year}-${parts.month}-${parts.day}`;
   if (!isEventDay(day)) return null;
-  const hour = Number(match[2]);
-  const minute = Number(match[3]);
+  const hour = Number(parts.hour);
+  const minute = Number(parts.minute);
   if (hour > 23 || minute > 59) return null;
   return { day, hour, minute };
 }

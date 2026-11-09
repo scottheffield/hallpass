@@ -23,6 +23,11 @@ describe("demo time helpers", () => {
     expect(splitDemoIso(rebuilt)).toEqual({ day: "2026-11-11", hour: 14, minute: 30 });
   });
 
+  it("derives Mountain Time from the parsed instant when the offset differs", () => {
+    const utcEvening = "2026-11-11T21:30:00+00:00" as IsoDateTime;
+    expect(splitDemoIso(utcEvening)).toEqual({ day: "2026-11-11", hour: 14, minute: 30 });
+  });
+
   it("rejects invalid wall times", () => {
     expect(parseDemoWallTime("24:00")).toBeNull();
     expect(parseDemoWallTime("nine")).toBeNull();
