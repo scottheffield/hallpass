@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Plan } from "../../../shared/types";
-import { dayNeedsGeneration, dayTabLabel, seedAttemptedDaysFromPlan } from "./days";
+import { EVENT_DAYS } from "../../../shared/event";
+import {
+  dayNeedsGeneration,
+  dayTabLabel,
+  seedAttemptedDaysFromPlan,
+  shouldAutoGeneratePlanDay,
+} from "./days";
 
 describe("dayTabLabel", () => {
   it("formats conference days in Mountain Time", () => {
@@ -35,6 +41,52 @@ describe("dayNeedsGeneration", () => {
             note: "Lunch",
           },
         ],
+      }),
+    ).toBe(false);
+  });
+});
+
+describe("shouldAutoGeneratePlanDay", () => {
+  const idle = {
+    stub: false,
+    loading: false,
+    generating: false,
+    genError: null as string | null,
+    loadError: null as string | null,
+    hasProfile: true,
+    plan: null as Plan | null,
+    selectedDay: EVENT_DAYS[0],
+    attemptedDays: new Set<string>(),
+  };
+
+  it("generates the first day when no plan exists yet", () => {
+    expect(shouldAutoGeneratePlanDay(idle)).toBe(true);
+  });
+
+  it("runs at most once per selected day", () => {
+    expect(
+      shouldAutoGeneratePlanDay({
+        ...idle,
+        attemptedDays: new Set([EVENT_DAYS[0]]),
+      }),
+    ).toBe(false);
+  });
+
+  it("does not generate without a saved profile", () => {
+    expect(
+      shouldAutoGeneratePlanDay({
+        ...idle,
+        hasProfile: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("does not generate after a plan load error", () => {
+    expect(
+      shouldAutoGeneratePlanDay({
+        ...idle,
+        plan: null,
+        loadError: "Could not load your plan.",
       }),
     ).toBe(false);
   });

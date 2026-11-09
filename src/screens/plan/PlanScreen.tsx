@@ -21,7 +21,11 @@ import {
   type TodayTimelineBlock,
 } from "../today/timeline";
 import { Button, ChangeList, Notice, Screen, SessionCard, Sheet, Stack } from "../../ui";
-import { dayNeedsGeneration, dayTabLabel, seedAttemptedDaysFromPlan } from "./days";
+import {
+  dayTabLabel,
+  seedAttemptedDaysFromPlan,
+  shouldAutoGeneratePlanDay,
+} from "./days";
 import { sessionDetailBullets } from "./detail";
 import { generationStageIndex, PLAN_GENERATION_STAGES } from "./generation";
 import {
@@ -147,13 +151,21 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
   );
 
   useEffect(() => {
-    if (!plan || stub || loading || generating || genError) return;
-    if (attemptedDaysRef.current.has(selectedDay)) return;
-    const dayBody = plan.days[selectedDay];
-    if (!dayNeedsGeneration(dayBody)) return;
+    const shouldGenerate = shouldAutoGeneratePlanDay({
+      stub,
+      loading,
+      generating,
+      genError,
+      loadError: error,
+      hasProfile: profile !== null,
+      plan,
+      selectedDay,
+      attemptedDays: attemptedDaysRef.current,
+    });
+    if (!shouldGenerate) return;
     attemptedDaysRef.current.add(selectedDay);
     void generateDay(selectedDay);
-  }, [plan, selectedDay, stub, loading, generating, genError, generateDay]);
+  }, [plan, profile, selectedDay, stub, loading, generating, genError, error, generateDay]);
 
   useEffect(() => {
     if (!generating || genStartedAt === null) return;
@@ -272,15 +284,15 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
             </Notice>
           ) : null}
 
-          {!loading && !error && !stub && !plan ? (
+          {!loading && !error && !stub && !plan && !profile ? (
             <Notice tone="empty" title="No plan yet">
               <p>Save a profile and build a plan before sessions can appear here.</p>
             </Notice>
           ) : null}
 
-          {!loading && !error && !stub && plan ? (
+          {!loading && !error && !stub && (plan || profile) ? (
             <>
-              {plan.source === "basic" ? (
+              {plan?.source === "basic" ? (
                 <p className="text-sm text-muted">basic plan (AI unavailable)</p>
               ) : null}
               {agendaSource === "fixture" ? (
