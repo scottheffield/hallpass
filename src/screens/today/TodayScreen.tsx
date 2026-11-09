@@ -19,6 +19,7 @@ import {
   restOfTodayTimeline,
   type TodayTimelineBlock,
 } from "./timeline";
+import { presentPlanReason } from "../plan/reason";
 import { TODAY_PLAN_HEADING_ID, todaySessionStatusDetail } from "./accessibility";
 
 export interface TodayScreenProps {
@@ -99,6 +100,10 @@ export function TodayScreen({
   );
 
   const next = useMemo(() => nextPlannedSession(timeline, now.getTime()), [timeline, now]);
+  const nextPresented = useMemo(
+    () => (next ? presentPlanReason(next.block.item.reason) : null),
+    [next],
+  );
   const listTimeline = useMemo(
     () => restOfTodayTimeline(timeline, next),
     [timeline, next],
@@ -217,8 +222,8 @@ export function TodayScreen({
                   title={next.block.session.title}
                   time={formatTimeRange(next.block.start, next.block.end)}
                   room={formatSessionRoom(next.block.session.room)}
-                  reasonLabel="Why it's on your plan"
-                  reason={next.block.item.reason}
+                  reasonLabel={nextPresented?.reasonLabel ?? "Why it's on your plan"}
+                  reason={nextPresented?.reason ?? next.block.item.reason}
                 />
                 {onDirections ? (
                   <Button variant="primary" onClick={() => onDirections(next.block.session.id)}>
@@ -262,6 +267,7 @@ export function TodayScreen({
                     }
 
                     const statusDetail = todaySessionStatusDetail(block.item);
+                    const presentedReason = presentPlanReason(block.item.reason);
 
                     return (
                       <SessionCard
@@ -270,8 +276,10 @@ export function TodayScreen({
                         title={block.session.title}
                         time={formatTimeRange(block.start, block.end)}
                         room={formatSessionRoom(block.session.room)}
-                        reasonLabel={statusDetail ? undefined : "Why it's on your plan"}
-                        reason={statusDetail ? undefined : block.item.reason}
+                        reasonLabel={
+                          statusDetail ? undefined : (presentedReason.reasonLabel ?? "Why it's on your plan")
+                        }
+                        reason={statusDetail ? undefined : presentedReason.reason}
                         detail={statusDetail}
                       />
                     );
