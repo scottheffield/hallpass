@@ -120,6 +120,8 @@ describe("break helpers", () => {
     expect(breakDetail("Coffee break")).toBeUndefined();
     expect(breakTitle("Lunch. Open time after.")).toBe("Lunch");
     expect(breakDetail("Lunch. Open time after.")).toBe("Lunch. Open time after.");
+    expect(breakTitle("Open time between sessions on the schedule.")).toBe("Open time");
+    expect(breakDetail("Open time between sessions on the schedule.")).toBeUndefined();
   });
 });
 

@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 export type SessionCardKind = "session" | "break" | "current" | "suggested";
 
 export interface SessionCardProps {
-  title: string;
+  /** Omit on detail sheets when the dialog title already names the session. */
+  title?: string;
   /** Already formatted, for example "10:00–10:40" or "10:40". */
   time: string;
   room?: string;
@@ -51,7 +52,9 @@ export function SessionCard({
             <span>{time}</span>
           </p>
           <div className="min-w-0">
-            <TitleTag className="font-display text-lg font-semibold leading-tight">{title}</TitleTag>
+            {title ? (
+              <TitleTag className="font-display text-lg font-semibold leading-tight">{title}</TitleTag>
+            ) : null}
             {detail ? <p className="mt-1 text-base leading-snug">{detail}</p> : null}
           </div>
         </div>
@@ -71,7 +74,9 @@ export function SessionCard({
             <p className="text-xs font-semibold tracking-wide uppercase">{suggested ? "Suggested" : "Current"}</p>
             <p className="text-base font-semibold">{time}</p>
           </div>
-          <p className="min-w-0 font-display text-lg font-semibold leading-tight">{title}</p>
+          {title ? (
+            <p className="min-w-0 font-display text-lg font-semibold leading-tight">{title}</p>
+          ) : null}
         </div>
         {room ? <p className="mt-2 text-sm">{room}</p> : null}
         {reasonLabel ? <p className="mt-2 font-semibold">{reasonLabel}</p> : null}
@@ -84,7 +89,7 @@ export function SessionCard({
 
   return (
     <article className="text-ink">
-      <TitleTag className={TITLE_CLASS}>{title}</TitleTag>
+      {title ? <TitleTag className={TITLE_CLASS}>{title}</TitleTag> : null}
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-3">
         <p className="font-semibold">{time}</p>
         {room ? <p>{room}</p> : null}
