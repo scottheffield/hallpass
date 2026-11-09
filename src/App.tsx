@@ -1,19 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import type { ProfileResponse } from "../shared/api";
 import { EVENT_TIME_ZONE } from "../shared/event";
 import type { IsoDateTime } from "../shared/types";
+import { post } from "./lib/api";
 import { demoNowForRequests, isDemoMode } from "./lib/clock";
-import {
-  AppFrame,
-  Button,
-  Choice,
-  DemoBarSlot,
-  Field,
-  Notice,
-  Sheet,
-  Stack,
-  type AppTab,
-} from "./ui";
-import { AdjustPreview, EntryPreview, ILLUSTRATIVE_ANSWER, StubPreview, TodayPreview } from "./ui/preview-screens";
+import { AppFrame, Choice, DemoBarSlot, Field, Notice, Sheet, type AppTab } from "./ui";
+import { AdjustPreview, StubPreview, TodayPreview } from "./ui/preview-screens";
+import { GoalsView } from "./views/GoalsView";
+import { IntakeFlow } from "./views/IntakeFlow";
 
 function formatDemoTime(iso: IsoDateTime): string {
   return new Intl.DateTimeFormat("en-US", {
@@ -27,21 +21,36 @@ function formatDemoTime(iso: IsoDateTime): string {
 }
 
 type Place = "entry" | "today" | "adjust" | "plan" | "goals";
-type Overlay = "explore" | "directions" | "break" | "ask" | null;
+type Overlay = "directions" | "break" | "ask" | null;
 
-/**
- * App frame only: tabs, page column, and slots.
- * Entry, Today, and plan adjustment are illustrative compositions.
- * Demo mode (`?demo=1`, wired in main) can show a quiet clock label in the frame slot.
- */
 export default function App() {
+  const [booting, setBooting] = useState(true);
   const [place, setPlace] = useState<Place>("entry");
   const [tab, setTab] = useState<AppTab>("today");
-  const [answer, setAnswer] = useState(ILLUSTRATIVE_ANSWER);
   const [updated, setUpdated] = useState(false);
   const [overlay, setOverlay] = useState<Overlay>(null);
   const [breakChoice, setBreakChoice] = useState("");
   const [ask, setAsk] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await post<ProfileResponse>("/api/profile/get", {});
+        if (!cancelled && res.profile) {
+          setPlace("today");
+          setTab("today");
+        }
+      } catch {
+        /* Stay on intake when the profile is missing or the request fails. */
+      } finally {
+        if (!cancelled) setBooting(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function showToday() {
     setTab("today");
@@ -59,16 +68,17 @@ export default function App() {
   const demoBar =
     isDemoMode() && demoNow ? <DemoBarSlot timeLabel={formatDemoTime(demoNow)} /> : undefined;
 
+  if (booting) {
+    return (
+      <AppFrame tab={tab} onTabChange={onTabChange} showTabs={false} demoBar={demoBar}>
+        <p className="text-sm text-muted">Loading…</p>
+      </AppFrame>
+    );
+  }
+
   return (
     <AppFrame tab={tab} onTabChange={onTabChange} showTabs={showTabs} demoBar={demoBar}>
-      {place === "entry" ? (
-        <EntryPreview
-          answer={answer}
-          onAnswer={setAnswer}
-          onMakePlan={showToday}
-          onExplore={() => setOverlay("explore")}
-        />
-      ) : null}
+      {place === "entry" ? <IntakeFlow onFinished={showToday} /> : null}
       {place === "today" ? (
         <TodayPreview
           updated={updated}
@@ -93,24 +103,7 @@ export default function App() {
         />
       ) : null}
       {place === "plan" ? <StubPreview which="plan" /> : null}
-      {place === "goals" ? <StubPreview which="goals" /> : null}
-
-      <Sheet open={overlay === "explore"} title="Help me think it through" onClose={() => setOverlay(null)}>
-        <Stack>
-          <Notice tone="info" title="Start from what you already wrote">
-            A guided conversation is not part of this shell. You can make a plan from your answer, or go back and
-            change it.
-          </Notice>
-          <Button
-            variant="primary"
-            onClick={() => {
-              showToday();
-            }}
-          >
-            Make my plan
-          </Button>
-        </Stack>
-      </Sheet>
+      {place === "goals" ? <GoalsView /> : null}
 
       <Sheet open={overlay === "directions"} title="Directions" onClose={() => setOverlay(null)}>
         <Notice tone="stub" title="Directions aren't in this shell">
