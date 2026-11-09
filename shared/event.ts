@@ -33,8 +33,8 @@ export function isGoalTheme(value: string): value is GoalThemeId {
 export const INTAKE = {
   purpose: {
     prompt: "What would make this trip worth it?",
-    hint: "For example: we spend too long finding the cause of Kubernetes incidents. Or solve a work problem, learn a topic, or find a community.",
-    placeholder: "",
+    hint: "For example: solve a work problem, learn a topic, find a community.",
+    placeholder: "We spend too long finding the cause of Kubernetes incidents.",
     figuringItOut: "I'm still figuring it out",
     starterGoals: [
       "Find practical ways to debug production Kubernetes",

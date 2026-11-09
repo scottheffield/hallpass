@@ -3,6 +3,11 @@ import { EVENT_NAME, INTAKE } from "../../../shared/event";
 import { Button, HelloMark, Notice, Screen, Stack, TextArea } from "../../ui";
 import { starterGoalSelectedLabel } from "./accessibility";
 
+/** Local copy UX: empty field, example in muted hint (issue #51 item 2). */
+const PURPOSE_PLACEHOLDER = "";
+const PURPOSE_HINT =
+  "For example: we spend too long finding the cause of Kubernetes incidents. Or solve a work problem, learn a topic, or find a community.";
+
 export interface IntakeScreenProps {
   answers: IntakeAnswers;
   onAnswers: (next: IntakeAnswers) => void;
@@ -42,8 +47,8 @@ export function IntakeScreen({
           value={answers.purpose}
           onChange={(purpose) => onAnswers({ ...answers, purpose })}
           rows={4}
-          placeholder={INTAKE.purpose.placeholder}
-          hint={INTAKE.purpose.hint}
+          placeholder={PURPOSE_PLACEHOLDER}
+          hint={PURPOSE_HINT}
           disabled={busy}
         />
         {showStarters ? (
