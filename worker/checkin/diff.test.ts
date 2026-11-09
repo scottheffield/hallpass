@@ -177,7 +177,7 @@ describe("diffPlanDay", () => {
     expect(text).toContain(" in 151 · Level 1 · Salt Palace");
     expect(text).not.toContain("|");
     expect(text).not.toContain("Verkada's triage agent");
-    expect(text).toContain("incident-response");
+    expect(text).toContain("incident response");
     expect(text).toContain("didn't help, so this tries a different angle");
   });
 

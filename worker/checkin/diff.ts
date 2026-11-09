@@ -66,8 +66,8 @@ function swapPairs(before: PlanDay, after: PlanDay): Array<{ from: string; to: s
 function goalTopicPhrase(goal: string): string | null {
   const lower = goal.toLowerCase();
   for (const theme of GOAL_THEMES) {
-    if (lower.includes(theme.label.toLowerCase())) return theme.id;
-    if (lower.includes(theme.id.replace(/-/g, " "))) return theme.id;
+    if (lower.includes(theme.label.toLowerCase())) return theme.label.toLowerCase();
+    if (lower.includes(theme.id.replace(/-/g, " "))) return theme.label.toLowerCase();
   }
   return null;
 }
@@ -92,9 +92,7 @@ function swapCheckinReason(signal: ReplanSignal | undefined, checkedInGoalText: 
     return `you said the last ${topicBit}session wasn't worth it, so this tries a different angle`;
   }
   if (signal.worth_it === "mixed" || signal.moved_goal === "a_little") {
-    return topic
-      ? `you wanted a different angle on ${topic.replace(/-/g, " ")}`
-      : "you wanted a lighter rest of the day";
+    return topic ? `you wanted a different angle on ${topic}` : "you wanted a lighter rest of the day";
   }
   return "";
 }
