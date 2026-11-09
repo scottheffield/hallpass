@@ -17,6 +17,20 @@ export function dayNeedsGeneration(
   return day.items.length === 0 && day.breaks.length === 0;
 }
 
+export function shouldAutoGeneratePlanDay(input: {
+  stub: boolean;
+  loading: boolean;
+  generating: boolean;
+  genError: string | null;
+  plan: Plan | null;
+  selectedDay: string;
+  attemptedDays: Set<string>;
+}): boolean {
+  if (input.stub || input.loading || input.generating || input.genError) return false;
+  if (input.attemptedDays.has(input.selectedDay)) return false;
+  return dayNeedsGeneration(input.plan?.days[input.selectedDay]);
+}
+
 /** Days that already have content should not be auto-generated after edits clear them. */
 export function seedAttemptedDaysFromPlan(plan: Plan): Set<string> {
   const attempted = new Set<string>();
