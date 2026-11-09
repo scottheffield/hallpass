@@ -21,3 +21,8 @@ export function resolveSheetReturnFocus(
   if (contentRoot && typeof contentRoot.focus === "function") return "content";
   return "none";
 }
+
+/** Focus override runs only after close when the shell passes an opener ref (not on open). */
+export function shouldOverrideSheetReturnFocus(open: boolean, returnFocusRefProvided: boolean): boolean {
+  return !open && returnFocusRefProvided;
+}

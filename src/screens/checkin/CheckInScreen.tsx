@@ -66,7 +66,6 @@ export function CheckInScreen({
   const proposalHeadingId = checkInProposalHeadingId(sheetInstanceId);
   const incompleteHintId = useId();
   const reqRef = useRef(0);
-  const openerRef = useRef<HTMLElement | null>(null);
   const [phase, setPhase] = useState<Phase>("form");
   const [worthIt, setWorthIt] = useState<WorthIt | "">("");
   const [movedGoal, setMovedGoal] = useState<MovedGoal | "">("");
@@ -76,32 +75,14 @@ export function CheckInScreen({
   const [proposal, setProposal] = useState<PlanProposal | null>(null);
 
   useEffect(() => {
-    if (open) {
-      const external = returnFocusRef?.current;
-      openerRef.current =
-        external?.isConnected === true
-          ? external
-          : document.activeElement instanceof HTMLElement
-            ? document.activeElement
-            : null;
-      return;
-    }
-    const opener =
-      returnFocusRef?.current?.isConnected === true
-        ? returnFocusRef.current
-        : openerRef.current?.isConnected === true
-          ? openerRef.current
-          : null;
+    if (open || !returnFocusRef) return;
+    const opener = returnFocusRef.current;
     const content = document.getElementById("content");
     const target = resolveSheetReturnFocus(opener, content);
     requestAnimationFrame(() => {
-      if (target === "opener" && opener) {
-        opener.focus();
-        return;
-      }
-      if (target === "content") content?.focus();
+      if (target === "opener" && opener) opener.focus();
+      else if (target === "content") content?.focus();
     });
-    openerRef.current = null;
   }, [open, returnFocusRef]);
 
   useEffect(() => {

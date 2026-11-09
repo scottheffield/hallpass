@@ -4,11 +4,21 @@ import {
   CHECKIN_SESSION_HEADING_LEVEL,
   checkInProposalHeadingId,
   resolveSheetReturnFocus,
+  shouldOverrideSheetReturnFocus,
 } from "./a11y";
 
 describe("checkInProposalHeadingId", () => {
   it("scopes the proposal heading id", () => {
     expect(checkInProposalHeadingId("abc")).toBe("checkin-proposal-why-abc");
+  });
+});
+
+describe("shouldOverrideSheetReturnFocus", () => {
+  it("runs only when the sheet is closed and returnFocusRef is provided", () => {
+    expect(shouldOverrideSheetReturnFocus(true, true)).toBe(false);
+    expect(shouldOverrideSheetReturnFocus(true, false)).toBe(false);
+    expect(shouldOverrideSheetReturnFocus(false, false)).toBe(false);
+    expect(shouldOverrideSheetReturnFocus(false, true)).toBe(true);
   });
 });
 
