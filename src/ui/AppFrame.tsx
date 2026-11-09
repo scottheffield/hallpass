@@ -48,7 +48,7 @@ export function AppFrame({ tab, onTabChange, showTabs = true, demoBar, ask, chil
         Skip to content
       </a>
       <div className="mx-auto flex min-h-dvh w-full max-w-[420px] flex-col bg-surface sm:border-x sm:border-line">
-        {demoBar ? <div className="border-b border-line px-4 py-2">{demoBar}</div> : null}
+        {demoBar ? demoBar : null}
         {online ? null : (
           <div className="px-4 pt-3">
             <Notice tone="offline" title="You're offline">
