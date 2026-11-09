@@ -125,9 +125,15 @@ describe("tight transfers", () => {
     expect(isTightTransfer("balanced", prev, next)).toBe(true);
   });
 
-  it("formats clash notes with shared walking minutes", () => {
-    expect(formatTightChangeNote(room255, hyattBallroom, 10)).toBe(
+  it("formats clash notes with shared walking minutes when the gap is shorter than the walk", () => {
+    expect(formatTightChangeNote("balanced", room255, hyattBallroom, 10)).toBe(
       "Tight change: the Hyatt Regency is about 12 minutes from 255 BC, and you have 10.",
+    );
+  });
+
+  it("explains light pacing when the gap fits the walk but not the doubled buffer", () => {
+    expect(formatTightChangeNote("light", room255, hyattBallroom, 15)).toBe(
+      "Tight change: you asked for a relaxed pace. the Hyatt Regency is about 12 minutes from 255 BC, and you have 15; allow about 24 minutes between sessions.",
     );
   });
 
@@ -188,7 +194,84 @@ describe("tight transfers", () => {
     );
     expect(result.items[1]?.session_id).toBe("c");
     expect(result.items[1]?.clash_note).toBeUndefined();
-    expect(result.items[1]?.reason).toContain("Closer room for the walk from 255 BC.");
+    expect(result.items[1]?.beat_alternative).toBeUndefined();
+    expect(result.items[1]?.reason).toContain("Closer room for the walk from 255 BC:");
+    expect(result.items[1]?.reason).toContain("Session c");
+    expect(result.items[1]?.reason).not.toContain("service ownership");
+  });
+
+  it("on swap drops model fields and does not keep the model clash_note", () => {
+    const sessions = new Map<string, Session>([
+      ["a", session("a", "2026-11-10T10:00:00-07:00", "2026-11-10T10:40:00-07:00", room255)],
+      ["b", session("b", "2026-11-10T10:50:00-07:00", "2026-11-10T11:30:00-07:00", hyattBallroom)],
+      ["c", session("c", "2026-11-10T10:50:00-07:00", "2026-11-10T11:30:00-07:00", room151)],
+    ]);
+    const result = validateDayPlan(
+      [
+        {
+          session_id: "b",
+          reason: 'Matches your goal "platform" from the abstract on service ownership.',
+          beat_alternative: { session_id: "c", why: "Wrong session after swap." },
+          clash_note: "Model overlap note that should not block the walk warning.",
+        },
+      ],
+      [],
+      {
+        pacing: "balanced",
+        candidateIds: new Set(["a", "b", "c"]),
+        sessions,
+        pinned: [{ session_id: "a", status: "planned", reason: "Pinned first slot.", pinned: true }],
+      },
+    );
+    expect(result.items[1]?.session_id).toBe("c");
+    expect(result.items[1]?.beat_alternative).toBeUndefined();
+    expect(result.items[1]?.clash_note).toBeUndefined();
+  });
+
+  it("replaces a model clash_note with the computed tight note when the pick stays tight", () => {
+    const sessions = new Map<string, Session>([
+      ["a", session("a", "2026-11-10T10:00:00-07:00", "2026-11-10T10:40:00-07:00", room255)],
+      ["b", session("b", "2026-11-10T10:50:00-07:00", "2026-11-10T11:30:00-07:00", hyattBallroom)],
+    ]);
+    const result = validateDayPlan(
+      [
+        {
+          session_id: "b",
+          reason: 'Matches your goal "platform" from the abstract on service ownership.',
+          clash_note: "Model overlap note that should not block the walk warning.",
+        },
+      ],
+      [],
+      {
+        pacing: "balanced",
+        candidateIds: new Set(["a", "b"]),
+        sessions,
+        pinned: [{ session_id: "a", status: "planned", reason: "Pinned first slot.", pinned: true }],
+      },
+    );
+    expect(result.items[1]?.clash_note).toBe(
+      "Tight change: the Hyatt Regency is about 12 minutes from 255 BC, and you have 10.",
+    );
+  });
+
+  it("does not swap to a closer room that is still a tight transfer", () => {
+    const sessions = new Map<string, Session>([
+      ["a", session("a", "2026-11-10T10:00:00-07:00", "2026-11-10T10:40:00-07:00", room255)],
+      ["b", session("b", "2026-11-10T10:50:00-07:00", "2026-11-10T11:30:00-07:00", hyattBallroom)],
+      ["c", session("c", "2026-11-10T10:42:00-07:00", "2026-11-10T11:22:00-07:00", room151)],
+    ]);
+    const result = validateDayPlan(
+      [{ session_id: "b", reason: 'Matches your goal "platform" from the abstract on service ownership.' }],
+      [],
+      {
+        pacing: "balanced",
+        candidateIds: new Set(["a", "b", "c"]),
+        sessions,
+        pinned: [{ session_id: "a", status: "planned", reason: "Pinned first slot.", pinned: true }],
+      },
+    );
+    expect(result.items[1]?.session_id).toBe("b");
+    expect(result.items[1]?.clash_note).toContain("about 12 minutes");
   });
 
   it("still flags unknown rooms because transferMinutes errs long", () => {

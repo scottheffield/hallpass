@@ -104,9 +104,28 @@ function originLabel(room: string): string {
 }
 
 /** Same minute estimate Directions uses, in plan copy. */
-export function formatTightChangeNote(fromRoom: string, toRoom: string, gapMinutes: number): string {
+export function formatTightChangeNote(
+  pacing: Pacing,
+  fromRoom: string,
+  toRoom: string,
+  gapMinutes: number,
+): string {
   const walk = transferMinutes(fromRoom, toRoom);
-  return `Tight change: ${destinationLabel(toRoom)} is about ${walk} minutes from ${originLabel(fromRoom)}, and you have ${gapMinutes}.`;
+  const needed = requiredTransferMinutes(pacing, fromRoom, toRoom);
+  const dest = destinationLabel(toRoom);
+  const orig = originLabel(fromRoom);
+  if (gapMinutes < walk) {
+    return `Tight change: ${dest} is about ${walk} minutes from ${orig}, and you have ${gapMinutes}.`;
+  }
+  return `Tight change: you asked for a relaxed pace. ${dest} is about ${walk} minutes from ${orig}, and you have ${gapMinutes}; allow about ${needed} minutes between sessions.`;
+}
+
+function reasonAfterRoomSwap(session: Session, fromLabel: string): string {
+  const snippet = session.abstract.trim().slice(0, 120);
+  const abstractBit = snippet
+    ? ` The abstract mentions ${snippet}${snippet.length >= 120 ? "…" : "."}`
+    : "";
+  return sanitizeText(`Closer room for the walk from ${fromLabel}: ${session.title}.${abstractBit}`, 600);
 }
 
 function canSchedule(session: Session, items: PlanItem[], skipId: string, sessions: Map<string, Session>): boolean {
@@ -134,6 +153,7 @@ function findCloserOverlappingCandidate(
     if (!alt) continue;
     if (!overlaps(alt, current)) continue;
     if (!canSchedule(alt, items, current.id, options.sessions)) continue;
+    if (isTightTransfer(options.pacing, prev, alt)) continue;
     const walk = transferMinutes(prev.room, alt.room);
     if (walk >= bestWalk) continue;
     bestWalk = walk;
@@ -158,20 +178,20 @@ function applyTightTransferPasses(items: PlanItem[], options: ValidateOptions): 
     if (closer) {
       const fromLabel = originLabel(prevSession.room);
       item.session_id = closer.id;
-      item.reason = sanitizeText(
-        `Closer room for the walk from ${fromLabel}. ${item.reason}`.trim(),
-        600,
-      );
+      delete item.beat_alternative;
+      delete item.clash_note;
+      item.reason = reasonAfterRoomSwap(closer, fromLabel);
       currSession = closer;
     }
 
     if (!isTightTransfer(options.pacing, prevSession, currSession)) continue;
 
-    if (!item.clash_note) {
-      const gap = gapMinutesBetween(prevSession.end, currSession.start);
-      const note = sanitizeText(formatTightChangeNote(prevSession.room, currSession.room, gap), 400);
-      if (note.length >= 8) item.clash_note = note;
-    }
+    const gap = gapMinutesBetween(prevSession.end, currSession.start);
+    const note = sanitizeText(
+      formatTightChangeNote(options.pacing, prevSession.room, currSession.room, gap),
+      400,
+    );
+    if (note.length >= 8) item.clash_note = note;
   }
 }
 
