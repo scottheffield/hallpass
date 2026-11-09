@@ -4,7 +4,7 @@ import type { Readout, Session } from "../../../shared/types";
 import { getSession, loadAgenda } from "../../lib/agenda";
 import { ApiFailure, post } from "../../lib/api";
 import { formatTimeRange } from "../today/timeline";
-import { Button, Notice, Screen, Sheet, Stack, TextArea } from "../../ui";
+import { Button, Notice, Screen, SessionCard, Sheet, Stack, TextArea } from "../../ui";
 import { copyCaseText } from "../case/copy";
 import {
   contentGaps,
@@ -39,25 +39,6 @@ function GoalBlock({ goal, status }: { goal: string; status: "hit" | "missed" | 
       <p className="text-xs font-semibold tracking-wide text-muted uppercase">{statusLabel}</p>
       <h3 className="mt-1 font-display text-lg font-semibold text-ink">{goal.replace(/\.$/, "")}</h3>
       <p className="mt-2 text-base leading-snug text-ink">{detail}</p>
-    </article>
-  );
-}
-
-function HelpedSessionEntry({
-  session,
-  reason,
-}: {
-  session: Session;
-  reason: string;
-}) {
-  return (
-    <article className="text-ink">
-      <h3 className="font-display text-[1.65rem] font-semibold leading-tight text-balance">{session.title}</h3>
-      <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-line pb-3">
-        <p className="font-semibold">{formatTimeRange(session.start, session.end)}</p>
-        {session.room ? <p>{session.room}</p> : null}
-      </div>
-      <p className="mt-3 text-base leading-snug">{reason}</p>
     </article>
   );
 }
@@ -176,8 +157,11 @@ export function ReadoutScreen({ onBack }: ReadoutScreenProps) {
                 <ul className="mt-2 flex list-none flex-col gap-3 p-0">
                   {helpedSessions.map((session) => (
                     <li key={session.id}>
-                      <HelpedSessionEntry
-                        session={session}
+                      <SessionCard
+                        headingLevel={3}
+                        title={session.title}
+                        time={formatTimeRange(session.start, session.end)}
+                        room={session.room}
                         reason="You marked this session as moving a goal forward."
                       />
                     </li>
