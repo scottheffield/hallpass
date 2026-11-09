@@ -22,11 +22,11 @@ describe("check-in form", () => {
     });
   });
 
-  it("caps notes at 280 characters", () => {
+  it("rejects notes over 280 characters instead of truncating", () => {
     const long = "a".repeat(300);
-    expect(trimNote(long).length).toBe(NOTE_MAX);
-    const body = buildCheckInRequest("sess-1", "yes", "yes", long);
-    expect(body?.note?.length).toBe(NOTE_MAX);
+    expect(trimNote(long).length).toBe(300);
+    expect(buildCheckInRequest("sess-1", "yes", "yes", long)).toBeNull();
+    expect(buildCheckInRequest("sess-1", "yes", "yes", "a".repeat(NOTE_MAX))).not.toBeNull();
   });
 
   it("maps proposal changes to display lines", () => {

@@ -16,10 +16,14 @@ export const MOVED_GOAL_OPTIONS = [
 ] as const satisfies readonly { value: MovedGoal; label: string }[];
 
 export function trimNote(note: string): string {
-  return note.trim().slice(0, NOTE_MAX);
+  return note.trim();
 }
 
-/** Returns null when ratings are incomplete. Notes stay in the POST body, never the URL. */
+export function noteExceedsLimit(note: string): boolean {
+  return trimNote(note).length > NOTE_MAX;
+}
+
+/** Returns null when ratings are incomplete or the note is over the limit. Notes stay in the POST body, never the URL. */
 export function buildCheckInRequest(
   sessionId: string,
   worthIt: WorthIt | "",
@@ -27,6 +31,7 @@ export function buildCheckInRequest(
   note: string,
 ): CheckInRequest | null {
   if (!sessionId.trim() || !worthIt || !movedGoal) return null;
+  if (noteExceedsLimit(note)) return null;
   const body: CheckInRequest = {
     session_id: sessionId.trim(),
     worth_it: worthIt,

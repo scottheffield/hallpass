@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { ApplyProposalRequest, CheckInResponse } from "../../../shared/api";
 import type { MovedGoal, PlanProposal, WorthIt } from "../../../shared/types";
 import { ApiFailure, post } from "../../lib/api";
@@ -54,6 +54,7 @@ export function CheckInScreen({
   onFinished,
 }: CheckInScreenProps) {
   const whyId = useId();
+  const reqRef = useRef(0);
   const [phase, setPhase] = useState<Phase>("form");
   const [worthIt, setWorthIt] = useState<WorthIt | "">("");
   const [movedGoal, setMovedGoal] = useState<MovedGoal | "">("");
@@ -63,6 +64,7 @@ export function CheckInScreen({
   const [proposal, setProposal] = useState<PlanProposal | null>(null);
 
   useEffect(() => {
+    reqRef.current += 1;
     if (!open) return;
     setPhase("form");
     setWorthIt("");
@@ -75,14 +77,21 @@ export function CheckInScreen({
 
   const payload = buildCheckInRequest(sessionId, worthIt, movedGoal, note);
   const isSubmitting = phase === "submitting";
-  const canSave = payload !== null && phase === "form";
+  const noteTooLong = note.length > NOTE_MAX;
+  const canSave = payload !== null && phase === "form" && !noteTooLong;
+
+  function setNoteCapped(value: string) {
+    setNote(value.slice(0, NOTE_MAX));
+  }
 
   async function saveCheckIn() {
     if (!payload) return;
+    const token = ++reqRef.current;
     setPhase("submitting");
     setError(null);
     try {
       const response = await post<CheckInResponse>("/api/checkin", payload);
+      if (token !== reqRef.current) return;
       setStub(Boolean(response.stub));
       if (response.proposal) {
         setProposal(response.proposal);
@@ -91,6 +100,7 @@ export function CheckInScreen({
         setPhase("saved");
       }
     } catch (err) {
+      if (token !== reqRef.current) return;
       setPhase("form");
       setError(err instanceof ApiFailure ? err.message : "Could not save check-in. Try again.");
     }
@@ -98,14 +108,17 @@ export function CheckInScreen({
 
   async function decideProposal(accept: boolean) {
     if (!proposal) return;
+    const token = ++reqRef.current;
     setPhase("applying");
     setError(null);
     const body: ApplyProposalRequest = { proposal_id: proposal.id, accept };
     try {
       await post("/api/plan/apply", body);
+      if (token !== reqRef.current) return;
       onFinished?.({ planUpdated: accept });
       onClose();
     } catch (err) {
+      if (token !== reqRef.current) return;
       setPhase("proposal");
       setError(err instanceof ApiFailure ? err.message : "Could not update your plan. Try again.");
     }
@@ -147,10 +160,10 @@ export function CheckInScreen({
             label="Optional note"
             name="checkin_note"
             value={note}
-            onChange={setNote}
+            onChange={setNoteCapped}
             rows={3}
             placeholder="For example: Too introductory. I need concrete examples."
-            hint={`Up to ${NOTE_MAX} characters. Sent securely with your check-in, not in the URL.`}
+            hint={`${note.length}/${NOTE_MAX} characters. Sent securely with your check-in, not in the URL.`}
             disabled={isSubmitting}
           />
           {error ? (
