@@ -5,8 +5,8 @@ import type { PlanDay } from "./diff";
 
 function upcomingItems(day: PlanDay, afterSessionId: string): PlanItem[] {
   const index = day.items.findIndex((item) => item.session_id === afterSessionId);
-  const start = index >= 0 ? index + 1 : 0;
-  return day.items.slice(start).filter((item) => item.status === "planned" && !item.pinned);
+  if (index < 0) return [];
+  return day.items.slice(index + 1).filter((item) => item.status === "planned" && !item.pinned);
 }
 
 /**
