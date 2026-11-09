@@ -1,16 +1,240 @@
 @import "tailwindcss";
 
-/* Design tokens are owned by the UX shell slice. Placeholders only. */
+/* Self-hosted OFL fonts. Licenses sit beside the files in src/ui/fonts/. */
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("./ui/fonts/source-sans-3-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Sans 3";
+  src: url("./ui/fonts/source-sans-3-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("./ui/fonts/bricolage-grotesque-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("./ui/fonts/bricolage-grotesque-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("./ui/fonts/bricolage-grotesque-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Shantell Sans";
+  src: url("./ui/fonts/shantell-sans-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+  v3 direction: warm ivory, navy text, cobalt actions, vermilion badge,
+  yellow planned break, pale blue suggestion. Flat colors only.
+  Badge, butter, and suggestion chips keep their light colors in dark mode
+  so the sticker and the break stay recognizable. Vermilion is nudged just
+  darker than the raster (#D34531) so small white badge text clears WCAG AA.
+*/
 @theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Bricolage Grotesque", "Source Sans 3", system-ui, sans-serif;
+  --font-mark: "Shantell Sans", "Source Sans 3", system-ui, sans-serif;
+
+  --color-canvas: #f3ebdd;
+  --color-surface: #fff9ee;
+  --color-ink: #172b40;
+  --color-muted: #3e5160;
+  --color-line: #8a7b6a;
+  --color-action: #1048d0;
+  --color-action-hover: #0c3aad;
+  --color-on-action: #ffffff;
+  --color-action-quiet: #1048d0;
+  --color-badge: #d34531;
+  --color-on-badge: #ffffff;
+  --color-butter: #f6e8b0;
+  --color-on-butter: #172b40;
+  --color-suggest: #e7eeff;
+  --color-on-suggest: #172b40;
+  --color-danger: #8c2f27;
+  --color-disabled: #e6dfd4;
+  /* Sheet scrim: fixed navy, not --color-ink (which flips to ivory in dark mode). */
+  --color-scrim: rgb(23 43 64 / 0.6);
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
-/* Visible focus everywhere (accessibility baseline). */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --color-canvas: #10161c;
+    --color-surface: #1a232e;
+    --color-ink: #f6f1e6;
+    --color-muted: #d5cbbc;
+    --color-line: #9aa3ae;
+    --color-action-quiet: #c5d2ff;
+    --color-danger: #ffb4a8;
+    --color-disabled: #2a3440;
+  }
+}
+
+body {
+  margin: 0;
+  min-height: 100dvh;
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.45;
+}
+
+::placeholder {
+  color: var(--color-muted);
+  opacity: 1;
+}
+
 :focus-visible {
-  outline: 3px solid currentColor;
+  outline: 3px solid var(--color-ink);
   outline-offset: 2px;
+}
+
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 3px solid CanvasText;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: fixed;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 50;
+  transform: translateY(-150%);
+  border: 2px solid var(--color-ink);
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  padding: 0.6rem 0.9rem;
+  font-weight: 600;
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* The radio itself is clipped; the card carries the visible focus ring. */
+.choice-card {
+  position: relative;
+}
+
+.choice-card:has(:focus-visible) {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+.choice-card input:focus-visible {
+  outline: none;
+}
+
+.hello-badge {
+  display: flex;
+  flex-direction: column;
+  width: 11.5rem;
+  max-width: 100%;
+  overflow: hidden;
+  border: 2px solid var(--color-badge);
+  border-radius: 10px;
+  background: #ffffff;
+  line-height: 1;
+}
+
+.hello-badge-top {
+  background: var(--color-badge);
+  color: var(--color-on-badge);
+  padding: 0.45rem 0.75rem 0.4rem;
+}
+
+.hello-badge-hello {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
+.hello-badge-mine {
+  margin-top: 0.1rem;
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.hello-badge-body {
+  background: #ffffff;
+  color: #172b40;
+  padding: 0.45rem 0.75rem 0.5rem;
+}
+
+.hello-badge-name {
+  display: inline-block;
+  border-bottom: 2px solid #172b40;
+  font-family: var(--font-mark);
+  font-size: 1.7rem;
+  line-height: 1.15;
+}
+
+.hello-mark {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 8px;
+  background: var(--color-badge);
+  color: var(--color-on-badge);
+  padding: 0.4rem 0.7rem;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
 }
