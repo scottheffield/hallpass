@@ -11,6 +11,7 @@ import {
   buildDayTimeline,
   conferenceDateKey,
   formatBreakTime,
+  formatSessionRoom,
   formatTime,
   formatTimeRange,
   nextPlannedSession,
@@ -23,6 +24,14 @@ import {
 
 const sessions = sample.sessions as Session[];
 const plan = demoPlan as Plan;
+
+describe("formatSessionRoom", () => {
+  it("formats pipe-separated venue names for display", () => {
+    expect(formatSessionRoom("Salt Palace | Level 1 | Grand Ballroom H")).toBe(
+      "Grand Ballroom H · Level 1 · Salt Palace",
+    );
+  });
+});
 
 describe("today timeline", () => {
   it("orders sessions and breaks for a conference day", () => {

@@ -11,6 +11,7 @@ import {
   buildDayTimeline,
   conferenceDateKey,
   formatHeaderDate,
+  formatSessionRoom,
   formatTime,
   formatTimeRange,
   nextPlannedSession,
@@ -215,7 +216,7 @@ export function TodayScreen({
                 <SessionCard
                   title={next.block.session.title}
                   time={formatTimeRange(next.block.start, next.block.end)}
-                  room={next.block.session.room}
+                  room={formatSessionRoom(next.block.session.room)}
                   reasonLabel="Why it's on your plan"
                   reason={next.block.item.reason}
                 />
@@ -268,7 +269,7 @@ export function TodayScreen({
                         headingLevel={3}
                         title={block.session.title}
                         time={formatTimeRange(block.start, block.end)}
-                        room={block.session.room}
+                        room={formatSessionRoom(block.session.room)}
                         reasonLabel={statusDetail ? undefined : "Why it's on your plan"}
                         reason={statusDetail ? undefined : block.item.reason}
                         detail={statusDetail}
