@@ -1,6 +1,7 @@
 import { EVENT_DAYS, EVENT_TIME_ZONE } from "../../../shared/event";
 import type { IsoDateTime, Plan, PlanBreak, PlanItem, Session } from "../../../shared/types";
 import { getSession } from "../../lib/agenda";
+import { formatRoomDisplay } from "../../lib/roomDisplay";
 
 export type TodayTimelineKind = "session" | "break";
 
@@ -57,6 +58,11 @@ export function formatTime(iso: IsoDateTime): string {
 
 export function formatTimeRange(start: IsoDateTime, end: IsoDateTime): string {
   return `${formatTime(start)}–${formatTime(end)}`;
+}
+
+/** Human-readable session room for Today cards and headings. */
+export function formatSessionRoom(room: string): string {
+  return formatRoomDisplay(room);
 }
 
 export function formatBreakTime(start: IsoDateTime, end: IsoDateTime): string {
