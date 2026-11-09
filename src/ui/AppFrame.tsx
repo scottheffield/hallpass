@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import { Notice } from "./Notice";
+import { TabNavIcon } from "./TabNavIcon";
 import styles from "./delight.module.css";
 
 export type AppTab = "today" | "plan" | "goals";
@@ -72,11 +73,12 @@ export function AppFrame({ tab, onTabChange, showTabs = true, demoBar, ask, chil
                 <button
                   key={item.id}
                   type="button"
-                  className={`${styles.tab} min-h-12 flex-1 px-2 text-base font-semibold ${selected ? "text-action-quiet" : "text-muted"}`}
+                  className={`${styles.tab} flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 px-2 py-1.5 text-sm font-semibold ${selected ? "text-action-quiet" : "text-muted"}`}
                   aria-current={selected ? "page" : undefined}
                   onClick={() => onTabChange(item.id)}
                 >
-                  {item.label}
+                  <TabNavIcon tab={item.id} />
+                  <span>{item.label}</span>
                 </button>
               );
             })}
