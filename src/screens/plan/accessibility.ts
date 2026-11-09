@@ -10,11 +10,6 @@ export function planDayPanelId(dayKey: string): string {
   return `plan-day-panel-${dayKey}`;
 }
 
-/** Tab label for assistive tech when selection is not conveyed by color alone. */
-export function planDayTabAccessibleName(shortLabel: string, selected: boolean): string {
-  return selected ? `${shortLabel}, selected` : shortLabel;
-}
-
 export type DayTabArrowKey = "ArrowLeft" | "ArrowRight" | "Home" | "End";
 
 /** Next tab index for roving keyboard navigation, or null when the key is not handled. */

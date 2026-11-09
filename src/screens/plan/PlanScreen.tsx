@@ -27,7 +27,6 @@ import { generationStageIndex, PLAN_GENERATION_STAGES } from "./generation";
 import {
   dayTabFocusIndex,
   planDayPanelId,
-  planDayTabAccessibleName,
   planDayTabId,
 } from "./accessibility";
 import { planFocusLine } from "./focus";
@@ -300,7 +299,6 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
                 {EVENT_DAYS.map((day, index) => {
                   const selected = day === selectedDay;
                   const label = dayTabLabel(day);
-                  const tabText = planDayTabAccessibleName(label, selected);
                   return (
                     <Button
                       key={day}
@@ -332,7 +330,7 @@ export function PlanScreen({ onGoals, onCase }: PlanScreenProps) {
                         document.getElementById(planDayTabId(nextDay))?.focus();
                       }}
                     >
-                      {tabText}
+                      {label}
                     </Button>
                   );
                 })}

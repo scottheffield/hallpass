@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  dayTabFocusIndex,
-  planDayPanelId,
-  planDayTabAccessibleName,
-  planDayTabId,
-} from "./accessibility";
+import { dayTabFocusIndex, planDayPanelId, planDayTabId } from "./accessibility";
 
 describe("planDayTabId", () => {
   it("includes the day key", () => {
@@ -15,13 +10,6 @@ describe("planDayTabId", () => {
 describe("planDayPanelId", () => {
   it("includes the day key", () => {
     expect(planDayPanelId("2026-11-10")).toBe("plan-day-panel-2026-11-10");
-  });
-});
-
-describe("planDayTabAccessibleName", () => {
-  it("marks the selected day", () => {
-    expect(planDayTabAccessibleName("Tue", true)).toBe("Tue, selected");
-    expect(planDayTabAccessibleName("Tue", false)).toBe("Tue");
   });
 });
 
