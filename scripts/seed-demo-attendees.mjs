@@ -9,6 +9,7 @@
  * unless SEED_ALLOW_SHARED_PREFIX is set to that same value exactly (opt-in for
  * live demo indexes). Does not write hallpass-sessions. Does not print secrets.
  */
+import { realpathSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -55,10 +56,19 @@ export function resolveSeedPrefix(elasticIndexPrefix, allowSharedPrefix) {
   return { allowed: false, prefix };
 }
 
+/** @returns {boolean} */
+export function pathsAreSameFile(a, b) {
+  try {
+    return realpathSync(a) === realpathSync(b);
+  } catch {
+    return false;
+  }
+}
+
 function isDirectRun() {
   const entry = process.argv[1];
   if (!entry) return false;
-  return fileURLToPath(import.meta.url) === entry;
+  return pathsAreSameFile(fileURLToPath(import.meta.url), entry);
 }
 
 function buildAttendee(attendee_id, index, sessionsByDay, popularIds, allSessions, random) {
