@@ -1,4 +1,12 @@
 export { DirectionsScreen, type DirectionsScreenProps } from "./DirectionsScreen";
+export { loadFloorLevels } from "./floorLevels";
+export {
+  buildFromPreviousLine,
+  formatRoomHeading,
+  previousRoomForDirections,
+  shouldShowSaltPalacePlan,
+  type FloorLevelEntry,
+} from "./wayfinding";
 export {
   accessNeedsMentionStepFree,
   buildDirectionsContent,
