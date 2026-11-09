@@ -1,0 +1,100 @@
+{
+  "attendee_id": "demo-alex",
+  "days": {
+    "2026-11-10": {
+      "items": [
+        {
+          "session_id": "1246200",
+          "status": "planned",
+          "reason": "End-user session on putting AI where people already ask questions: namespace status, and where on-call should look first. Grand Ballroom H, Level 1. The 12:20 session is in the same room.",
+          "clash_note": "Overlaps Your Agent Needs a Platform in room 255 BC, Level 2, 11:30–12:00. That session is an advanced build of a multi-agent platform. This one stays on Level 1 and is about the question backlog. You are not attending the Level 2 session."
+        },
+        {
+          "session_id": "1250865",
+          "status": "planned",
+          "reason": "A year of operating cache-aware LLM inference on Kubernetes, including cache-hit cliffs and the cost of cascading small and large models. Same room as the 11:30 session, Grand Ballroom H."
+        },
+        {
+          "session_id": "1250770",
+          "status": "planned",
+          "reason": "SREs describe AI incident response stalling on missing context: a recent deploy, an owner change, an upstream dependency. Grand Ballroom ACE at 15:40.",
+          "beat_alternative": {
+            "session_id": "1244963",
+            "why": "Same 15:40 slot in room 151. That session is a cost and latency account of an in-cluster triage agent. This one is about the context those tools still miss, which is the incident goal. Room 151 is on Level 1 by the south foyer, away from the Grand Ballroom."
+          }
+        },
+        {
+          "session_id": "1247858",
+          "status": "planned",
+          "reason": "Platform SLOs as promises to developers, not controller metrics. Grand Ballroom ACE at 16:40, after the coffee break, same room as the 15:40 session."
+        }
+      ],
+      "breaks": [
+        {
+          "start": "2026-11-10T12:50:00-07:00",
+          "end": "2026-11-10T15:40:00-07:00",
+          "note": "Lunch, then open time. Next session is 15:40 in Grand Ballroom ACE."
+        },
+        {
+          "start": "2026-11-10T16:10:00-07:00",
+          "end": "2026-11-10T16:40:00-07:00",
+          "note": "Coffee break on the schedule. The next session stays in Grand Ballroom ACE."
+        }
+      ]
+    },
+    "2026-11-11": {
+      "items": [
+        {
+          "session_id": "1248310",
+          "status": "planned",
+          "reason": "A production outage from mixing bursty inference pods with multi-node training in Kueue, including API webhook timeouts. Grand Ballroom H at 11:00."
+        },
+        {
+          "session_id": "1247612",
+          "status": "planned",
+          "reason": "Control-plane failures at very large node counts on production AI workloads, and the upstream changes that stopped cascading stalls. Same room at 11:50."
+        },
+        {
+          "session_id": "1250728",
+          "status": "planned",
+          "reason": "Where image pulls hide inside pod startup time, from a large bare-metal fleet, and which parts of that path they changed. Same room at 14:20, after lunch."
+        }
+      ],
+      "breaks": [
+        {
+          "start": "2026-11-11T12:20:00-07:00",
+          "end": "2026-11-11T14:20:00-07:00",
+          "note": "Lunch on the schedule, then open time before the 14:20 session in Grand Ballroom H."
+        }
+      ]
+    },
+    "2026-11-12": {
+      "items": [
+        {
+          "session_id": "1250494",
+          "status": "planned",
+          "reason": "How to detect incident agents that invent metrics, service edges, or deploys, using the cluster as ground truth. Room 151 at 11:00."
+        },
+        {
+          "session_id": "1250150",
+          "status": "planned",
+          "reason": "A panel on workload-aware scheduling for large AI and research clusters. Grand Ballroom H at 11:50, a short walk from room 151 on Level 1."
+        },
+        {
+          "session_id": "1228453",
+          "status": "planned",
+          "reason": "Gang scheduling so training pods land together on contiguous hardware. Grand Ballroom ACE at 13:50, after lunch."
+        }
+      ],
+      "breaks": [
+        {
+          "start": "2026-11-12T12:20:00-07:00",
+          "end": "2026-11-12T13:50:00-07:00",
+          "note": "Lunch, then walk from Grand Ballroom H to Grand Ballroom ACE for the 13:50 session."
+        }
+      ]
+    }
+  },
+  "source": "ai",
+  "updated_at": "2026-11-09T12:00:00-07:00"
+}

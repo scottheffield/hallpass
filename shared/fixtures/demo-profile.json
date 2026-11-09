@@ -1,0 +1,32 @@
+{
+  "attendee_id": "demo-alex",
+  "why_summary": "Practical platform engineering and AI inference. Skip vendor pitches. Leave room for breaks.",
+  "goals": [
+    "Find practical ways to run AI inference on the platform I already operate.",
+    "Get better at Kubernetes incident response when the hard part is missing context, not more dashboards."
+  ],
+  "role": "SRE",
+  "problems": [
+    "Incidents stall because the signal is there and the recent deploy or owner change is not.",
+    "Inference is showing up on the platform, and I need operations practice rather than a product tour."
+  ],
+  "topics": [
+    "platform engineering",
+    "AI inference",
+    "Kubernetes incident response"
+  ],
+  "tools": [
+    "Kubernetes",
+    "OpenTelemetry",
+    "Kueue"
+  ],
+  "people_to_see": [],
+  "expertise_to_see": [
+    "SREs who have used AI in incident response",
+    "platform engineers operating inference on Kubernetes"
+  ],
+  "energy": "medium",
+  "pacing": "balanced",
+  "breaks": "A real lunch away from sessions, and no third talk in a morning block.",
+  "updated_at": "2026-11-09T12:00:00-07:00"
+}

@@ -1,0 +1,290 @@
+{
+  "label": "agenda-backed",
+  "note": "Subset copied from public/agenda.json. Every id is a real KubeCon + CloudNativeCon North America 2026 session. Not illustrative.",
+  "source": "public/agenda.json",
+  "pulled_at": "2026-11-09T12:41:25-07:00",
+  "sessions": [
+    {
+      "id": "1246200",
+      "title": "Ask Your Platform: Putting AI to Work Where the Questions Live",
+      "start": "2026-11-10T11:30:00-07:00",
+      "end": "2026-11-10T12:00:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom H",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Anton Alexander",
+        "Scott Adams"
+      ],
+      "abstract": "Every platform team has the same backlog: questions. Developers want to know what's happening in their namespace. On-call engineers want to know where to look first. The answers exist, just not fast.\nMost advice about AI starts with the technology. We started with the questions. We looked at where people already go for answers and put AI there, inside the work we were already doing. Investigations that used to take days now take hours.\nThis talk shows what that looked like in practice and how to spot the same opportunities on your own platform. You'll leave knowing where AI fits in platform engineering work, where it doesn't, and with the confidence to start. No AI background needed.",
+      "search_text": "Ask Your Platform: Putting AI to Work Where the Questions Live\nEvery platform team has the same backlog: questions. Developers want to know what's happening in their namespace. On-call engineers want to know where to look first. The answers exist, just not fast.\nMost advice about AI starts with the technology. We started with the questions. We looked at where people already go for answers and put AI there, inside the work we were already doing. Investigations that used to take days now take hours.\nThis talk shows what that looked like in practice and how to spot the same opportunities on your own platform. You'll leave knowing where AI fits in platform engineering work, where it doesn't, and with the confidence to start. No AI background needed.\nAI Inference + Agentic",
+      "speaker_text": "Anton Alexander. Independent. Platform Engineer. Anton Alexander is a Platform Engineer focused on developer experience. He works on Kubernetes offerings running on public and private clouds that power business-critical software at scale, with an emphasis on making infrastructure easier for engineering teams to use, adopt, and trust. Lately he has been building AI-driven tools to simplify troubleshooting and help teams interact with complex systems more naturally.\nScott Adams. Independent. Principal Engineer. Scott Adams is a Principal Engineer, where he leads platform and DevOps initiatives on AWS and EKS. He builds AI-powered developer tools that reduce operational toil — from intelligent namespace assistants to incident investigation accelerators. Scott is passionate about practical AI adoption in platform engineering, focusing on what actually works rather than what's theoretically possible.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1233585",
+      "title": "Your Agent Needs a Platform: Cloud Native Infrastructure for Multi-Agent AI Systems",
+      "start": "2026-11-10T11:30:00-07:00",
+      "end": "2026-11-10T12:00:00-07:00",
+      "room": "Salt Palace | Level 2 | 255 BC",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Soham Ghadge"
+      ],
+      "abstract": "Everyone is building AI agents. Almost no one is thinking about the infrastructure layer underneath them.\nThis talk reframes AI agents as cloud native workloads and shows how to build a production-grade multi-agent platform on Kubernetes. Topics covered: modeling agents as K8s custom resources, durable execution and retry semantics with Dapr, event-driven inter-agent messaging with NATS, and end-to-end observability using OpenTelemetry traces across agent hops.\nWe go beyond LangGraph demos to tackle the hard problems: failure recovery, agent scheduling, concurrency limits, and audit logging — the same concerns we solved for microservices, now applied to agents.",
+      "search_text": "Your Agent Needs a Platform: Cloud Native Infrastructure for Multi-Agent AI Systems\nEveryone is building AI agents. Almost no one is thinking about the infrastructure layer underneath them.\nThis talk reframes AI agents as cloud native workloads and shows how to build a production-grade multi-agent platform on Kubernetes. Topics covered: modeling agents as K8s custom resources, durable execution and retry semantics with Dapr, event-driven inter-agent messaging with NATS, and end-to-end observability using OpenTelemetry traces across agent hops.\nWe go beyond LangGraph demos to tackle the hard problems: failure recovery, agent scheduling, concurrency limits, and audit logging — the same concerns we solved for microservices, now applied to agents.\nAI Inference + Agentic",
+      "speaker_text": "Soham Ghadge. GenbaNEXT. AI Engineer|LLMOps|Open source enthusiast. Soham is the Lead AI Engineer at GenbaNext Technologies, a Tokyo-based startup. He specialises in LLMs and LLMOps, and speaks about new and upcoming technologies in community events.",
+      "tags": [
+        "Advanced"
+      ]
+    },
+    {
+      "id": "1250865",
+      "title": "What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes",
+      "start": "2026-11-10T12:20:00-07:00",
+      "end": "2026-11-10T12:50:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom H",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "YoungJoon Jeong",
+        "Seol Heo"
+      ],
+      "abstract": "The maintainer talks tell you how cache-aware inference routing works. This talk tells you what happens after you adopt it and run a dozen live services on it for a year.\nA Korean telecom moved from a single RAG pipeline to production agents on Kubernetes, adopting the Gateway API Inference Extension and llm-d for KV-cache-aware routing. The architecture worked in the demo. Production was a different teacher: cache-hit cliffs under real traffic, a small-versus-large model cascade whose economics only appeared at scale, and the realization that promoting a routing policy needs the same evaluation gate as promoting a model.\nWe share the failure modes the docs omit, the small/large cascade cost numbers, the measured 40-50% time-to-first-token reduction on cache hits, how we wired evaluation into routing-policy promotion, and the operational signals that actually predicted trouble.",
+      "search_text": "What the Docs Don't Tell You: A Telecom's Year Operating Cache-Aware LLM Inference on Kubernetes\nThe maintainer talks tell you how cache-aware inference routing works. This talk tells you what happens after you adopt it and run a dozen live services on it for a year.\nA Korean telecom moved from a single RAG pipeline to production agents on Kubernetes, adopting the Gateway API Inference Extension and llm-d for KV-cache-aware routing. The architecture worked in the demo. Production was a different teacher: cache-hit cliffs under real traffic, a small-versus-large model cascade whose economics only appeared at scale, and the realization that promoting a routing policy needs the same evaluation gate as promoting a model.\nWe share the failure modes the docs omit, the small/large cascade cost numbers, the measured 40-50% time-to-first-token reduction on cache hits, how we wired evaluation into routing-policy promotion, and the operational signals that actually predicted trouble.\nAI Inference + Agentic",
+      "speaker_text": "YoungJoon Jeong. AWS. Helping enterprises build AI platforms on Kubernetes. YoungJoon Jeong is a Specialist Solutions Architect at Amazon Web Services (AWS), specializing in Kubernetes platform engineering and AI/ML infrastructure. He works with enterprises across the APJC region on production EKS deployments spanning agentic AI platforms, GPU scheduling, hybrid infrastructure, and security governance. He publishes an open-source engineering playbook covering EKS best practices, AI platform architecture, performance benchmarks, and cloud-native operations.\nSeol Heo. LG Uplus Corp.. Turning AI platforms into real-world services at scale. Seol Heo is a Tech Lead on the MLOps Development Team at LG U+, South Korea's major telecommunications provider. He leads the design and implementation of LG U+'s MLOps platform on Amazon EKS, including the adoption of EKS Hybrid Nodes to bridge on-premises GPU infrastructure with cloud-native workflows. His work focuses on building scalable model training, evaluation, and serving pipelines that power LG U+'s agentic AI services in production.",
+      "tags": [
+        "Advanced",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1246033",
+      "title": "When Infrastructure Breaks in Production: How EarnIn Brought Testing to the Full CNCF Stack",
+      "start": "2026-11-10T12:20:00-07:00",
+      "end": "2026-11-10T12:50:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom GI",
+      "track": "Platform Engineering",
+      "speakers": [
+        "Priya Namasivayam"
+      ],
+      "abstract": "EarnIn runs 15+ CNCF add-ons (including Flux, Karpenter, Kyverno, cert-manager, Linkerd, external-secrets-operator, Velero, and more) on a high-availability platform where infrastructure failure directly affects people's access to their earnings.\nAfter catching too many issues in production — cert-manager chains breaking silently after upgrades, Velero backup jobs completing without actually running — we built an in-cluster infrastructure testing framework using Testkube, wired directly into our Flux GitOps pipeline.\nThis session covers how we model infrastructure tests as Kubernetes CRDs, how quality gates fire on every GitOps-triggered change, and which failure classes we catch across our CNCF stack. We'll share real test patterns, the architecture that makes it work, and the lessons from operationalizing infrastructure testing at a fintech company where \"it worked in staging\" is not good enough.",
+      "search_text": "When Infrastructure Breaks in Production: How EarnIn Brought Testing to the Full CNCF Stack\nEarnIn runs 15+ CNCF add-ons (including Flux, Karpenter, Kyverno, cert-manager, Linkerd, external-secrets-operator, Velero, and more) on a high-availability platform where infrastructure failure directly affects people's access to their earnings.\nAfter catching too many issues in production — cert-manager chains breaking silently after upgrades, Velero backup jobs completing without actually running — we built an in-cluster infrastructure testing framework using Testkube, wired directly into our Flux GitOps pipeline.\nThis session covers how we model infrastructure tests as Kubernetes CRDs, how quality gates fire on every GitOps-triggered change, and which failure classes we catch across our CNCF stack. We'll share real test patterns, the architecture that makes it work, and the lessons from operationalizing infrastructure testing at a fintech company where \"it worked in staging\" is not good enough.\nPlatform Engineering",
+      "speaker_text": "Priya Namasivayam. EarnIn. EarnIn, Staff Platform Engineer. Priya Namasivayam is a Staff Platform Engineer at EarnIn, building cloud-native infrastructure at scale. She specializes in Kubernetes, service meshes, and GitOps delivery, and led EarnIn's migration from AWS App Mesh to Linkerd—improving security, reliability, and developer experience. She champions treating infrastructure like application code, gating Flux-driven changes with in-cluster validation via Testkube, and sharing patterns teams can adopt in production.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1250770",
+      "title": "The SRE Is Not Dead: What AI Taught Us about Missing Context in Kubernetes Incident Response",
+      "start": "2026-11-10T15:40:00-07:00",
+      "end": "2026-11-10T16:10:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom ACE",
+      "track": "Observability",
+      "speakers": [
+        "Muhammed Yunas Chirayath",
+        "Ajmal Ali kannu"
+      ],
+      "abstract": "We introduced AI-assisted incident response into a large-scale financial services platform running on OpenShift and Kubernetes expecting faster resolutions and less engineer toil. Instead, we discovered the biggest bottleneck wasn't signal analysis—it was missing operational context.\nAI could detect CPU spikes and latency increases, but it couldn't know a deployment had occurred 20 minutes earlier, a service owner had changed, or an upstream dependency was degrading. That gap led to poor prioritization and engineers chasing the wrong signals during incidents.\nThis session shares how we rebuilt incident response using OpenTelemetry, Argo CD, Prometheus, Grafana, and Backstage to combine telemetry, deployment intelligence, and service ownership into a single workflow.\nAttendees will learn practical patterns for building context-aware incident response on Kubernetes, reducing alert fatigue, and improving operational decision-making beyond prediction-based tooling.",
+      "search_text": "The SRE Is Not Dead: What AI Taught Us about Missing Context in Kubernetes Incident Response\nWe introduced AI-assisted incident response into a large-scale financial services platform running on OpenShift and Kubernetes expecting faster resolutions and less engineer toil. Instead, we discovered the biggest bottleneck wasn't signal analysis—it was missing operational context.\nAI could detect CPU spikes and latency increases, but it couldn't know a deployment had occurred 20 minutes earlier, a service owner had changed, or an upstream dependency was degrading. That gap led to poor prioritization and engineers chasing the wrong signals during incidents.\nThis session shares how we rebuilt incident response using OpenTelemetry, Argo CD, Prometheus, Grafana, and Backstage to combine telemetry, deployment intelligence, and service ownership into a single workflow.\nAttendees will learn practical patterns for building context-aware incident response on Kubernetes, reducing alert fatigue, and improving operational decision-making beyond prediction-based tooling.\nObservability",
+      "speaker_text": "Muhammed Yunas Chirayath. Best Buy. Best Buy, Principle Site Reliability Engineer. Muhammed Yunas Chirayath is a Site Reliability Engineer with production experience building and operating large-scale platforms on OpenShift and Kubernetes. He specializes in observability strategy, cost optimization, and platform reliability. He has led efforts to build unified observability platforms, reduce telemetry waste, and solve hard networking and reliability problems that rarely make it into documentation but always show up in production.\nAjmal Ali kannu. Self. Ajmal. Ajmal Ali kannu is a Senior Full Stack Engineer focused on building resilient, high-scale systems in the financial domain. He has worked extensively with open source technologies to design and deliver cloud-native apps handling high-throughput transactional workloads.\r\n\r\nAjmal is passionate about sharing practical lessons from production—especially the things that don’t go as planned—and helping teams build systems that scale and survive in real-world conditions.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1244963",
+      "title": "Triaging 4,700 Alerts/Month at $0.33 Each: Verkada's MCP Agent on Nine Production Clusters",
+      "start": "2026-11-10T15:40:00-07:00",
+      "end": "2026-11-10T16:10:00-07:00",
+      "room": "Salt Palace | Level 1 | 151",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Rohan Sood",
+        "Adrian Ng"
+      ],
+      "abstract": "Over the last three months Verkada's incident-triage agent handled about 4,700 production alerts a month across nine Kubernetes clusters at $0.33 per investigation, with an 87.5% prompt-cache-read ratio and a 139-second median time-to-summary. The control plane runs in-cluster on every shard. No AI-for-SRE SaaS is in the path; inference is managed Claude Opus 5, state lives on managed KV.\nThree reversals shaped the system and each cut cost or restored reliability: pod-to-serverless ingress so chat deploys never drop alerts; per-pod to cross-cluster state on managed KV so a single investigation can span shards; single-shot to multi-turn under a 1-hour cache-TTL budget, where cost tracks investigation depth: about $0.27 for a five-call investigation and $1.29 past twenty-five.\nMCP is the boring substrate that made the rest tractable: per-cluster MCP servers for ArgoCD, Prometheus, and the observability stack, with cross-cluster fan-out through the serverless ingress, and per-channel Markdown system prompts that retune triage behavior without a code change.",
+      "search_text": "Triaging 4,700 Alerts/Month at $0.33 Each: Verkada's MCP Agent on Nine Production Clusters\nOver the last three months Verkada's incident-triage agent handled about 4,700 production alerts a month across nine Kubernetes clusters at $0.33 per investigation, with an 87.5% prompt-cache-read ratio and a 139-second median time-to-summary. The control plane runs in-cluster on every shard. No AI-for-SRE SaaS is in the path; inference is managed Claude Opus 5, state lives on managed KV.\nThree reversals shaped the system and each cut cost or restored reliability: pod-to-serverless ingress so chat deploys never drop alerts; per-pod to cross-cluster state on managed KV so a single investigation can span shards; single-shot to multi-turn under a 1-hour cache-TTL budget, where cost tracks investigation depth: about $0.27 for a five-call investigation and $1.29 past twenty-five.\nMCP is the boring substrate that made the rest tractable: per-cluster MCP servers for ArgoCD, Prometheus, and the observability stack, with cross-cluster fan-out through the serverless ingress, and per-channel Markdown system prompts that retune triage behavior without a code change.\nAI Inference + Agentic",
+      "speaker_text": "Rohan Sood. Verkada. Building Resilient Systems and Scalable Platforms. Rohan first explored mechanical systems at Berkeley before a fascination with robotics and ML prompted a pivot. He dove into academic research on how machines make sense of the world, exploring SLAM, decision theory, and information theory. After starting his career building machine learning infrastructure, he now works on a similar problem at a different scale: ensuring large cloud infrastructure stacks can make sense of—and survive—the chaos of production.\nAdrian Ng. Verkada. Director of engineering at Verkada. Adrian Ng has spent two decades building enterprise-grade infrastructure. As an Engineering Director at Verkada, he leads the platform infrastructure teams keeping Verkada's cloud reliable across more than 2 million devices globally. He previously led engineering teams building products from scratch at Google Cloud and Oracle. Adrian holds a BS and MS degree from Carnegie Mellon University.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1247858",
+      "title": "The Promises We Keep at Scale: A Contract-Driven Guide to Platform SLOs",
+      "start": "2026-11-10T16:40:00-07:00",
+      "end": "2026-11-10T17:10:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom ACE",
+      "track": "Observability",
+      "speakers": [
+        "Vasudev Bongale",
+        "Swati Shridhar Nair"
+      ],
+      "abstract": "Monitoring a Kubernetes platform with 2M+ containers exposes the limits of standard tools. Most setups track internal controller machinery, ignoring user friction. Teams outgrowing kube-state-metrics often build custom metrics focused on internal mechanics rather than user experience, producing noise instead of insight.\nEffective platform observability needs to measure the promises made to developers.\nThis session designs an SLO framework unified across stateless and stateful workloads using a contract-driven model. Learn to distill thousands of data points into 3–4 critical metrics that drove our operations this past year. We track workload readiness alongside pod-lifecycle signals (init-container latency, image download waits, terminating stalls) to isolate infrastructure faults from user errors before a page fires. This continues KubeCon NA 2025 (\"Making Application Rollouts Observable, Actionable, and Boring\"), moving from rollout signals to platform-wide promises.",
+      "search_text": "The Promises We Keep at Scale: A Contract-Driven Guide to Platform SLOs\nMonitoring a Kubernetes platform with 2M+ containers exposes the limits of standard tools. Most setups track internal controller machinery, ignoring user friction. Teams outgrowing kube-state-metrics often build custom metrics focused on internal mechanics rather than user experience, producing noise instead of insight.\nEffective platform observability needs to measure the promises made to developers.\nThis session designs an SLO framework unified across stateless and stateful workloads using a contract-driven model. Learn to distill thousands of data points into 3–4 critical metrics that drove our operations this past year. We track workload readiness alongside pod-lifecycle signals (init-container latency, image download waits, terminating stalls) to isolate infrastructure faults from user errors before a page fires. This continues KubeCon NA 2025 (\"Making Application Rollouts Observable, Actionable, and Boring\"), moving from rollout signals to platform-wide promises.\nObservability",
+      "speaker_text": "Vasudev Bongale. LinkedIn. Staff Software Engineer. Vasudev is a Staff Software Engineer and technical lead for LinkedIn’s Kubernetes platform, which runs 2M+ containers across stateless and stateful services. He works on the end-to-end workload lifecycle, from how workloads are deployed to platform accountability and SLOs, with a focus on keeping infrastructure reliable, transparent, and out of developers’ way.\nSwati Shridhar Nair. LinkedIn. LinkedIn, Senior Software Engineer. Swati is a Senior Software Engineer at LinkedIn, where she builds and operates Kubernetes platforms for both stateless and stateful workloads that power many of LinkedIn’s core services. She enjoys simplifying complex systems and building reliable, observable, and resilient platforms at scale.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1248310",
+      "title": "Anatomy of an Outage: When Bursty ML Workloads Break the Kubernetes Scheduler",
+      "start": "2026-11-11T11:00:00-07:00",
+      "end": "2026-11-11T11:30:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom H",
+      "track": "Operations + Performance",
+      "speakers": [
+        "Cellan Hall",
+        "Jenny Vega",
+        "Karol Szuster"
+      ],
+      "abstract": "At Isomorphic Labs, we run tens of thousands of concurrent ML workloads per cluster for drug discovery. Using Kueue for scheduling, we found that mixing bursty single-pod inference alongside heavy multi-node distributed training pushed our control plane over the edge.\nThis talk breaks down a production outage where pending workloads triggered Kube-API webhook timeouts, causing a cascading control plane failure. We detail how we stabilised the cluster: mitigating head-of-line blocking by decoupling queues and tuning Kueue's Preemption Fair Sharing. We also explain the \"cardinality problem\" of integrating KEDA with Kueue, and how to build scheduler signal limiters to protect the API server from hyper-scale event storms.\nAttendees will learn actionable architectural guardrails to navigate volatile scaling, manage extreme concurrency, and safely colocate massive batch inference with distributed training.",
+      "search_text": "Anatomy of an Outage: When Bursty ML Workloads Break the Kubernetes Scheduler\nAt Isomorphic Labs, we run tens of thousands of concurrent ML workloads per cluster for drug discovery. Using Kueue for scheduling, we found that mixing bursty single-pod inference alongside heavy multi-node distributed training pushed our control plane over the edge.\nThis talk breaks down a production outage where pending workloads triggered Kube-API webhook timeouts, causing a cascading control plane failure. We detail how we stabilised the cluster: mitigating head-of-line blocking by decoupling queues and tuning Kueue's Preemption Fair Sharing. We also explain the \"cardinality problem\" of integrating KEDA with Kueue, and how to build scheduler signal limiters to protect the API server from hyper-scale event storms.\nAttendees will learn actionable architectural guardrails to navigate volatile scaling, manage extreme concurrency, and safely colocate massive batch inference with distributed training.\nOperations + Performance",
+      "speaker_text": "Cellan Hall. Isomorphic Labs. Software Engineer @ Isomorphic Labs. Cellan Hall is a Software Engineer at Isomorphic Labs, managing observability for clusters running tens of thousands of ML workloads. They instrument Kueue and the Kubernetes scheduler to survive massive spikes from mixed AI compute. Cellan builds telemetry to catch API server bottlenecks before they trigger cascading failures. When not tuning alerts, they are obsessing over extraction times and dialling in the perfect espresso.\nJenny Vega. Isomorphic Labs. Senior ML Platform Software Engineer @ Isomorphic Labs. Jenny Vega is a Senior ML Platform Engineer at Isomorphic Labs, building the infrastructure for AI-driven drug discovery. Specializing in Kubernetes orchestration, Jenny designed and rolled out scheduling enhancements that boosted GPU cluster utilization across tens of millions of monthly runs. Previously, she was a Senior Solutions Architect at Google and AWS, guiding enterprises and startups on distributed training and large-scale cloud architectures.\nKarol Szuster. Google. Software Engineer @ Google. Software Engineer with 6+ years of experience. Previously built solutions for AI-driven data publication and curation. Currently at Google developing Kueue to enhance AI training and inference capabilities across Kubernetes clusters.",
+      "tags": [
+        "Advanced",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1247612",
+      "title": "How Anthropic Almost Melted GKE (And the PRs That Saved It)",
+      "start": "2026-11-11T11:50:00-07:00",
+      "end": "2026-11-11T12:20:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom H",
+      "track": "Operations + Performance",
+      "speakers": [
+        "Maciek Różacki",
+        "Jian Cheung"
+      ],
+      "abstract": "At 50,000 nodes, component failure is a statistical certainty—but total control-plane collapse shouldn't be. When Anthropic and Google pushed GKE to these limits on production AI workloads, the real threat wasn't the initial faults; it was the catastrophic loss of graceful degradation. Default upstream mechanics frequently turned localized anomalies into cascading, fleet-wide stalls.\nThis talk explores six joint war stories where Kubernetes' built-in self-healing broke down: from a CNI startup probe that couldn't outlast its own informer sync, to an APF cost-misestimation that triggered master OOMs.\nWe will detail the exact failure modes, the joint debugging, and the upstream PRs that enforced blast-radius isolation. Finally, we’ll examine how these lessons drive forward-looking community work—like queue isolation and stateless controllers—ensuring Kubernetes handles massive scale gracefully without breaking.",
+      "search_text": "How Anthropic Almost Melted GKE (And the PRs That Saved It)\nAt 50,000 nodes, component failure is a statistical certainty—but total control-plane collapse shouldn't be. When Anthropic and Google pushed GKE to these limits on production AI workloads, the real threat wasn't the initial faults; it was the catastrophic loss of graceful degradation. Default upstream mechanics frequently turned localized anomalies into cascading, fleet-wide stalls.\nThis talk explores six joint war stories where Kubernetes' built-in self-healing broke down: from a CNI startup probe that couldn't outlast its own informer sync, to an APF cost-misestimation that triggered master OOMs.\nWe will detail the exact failure modes, the joint debugging, and the upstream PRs that enforced blast-radius isolation. Finally, we’ll examine how these lessons drive forward-looking community work—like queue isolation and stateless controllers—ensuring Kubernetes handles massive scale gracefully without breaking.\nOperations + Performance",
+      "speaker_text": "Maciek Różacki. Google. Google, Group Product Manager. Product manager behind K8Ss and GKEs capabilities for Scalability, HPC, Batch and AI Training use cases. Figuring out how to make Kubernetes a the best platform to build research platforms.\nJian Cheung. Anthropic. Anthropic, Member of Technical Staff. Jian is a Member of Technical Staff at Anthropic working on large accelerator clusters. Prior to Anthropic, Jian worked on Compute Infrastructure at Airbnb.",
+      "tags": [
+        "Advanced",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1250728",
+      "title": "Hidden Pod Startup Latency: Container Image Pull",
+      "start": "2026-11-11T14:20:00-07:00",
+      "end": "2026-11-11T14:50:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom H",
+      "track": "Operations + Performance",
+      "speakers": [
+        "Omer Oz"
+      ],
+      "abstract": "Pod startup latency directly impacts service responsiveness, autoscaling speed, and incident recovery on Kubernetes. Yet much of that latency is dominated by the image pull step; which is mostly hidden.\nDrawing on a real LinkedIn production case study — over 500K bare-metal hosts, 25M cores, and pod density averaging beyond 50 per host in our densest clusters — we’ll show how we cut the long tail of pod startup latency by 72% through reducing image pull latency by 72% at P99 and 75% at P50. We'll examine how container image pulls contribute to startup latency: taking a deep dive into the image pull path to identify bottlenecks and build a mental model, then covering the practical levers we have — compression, kubelet and containerd configuration, and P2P caching.",
+      "search_text": "Hidden Pod Startup Latency: Container Image Pull\nPod startup latency directly impacts service responsiveness, autoscaling speed, and incident recovery on Kubernetes. Yet much of that latency is dominated by the image pull step; which is mostly hidden.\nDrawing on a real LinkedIn production case study — over 500K bare-metal hosts, 25M cores, and pod density averaging beyond 50 per host in our densest clusters — we’ll show how we cut the long tail of pod startup latency by 72% through reducing image pull latency by 72% at P99 and 75% at P50. We'll examine how container image pulls contribute to startup latency: taking a deep dive into the image pull path to identify bottlenecks and build a mental model, then covering the practical levers we have — compression, kubelet and containerd configuration, and P2P caching.\nOperations + Performance",
+      "speaker_text": "Omer Oz. LinkedIn. Software Engineer @ Linkedin Compute Infrastructure. Omer is a software engineer who loves optimizing large systems. In the past he has worked across different parts of the ML Infra stack and now he works on Compute Infra at LinkedIn, helping run one of the largest Kubernetes installations in the world — +500k bare-metal machines. In his spare time, he loves testing and contributing to open source projects.",
+      "tags": [
+        "Advanced",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1250494",
+      "title": "Catching Ghosts in the Machine: Hallucination Detection for Observability Agents",
+      "start": "2026-11-12T11:00:00-07:00",
+      "end": "2026-11-12T11:30:00-07:00",
+      "room": "Salt Palace | Level 1 | 151",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Raj Bhensadadia",
+        "Prschita Prschita"
+      ],
+      "abstract": "Last year at KubeCon, we showed how MCP and LLMs let you talk to your dashboards. The next step is agents that investigate incidents autonomously. An agent queries Prometheus, reads logs, and produces an RCA, but the metric it cites does not exist, the service dependency it assumes has no edge in the mesh, and the deploy it blames was in another namespace. The diagnosis looks expert and is fabricated.\nWe call these observability hallucinations: agents inventing metrics, service relationships, or causal timelines. Unlike generic LLM hallucinations, these are detectable because ground truth exists in your infrastructure. Prometheus metadata knows every metric. Kubernetes discovery knows every service path.\nThis talk presents three hallucination types: metric, topological, and temporal - with a detection architecture that validates claims. We will demo how MCP tool-call interception, evidence grounding, and a self-correction loop correct analysis before it reaches the on-call engineer.",
+      "search_text": "Catching Ghosts in the Machine: Hallucination Detection for Observability Agents\nLast year at KubeCon, we showed how MCP and LLMs let you talk to your dashboards. The next step is agents that investigate incidents autonomously. An agent queries Prometheus, reads logs, and produces an RCA, but the metric it cites does not exist, the service dependency it assumes has no edge in the mesh, and the deploy it blames was in another namespace. The diagnosis looks expert and is fabricated.\nWe call these observability hallucinations: agents inventing metrics, service relationships, or causal timelines. Unlike generic LLM hallucinations, these are detectable because ground truth exists in your infrastructure. Prometheus metadata knows every metric. Kubernetes discovery knows every service path.\nThis talk presents three hallucination types: metric, topological, and temporal - with a detection architecture that validates claims. We will demo how MCP tool-call interception, evidence grounding, and a self-correction loop correct analysis before it reaches the on-call engineer.\nAI Inference + Agentic",
+      "speaker_text": "Raj Bhensadadia. Apple. Machine Learning Engineer at Apple. Raj Bhensadadia, a machine learning engineer with a passion for leveraging ML technologies to enhance monitoring and analysis of large scale systems and ensure robustness and performance of infrastructure and services.\nPrschita Prschita. Apple. Apple, Engineering Manager. Prschita is an engineering manager at Apple, leading the Observability Intelligence and Analysis team. Prschita loves to think about and build ML-Driven Observability solutions. She has a background in Observability, Machine Learning, Data Science and Data Engineering.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1250150",
+      "title": "The Scheduling Stack: Real-World Lessons from Anthropic, Anyscale, Google, and CERN",
+      "start": "2026-11-12T11:50:00-07:00",
+      "end": "2026-11-12T12:20:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom H",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Wojciech Tyczyński",
+        "Ricardo Rocha",
+        "Kaslin Fields",
+        "Decheng Dai",
+        "Jui-An Huang"
+      ],
+      "abstract": "For years, Kubernetes treated individual pods as scheduling units, complicating the execution of complex distributed systems. With the explosive growth of AI workloads, the ecosystem demands a smarter control plane.\nIn this panel, scheduling experts from Google, Anthropic, Anyscale and CERN will unpack the paradigm shift of Workload Aware Scheduling. By teaching core Kubernetes to natively understand higher-level application semantics, we are bridging the critical gap between the scheduler and higher-level frameworks. This upstream evolution is essential for optimizing resource sharing and performance in massive multi-tenant environments.\nOur panelists will discuss how these foundational blocks enable a cohesive multi-layer scheduling stack. Furthermore, we will explore how this crucial first step unlocks the next frontiers of orchestration including seamless disruption management and tighter integration with infrastructure autoscaling.",
+      "search_text": "The Scheduling Stack: Real-World Lessons from Anthropic, Anyscale, Google, and CERN\nFor years, Kubernetes treated individual pods as scheduling units, complicating the execution of complex distributed systems. With the explosive growth of AI workloads, the ecosystem demands a smarter control plane.\nIn this panel, scheduling experts from Google, Anthropic, Anyscale and CERN will unpack the paradigm shift of Workload Aware Scheduling. By teaching core Kubernetes to natively understand higher-level application semantics, we are bridging the critical gap between the scheduler and higher-level frameworks. This upstream evolution is essential for optimizing resource sharing and performance in massive multi-tenant environments.\nOur panelists will discuss how these foundational blocks enable a cohesive multi-layer scheduling stack. Furthermore, we will explore how this crucial first step unlocks the next frontiers of orchestration including seamless disruption management and tighter integration with infrastructure autoscaling.\nAI Inference + Agentic",
+      "speaker_text": "Wojciech Tyczyński. Google. Senior Staff Software Engineer, Google. Wojciech is working on Google Technical Infrastructure & Cloud since 2012. Since 2015 he works on Kubernetes and GKE. With the main focus on scalability, performance and reliability, he gained experience and contributed to many Kubernetes features and most of its components. Currently his main focus is in the scheduling rea.\r\nBefore joining Google he graduated from University of Warsaw earning M.S. in Computer Science and B.S. in Mathematics.\nRicardo Rocha. CERN. Computing Engineer. Ricardo leads the Platform Infrastructure team at CERN with a strong focus on cloud native deployments and machine learning. He has led for several years the internal effort to transition services and workloads to use cloud native technologies, as well as dissemination and training efforts. Ricardo got CERN to join the CNCF and is a lead of the CNCF Research User Group. Prior to this work Ricardo helped develop the grid computing infrastructure serving the Large Hadron Collider (LHC).\nKaslin Fields. Google. Google Developer Advocate. Kaslin Fields is a Developer Advocate at Google Cloud, a Container enthusiast and creator of tech comics. She uses her knowledge of DevOps technologies and methodologies to help others as they enter the Cloud Native world. By creating comics about DevOps tech, she hopes to make learning Cloud Native fun and accessible to everyone!\nDecheng Dai. Anthropic. Anthropic, Member of Technical Staff. Decheng Dai is a Member of Technical Staff on Anthropic's Core Infrastructure team, where he has built two generations of the Kubernetes scheduler that places inference, training, and research workloads across the company's TRN, TPU, and GPU fleet. Before Anthropic he spent six years on Google's Borgmaster team, focused on TPUv1 bring-up and network-aware scheduling.\nJui-An Huang. Anyscale. Anyscale, Software Engineer. Jui-An Huang is also known as rueian on GitHub. He is the creator of rueidis/valkey-go, an official Redis/Valkey Go client, and more recently has been contributing to Ray and KubeRay since 2022.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1228453",
+      "title": "Anthropic’s Kubernetes Scheduler for Frontier AI: What Worked, What Broke",
+      "start": "2026-11-12T13:50:00-07:00",
+      "end": "2026-11-12T14:20:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom ACE",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Decheng Dai"
+      ],
+      "abstract": "A TPU on the wrong torus coordinate is worthless. So is one GPU placed outside its NVLink island. For frontier training, where a pod lands matters as much as whether it lands at all. And they have to land as a gang: every pod in the job on contiguous hardware, or none at all. The default scheduler scores pods one at a time and has no vocabulary for \"all 256 of these, on contiguous hardware, or none.\"\nThis is Anthropic's account of building the scheduler that does and how we kept it fast as clusters grew toward GKE's 65K node limit. Part one is design: modeling interconnect topology as first-class scheduling domains, gang admission with graceful eviction, capacity allocation, and defragmentation. Part two is the performance story - the optimizations that brought average processing time to under 3ms per job: gating expensive affinity checks behind cheap predicates, efficient resource accounting, and caching infeasibility verdicts.",
+      "search_text": "Anthropic’s Kubernetes Scheduler for Frontier AI: What Worked, What Broke\nA TPU on the wrong torus coordinate is worthless. So is one GPU placed outside its NVLink island. For frontier training, where a pod lands matters as much as whether it lands at all. And they have to land as a gang: every pod in the job on contiguous hardware, or none at all. The default scheduler scores pods one at a time and has no vocabulary for \"all 256 of these, on contiguous hardware, or none.\"\nThis is Anthropic's account of building the scheduler that does and how we kept it fast as clusters grew toward GKE's 65K node limit. Part one is design: modeling interconnect topology as first-class scheduling domains, gang admission with graceful eviction, capacity allocation, and defragmentation. Part two is the performance story - the optimizations that brought average processing time to under 3ms per job: gating expensive affinity checks behind cheap predicates, efficient resource accounting, and caching infeasibility verdicts.\nAI Inference + Agentic",
+      "speaker_text": "Decheng Dai. Anthropic. Anthropic, Member of Technical Staff. Decheng Dai is a Member of Technical Staff on Anthropic's Core Infrastructure team, where he has built two generations of the Kubernetes scheduler that places inference, training, and research workloads across the company's TRN, TPU, and GPU fleet. Before Anthropic he spent six years on Google's Borgmaster team, focused on TPUv1 bring-up and network-aware scheduling.",
+      "tags": [
+        "Advanced",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1250275",
+      "title": "Observability for LLM Inference on Kubernetes",
+      "start": "2026-11-11T16:10:00-07:00",
+      "end": "2026-11-11T16:40:00-07:00",
+      "room": "Salt Palace | Level 1 | Grand Ballroom ACE",
+      "track": "Observability",
+      "speakers": [
+        "Oscar Castillo",
+        "Jeffry Hernández"
+      ],
+      "abstract": "When a language model fails in production, the symptoms rarely show up in traditional dashboards. In this session, we explore what it really means to observe an inference system: which metrics actually matter and which ones can be misleading, how to correlate hardware behavior with model behavior, and how to build a unified view that goes from silicon all the way to the user response. We will talk about token latency, throughput, GPU saturation, and application traces.",
+      "search_text": "Observability for LLM Inference on Kubernetes\nWhen a language model fails in production, the symptoms rarely show up in traditional dashboards. In this session, we explore what it really means to observe an inference system: which metrics actually matter and which ones can be misleading, how to correlate hardware behavior with model behavior, and how to build a unified view that goes from silicon all the way to the user response. We will talk about token latency, throughput, GPU saturation, and application traces.\nObservability",
+      "speaker_text": "Oscar Castillo. Genius Sports. DevOps Engineer. IT Engineer with 14 years of experience, evolving from Security Architecture to Cloud and Infrastructure Engineering. Speaker at KubeCon + CloudNativeCon, sharing practical insights on cloud-native technologies and platform engineering. Currently working in DevOps and transitioning into Platform Engineering, focused on automation, CI/CD, Kubernetes, containers, and Infrastructure as Code to build scalable, secure, and resilient platforms.\nJeffry Hernández. Wizeline. Site Reliability Engineer. Senior SRE @ Wizeline with a strong background in cloud infrastructure and Open Source technologies. Co-organizer of CNCG Cali and KCD Colombia. Last year He has been deeply involved in Al Infrastructure, helping customers to serve models at scale and implement best observability practices.",
+      "tags": [
+        "Any Level",
+        "End User Talk"
+      ]
+    },
+    {
+      "id": "1248185",
+      "title": "Who Ran Up the Inference Bill? AI Traffic Control with KServe and Gateway API Inference Extensions",
+      "start": "2026-11-10T17:30:00-07:00",
+      "end": "2026-11-10T18:00:00-07:00",
+      "room": "Salt Palace | Level 2 | 255 EF",
+      "track": "AI Inference + Agentic",
+      "speakers": [
+        "Lasse Vierow"
+      ],
+      "abstract": "Eventually, every AI platform team asks: Why did my inference bill just explode?\nAvoid being caught off guard by using KServe and Kubernetes Gateway API for AI traffic control.\nKServe provides a powerful foundation for model serving, with standards-based inference APIs, multi-framework support, and production-grade autoscaling. Layer on a Kubernetes Gateway API-based gateway architecture with emerging projects like agentgateway, and you get an extensible approach to controlling spend.\nBeyond standard model consumption features, you can add token-based rate limiting, policy enforcement for guardrails, inference traffic observability, and resilient routing strategies tailored to AI workloads. This session will demo how to solve challenges such as cost control, security, operational visibility, and model failover.\nLeave this session with an understanding of how KServe + Gateway API–based AI gateways together support scalable, governable, and resilient AI platforms.",
+      "search_text": "Who Ran Up the Inference Bill? AI Traffic Control with KServe and Gateway API Inference Extensions\nEventually, every AI platform team asks: Why did my inference bill just explode?\nAvoid being caught off guard by using KServe and Kubernetes Gateway API for AI traffic control.\nKServe provides a powerful foundation for model serving, with standards-based inference APIs, multi-framework support, and production-grade autoscaling. Layer on a Kubernetes Gateway API-based gateway architecture with emerging projects like agentgateway, and you get an extensible approach to controlling spend.\nBeyond standard model consumption features, you can add token-based rate limiting, policy enforcement for guardrails, inference traffic observability, and resilient routing strategies tailored to AI workloads. This session will demo how to solve challenges such as cost control, security, operational visibility, and model failover.\nLeave this session with an understanding of how KServe + Gateway API–based AI gateways together support scalable, governable, and resilient AI platforms.\nAI Inference + Agentic",
+      "speaker_text": "Lasse Vierow. Independent. Cloud Engineer. Spent the last few years working in cloud engineering and enjoy cloud native. Participated in the Linux Foundation Mentorship Program and like to explore new technologies, sharing ideas, and connecting with people from around the world.",
+      "tags": [
+        "Beginner"
+      ]
+    }
+  ]
+}
