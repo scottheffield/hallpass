@@ -60,7 +60,7 @@ export function draftFromAnswers(answers: IntakeAnswers): ProfileDraft {
     (answers.pacing === "light" ? "Longer gaps between sessions." : answers.pacing === "packed" ? "" : "");
 
   return {
-    why_summary: purpose || goals.join(" ") || "Make this conference worth the trip.",
+    why_summary: purpose || goals.join(" ") || "Make this conference worth attending.",
     goals: goals.length ? goals : ["Define what to take home from KubeCon."],
     goal_themes: themes.length ? themes : undefined,
     role: role || "Attendee",
@@ -77,7 +77,7 @@ export function draftFromAnswers(answers: IntakeAnswers): ProfileDraft {
 }
 
 export const CLARIFY_QUESTION =
-  "What would you want to tell a colleague you got from this trip? One sentence is enough.";
+  "What would you want to tell a colleague you got from this conference? One sentence is enough.";
 
 export function needsClarify(answers: IntakeAnswers): boolean {
   if (answers.clarify_answer?.trim()) return false;
