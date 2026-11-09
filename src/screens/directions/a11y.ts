@@ -10,4 +10,4 @@ export const FLOOR_MAP_UNAVAILABLE =
 
 /** Shared focus ring for keyboard links on the directions screen. */
 export const DIRECTIONS_LINK_FOCUS =
-  "rounded-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2";
+  "focus:outline-none focus-visible:ring-2 focus-visible:ring-action focus-visible:ring-offset-2";

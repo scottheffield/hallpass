@@ -125,13 +125,13 @@ export function DirectionsScreen({
 
 function StartingFrom({ startingLandmark }: { startingLandmark: string }) {
   return (
-    <div aria-labelledby="directions-starting-from">
+    <section aria-labelledby="directions-starting-from">
       <h2 id="directions-starting-from" className="font-display text-lg font-semibold text-ink">
         Starting from
       </h2>
       <p className="mt-2 text-base leading-snug">{startingLandmark}</p>
       <p className="mt-1 text-sm text-muted">Hallpass does not track your live location.</p>
-    </div>
+    </section>
   );
 }
 
@@ -143,7 +143,7 @@ function WalkingRoute({
   walkingText: string;
 }) {
   return (
-    <div aria-labelledby="directions-walking-route">
+    <section aria-labelledby="directions-walking-route">
       <h2 id="directions-walking-route" className="font-display text-lg font-semibold text-ink">
         Walking route
       </h2>
@@ -161,18 +161,18 @@ function WalkingRoute({
         ) : null}
         {walkingText}
       </p>
-    </div>
+    </section>
   );
 }
 
 function StepFreeOption({ text }: { text: string }) {
   return (
-    <div aria-labelledby="directions-step-free">
+    <section aria-labelledby="directions-step-free">
       <h2 id="directions-step-free" className="font-display text-lg font-semibold text-ink">
         Step-free option
       </h2>
       <p className="mt-2 text-base leading-snug whitespace-pre-wrap">{text}</p>
-    </div>
+    </section>
   );
 }
 
@@ -186,7 +186,7 @@ function FloorPlanSection({
   landmark: string;
 }) {
   return (
-    <div aria-labelledby="directions-floor-plan">
+    <section aria-labelledby="directions-floor-plan">
       <h2 id="directions-floor-plan" className="font-display text-lg font-semibold text-ink">
         Supplementary floor plan
       </h2>
@@ -219,11 +219,11 @@ function FloorPlanSection({
       <p className="mt-3 text-base leading-snug">
         <a
           href={FLOOR_PLAN_PATH}
-          className={`font-semibold text-action underline underline-offset-2 ${DIRECTIONS_LINK_FOCUS}`}
+          className={`rounded-sm font-semibold text-action underline underline-offset-2 ${DIRECTIONS_LINK_FOCUS}`}
         >
           {FLOOR_PLAN_LINK_LABEL}
         </a>
       </p>
-    </div>
+    </section>
   );
 }
