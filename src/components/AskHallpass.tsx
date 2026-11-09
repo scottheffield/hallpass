@@ -3,7 +3,9 @@ import { AGENT_LIMITS, type AgentMessage } from "../../shared/api";
 import { ApiFailure } from "../lib/api";
 import { emptyAgentReplyState, type AgentReplyState } from "../screens/ask/parseSse";
 import { OFFLINE_AGENT_COPY, streamAgentReply } from "../screens/ask/streamAgent";
-import { Button, HelloMark, Notice, Sheet, Stack, TextArea } from "../ui";
+import { AskSheet } from "../screens/ask/AskSheet";
+import { shouldBlockAskDismiss } from "../screens/ask/askDismiss";
+import { Button, HelloMark, Notice, Stack, TextArea } from "../ui";
 
 export interface AskHallpassProps {
   /** When set with `onClose`, the sheet is controlled and the corner trigger is hidden. */
@@ -73,7 +75,10 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
   const controlled = openProp !== undefined && onClose !== undefined;
   const open = controlled ? openProp : internalOpen;
 
+  const dialogId = useId();
   const listId = useId();
+  const openerDomId = useId();
+  const openerRef = useRef<HTMLElement | null>(null);
   const reqRef = useRef(0);
   const liveRef = useRef<HTMLDivElement>(null);
   const [draft, setDraft] = useState("");
@@ -103,6 +108,10 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
   function setDraftCapped(value: string) {
     setDraft(value.slice(0, charLimit));
   }
+
+  useEffect(() => {
+    openerRef.current = document.getElementById(openerDomId);
+  }, [openerDomId, open]);
 
   useEffect(() => {
     if (live?.text && liveRef.current) {
@@ -155,26 +164,41 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
 
   const canSend = Boolean(trimmed) && !tooLong && !atMessageCap && !sending && !offline;
   const showLiveBubble = sending || (live !== null && live.text.length > 0);
+  const dismissBlocked = shouldBlockAskDismiss({
+    sending,
+    liveTextLength: live?.text.length ?? 0,
+  });
 
   return (
     <>
       {controlled ? null : (
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(3.25rem+env(safe-area-inset-bottom))] z-30 mx-auto flex max-w-[420px] justify-end px-4">
           <Button
+            id={openerDomId}
             type="button"
             variant="secondary"
             className="pointer-events-auto w-auto min-w-0 gap-2 px-3 shadow-md"
             aria-expanded={open}
             aria-haspopup="dialog"
+            aria-controls={dialogId}
             onClick={openSheet}
           >
-            <HelloMark compact />
+            <span aria-hidden>
+              <HelloMark compact />
+            </span>
             <span>Ask Hallpass</span>
           </Button>
         </div>
       )}
 
-      <Sheet open={open} title="Ask Hallpass" onClose={closeSheet}>
+      <AskSheet
+        open={open}
+        title="Ask Hallpass"
+        dialogId={dialogId}
+        dismissBlocked={dismissBlocked}
+        returnFocusRef={controlled ? undefined : openerRef}
+        onClose={closeSheet}
+      >
         <Stack gap="sm">
           <HelloMark compact />
           <p className="text-sm text-muted">{INTRO}</p>
@@ -193,6 +217,8 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
 
           <div
             id={listId}
+            role="log"
+            aria-label="Hallpass chat"
             className="flex max-h-[min(40dvh,320px)] flex-col gap-2 overflow-y-auto pr-1"
             aria-live="polite"
             aria-relevant="additions text"
@@ -234,11 +260,17 @@ export function AskHallpass({ open: openProp, onClose }: AskHallpassProps) {
             </Notice>
           ) : null}
 
-          <Button type="button" variant="primary" disabled={!canSend} onClick={send}>
+          <Button
+            type="button"
+            variant="primary"
+            disabled={!canSend}
+            aria-busy={sending || undefined}
+            onClick={send}
+          >
             {sending ? "Sending…" : "Send"}
           </Button>
         </Stack>
-      </Sheet>
+      </AskSheet>
     </>
   );
 }
