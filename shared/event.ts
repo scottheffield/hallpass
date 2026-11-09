@@ -32,7 +32,7 @@ export function isGoalTheme(value: string): value is GoalThemeId {
 
 export const INTAKE = {
   purpose: {
-    prompt: "What would make this trip worth it?",
+    prompt: "What would make this conference worth it?",
     hint: "For example: solve a work problem, learn a topic, find a community.",
     placeholder: "We spend too long finding the cause of Kubernetes incidents.",
     figuringItOut: "I'm still figuring it out",

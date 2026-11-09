@@ -126,6 +126,16 @@ export function nextPlannedSession(blocks: TodayTimelineBlock[], nowMs: number):
   return null;
 }
 
+/** Timeline for the list under Next, without repeating the hero next session. */
+export function restOfTodayTimeline(
+  blocks: TodayTimelineBlock[],
+  next: NextPlannedSession | null,
+): TodayTimelineBlock[] {
+  if (!next) return blocks;
+  const { session } = next.block;
+  return blocks.filter((block) => block.kind !== "session" || block.session.id !== session.id);
+}
+
 export function activeBreak(blocks: TodayTimelineBlock[], nowMs: number): TodayBreakBlock | null {
   for (const block of blocks) {
     if (block.kind !== "break") continue;

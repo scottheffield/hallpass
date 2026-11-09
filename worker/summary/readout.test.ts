@@ -4,9 +4,11 @@ import type { CheckIn, Plan } from "../../shared/types";
 import {
   buildFallbackReadout,
   enforceGoalEvidence,
+  goalListsFromProfile,
   helpedSessionIds,
   isReadoutFinal,
   lastPlannedBlockEndMs,
+  pickNextStepSessions,
 } from "./readout";
 
 const sessionText = new Map<string, string>([
@@ -18,6 +20,12 @@ const sessionText = new Map<string, string>([
 const sessionEnd = new Map<string, string>([
   ["s-incident", "2026-11-10T16:00:00-07:00"],
   ["s-inference", "2026-11-12T14:00:00-07:00"],
+]);
+
+const sessionMeta = new Map<string, { title: string; start: string; room: string }>([
+  ["s-incident", { title: "Debugging a Kubernetes incident", start: "2026-11-10T15:00:00-07:00", room: "151" }],
+  ["s-inference", { title: "Serving inference on a platform", start: "2026-11-12T11:00:00-07:00", room: "Grand Ballroom H" }],
+  ["s-other", { title: "Unrelated keynote", start: "2026-11-10T17:00:00-07:00", room: "255 BC" }],
 ]);
 
 const resolvable = new Set(sessionText.keys());
@@ -100,6 +108,7 @@ describe("buildFallbackReadout", () => {
       asOf,
       sessionTextById: sessionText,
       sessionEndById: sessionEnd,
+      sessionMetaById: sessionMeta,
     });
     expect(readout.goals_hit).toEqual([]);
     expect(readout.goals_missed).toEqual([]);
@@ -137,6 +146,7 @@ describe("buildFallbackReadout", () => {
       asOf: new Date("2026-11-10T18:00:00-07:00"),
       sessionTextById: sessionText,
       sessionEndById: sessionEnd,
+      sessionMetaById: sessionMeta,
     });
     expect(readout.helped_sessions).toEqual(["s-incident"]);
     expect(readout.goals_hit.length).toBeGreaterThan(0);
@@ -164,8 +174,100 @@ describe("buildFallbackReadout", () => {
       asOf: new Date("2026-11-10T18:00:00-07:00"),
       sessionTextById: sessionText,
       sessionEndById: sessionEnd,
+      sessionMetaById: sessionMeta,
     });
     expect(readout.goals_hit).toEqual([]);
     expect(readout.helped_sessions).toEqual([]);
+  });
+});
+
+describe("goal cards from profile", () => {
+  it("uses only profile goal strings for hit and missed lists", () => {
+    const profile = fixtureProfile("test-attendee");
+    const status = new Map<number, "hit" | "missed" | "unclear">([
+      [0, "hit"],
+      [1, "missed"],
+    ]);
+    const { goals_hit, goals_missed } = goalListsFromProfile(profile, status);
+    expect(goals_hit).toEqual([profile.goals[0]]);
+    expect(goals_missed).toEqual([profile.goals[1]]);
+    for (const goal of [...goals_hit, ...goals_missed]) {
+      expect(profile.goals).toContain(goal);
+    }
+  });
+
+  it("drops model-only goal text that does not match profile goals", () => {
+    const profile = fixtureProfile("test-attendee");
+    const draft = [
+      profile.goals[0],
+      "NOT ENOUGH FEEDBACK / whether the Kubernetes incident response goal moved",
+    ];
+    const aligned = draft.filter((line) => profile.goals.includes(line));
+    expect(aligned).toEqual([profile.goals[0]]);
+  });
+});
+
+describe("next steps from agenda ids", () => {
+  it("orders picks by parsed start time so 11:00 does not sort ahead of 9:00", () => {
+    const profile = fixtureProfile("test-attendee");
+    const plan = planWithSessions();
+    const meta = new Map<string, { title: string; start: string; room: string }>([
+      ["s-late", { title: "Late morning", start: "2026-11-12T11:00:00-07:00", room: "A" }],
+      ["s-early", { title: "Early morning", start: "2026-11-10T09:00:00-07:00", room: "B" }],
+    ]);
+    plan.days = {
+      "2026-11-10": {
+        items: [
+          {
+            session_id: "s-early",
+            status: "planned",
+            reason: 'Matches your goal "inference" through the session topic in Early.',
+          },
+        ],
+        breaks: [],
+      },
+      "2026-11-12": {
+        items: [
+          {
+            session_id: "s-late",
+            status: "planned",
+            reason: 'Matches your goal "inference" through the session topic in Late.',
+          },
+        ],
+        breaks: [],
+      },
+    };
+    const ids = new Set(["s-early", "s-late"]);
+    const picks = pickNextStepSessions(
+      plan,
+      profile,
+      [0],
+      Date.parse("2026-11-10T08:00:00-07:00"),
+      meta,
+      ids,
+      2,
+    );
+    expect(picks.map((pick) => pick.session_id)).toEqual(["s-early", "s-late"]);
+  });
+
+  it("references only session ids that remain on the plan", () => {
+    const profile = fixtureProfile("test-attendee");
+    const plan = planWithSessions();
+    const picks = pickNextStepSessions(
+      plan,
+      profile,
+      [0, 1],
+      Date.parse("2026-11-10T12:00:00-07:00"),
+      sessionMeta,
+      resolvable,
+    );
+    const plannedIds = new Set(
+      Object.values(plan.days).flatMap((day) => day.items.map((item) => item.session_id)),
+    );
+    expect(picks.length).toBeGreaterThan(0);
+    for (const pick of picks) {
+      expect(plannedIds.has(pick.session_id)).toBe(true);
+      expect(resolvable.has(pick.session_id)).toBe(true);
+    }
   });
 });

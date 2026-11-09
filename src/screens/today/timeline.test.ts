@@ -15,6 +15,7 @@ import {
   formatTimeRange,
   nextPlannedSession,
   resolveTodayHeading,
+  restOfTodayTimeline,
   type TodayBreakBlock,
   type TodaySessionBlock,
   type TodayTimelineBlock,
@@ -51,6 +52,28 @@ describe("today timeline", () => {
     const next = nextPlannedSession(blocks, atNine);
     expect(next?.block.session.id).toBe("1246200");
     expect(next?.heading).toContain("11:30");
+  });
+
+  it("drops the hero next session from the list timeline", () => {
+    const blocks = buildDayTimeline(sessions, plan.days["2026-11-10"]);
+    const atNine = Date.parse("2026-11-10T09:00:00-07:00");
+    const next = nextPlannedSession(blocks, atNine);
+    const list = restOfTodayTimeline(blocks, next);
+    expect(list.some((block) => block.kind === "session" && block.session.id === next?.block.session.id)).toBe(
+      false,
+    );
+    expect(list.length).toBe(blocks.length - 1);
+    expect(list).toEqual(blocks.filter((block) => block !== next?.block));
+  });
+
+  it("empties the list without meaning the day has no plan when next is the only block", () => {
+    const session = sessions.find((row) => row.id === "1246200")!;
+    const blocks = [sessionBlock(session)];
+    const beforeStart = Date.parse(session.start) - 60_000;
+    const next = nextPlannedSession(blocks, beforeStart);
+    expect(next?.block.session.id).toBe(session.id);
+    expect(restOfTodayTimeline(blocks, next)).toEqual([]);
+    expect(blocks.length).toBe(1);
   });
 
   it("uses Mountain Time for the conference date key", () => {

@@ -19,7 +19,7 @@ import type {
 export type { PlanChange, PlanProposal };
 
 export interface IntakeAnswers {
-  /** Opening question: "What would make this trip worth it?" */
+  /** Opening question: "What would make this conference worth it?" */
   purpose: string;
   /** The attendee chose "I'm still figuring it out". */
   figuring_it_out?: boolean;
