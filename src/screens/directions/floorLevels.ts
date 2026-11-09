@@ -37,8 +37,7 @@ export async function loadFloorLevels(): Promise<FloorLevelEntry[]> {
       await response.body?.cancel();
     }
   } catch {
-    // Offline or missing file.
+    // Offline or missing file; allow a retry on the next call.
   }
-  cached = [];
-  return cached;
+  return [];
 }

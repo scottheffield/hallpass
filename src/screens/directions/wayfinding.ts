@@ -75,6 +75,10 @@ export function buildFromPreviousLine(
     return `Same floor. Follow signs to ${toParsed.room}.`;
   }
 
+  if (toParsed.level === LEVEL_UNKNOWN) {
+    return `Follow signs to ${toParsed.room}.`;
+  }
+
   return `Go to ${toParsed.level} by the escalators or a marked elevator, then follow signs to ${toParsed.room}.`;
 }
 
@@ -114,6 +118,7 @@ function itemCountsAsPrevious(
   nowMs: number,
 ): boolean {
   if (status === "done") return true;
+  if (status === "skipped") return false;
   return Number.isFinite(sessionEndMs) && sessionEndMs <= nowMs;
 }
 

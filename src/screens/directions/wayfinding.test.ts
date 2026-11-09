@@ -117,6 +117,10 @@ describe("buildFromPreviousLine", () => {
       "Go to Level 4 by the escalators or a marked elevator, then follow signs to Regency Ballroom B.",
     );
   });
+
+  it("uses follow-signs copy when the target level is unknown", () => {
+    expect(buildFromPreviousLine(hyattBallroom, hyattLobby)).toBe("Follow signs to Lobby.");
+  });
 });
 
 describe("Salt Palace floor plan", () => {
@@ -193,5 +197,15 @@ describe("previousRoomForDirections", () => {
     expect(
       previousRoomForDirections(sessions, itemsDone, "s2", "2026-11-10T09:30:00-07:00"),
     ).toBe("Salt Palace | Level 1 | 151");
+  });
+
+  it("ignores skipped sessions even after their end time", () => {
+    const items: PlanItem[] = [
+      { session_id: "s1", status: "skipped", reason: "" },
+      { session_id: "s2", status: "planned", reason: "" },
+    ];
+    expect(
+      previousRoomForDirections(sessions, items, "s2", "2026-11-10T11:00:00-07:00"),
+    ).toBeUndefined();
   });
 });
