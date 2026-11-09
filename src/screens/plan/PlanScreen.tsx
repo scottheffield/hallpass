@@ -40,6 +40,7 @@ import { planSessionStatusDetail } from "./statusLabel";
 export interface PlanScreenProps {
   onGoals?: () => void;
   onCase?: () => void;
+  onPlanChange?: () => void;
 }
 
 async function fetchPlan(): Promise<Plan | null> {
@@ -57,7 +58,7 @@ function blockKey(block: TodayTimelineBlock, index: number): string {
   return `break-${block.start}-${index}`;
 }
 
-export function PlanScreen({ onCase }: PlanScreenProps) {
+export function PlanScreen({ onCase, onPlanChange }: PlanScreenProps) {
   const [plan, setPlan] = useState<Plan | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -77,6 +78,10 @@ export function PlanScreen({ onCase }: PlanScreenProps) {
   const generatingRef = useRef(false);
   const attemptedDaysRef = useRef(new Set<string>());
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    onPlanChange?.();
+  }, [plan, onPlanChange]);
 
   const reload = useCallback(async () => {
     setLoading(true);
