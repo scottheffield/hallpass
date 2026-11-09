@@ -129,8 +129,16 @@ function InsightsSections({
         <h2 id="insights-breaks-heading" className="font-display text-lg font-semibold text-ink">
           Break demand
         </h2>
-        <p className="mt-1 text-sm text-muted">{formatBreakDemand(insights.break_demand, insights.n_attendees)}</p>
-        <p className="mt-3 font-display text-3xl font-semibold tabular-nums text-ink">{insights.break_demand}</p>
+        <p id="insights-breaks-detail" className="mt-1 text-sm text-muted">
+          {formatBreakDemand(insights.break_demand, insights.n_attendees)}
+        </p>
+        <p
+          className="mt-3 font-display text-3xl font-semibold tabular-nums text-ink"
+          aria-describedby="insights-breaks-detail"
+        >
+          <span className="sr-only">Break demand count: </span>
+          {insights.break_demand}
+        </p>
       </section>
     </Stack>
   );
@@ -193,7 +201,9 @@ export function InsightsScreen({ onBack }: InsightsScreenProps) {
         lead={sampleLead}
         headerEnd={
           state.kind === "ready" ? (
-            <span className="tabular-nums">{state.data.n_attendees} profiles</span>
+            <span className="tabular-nums text-sm font-semibold text-muted">
+              {state.data.n_attendees} attendee profiles
+            </span>
           ) : undefined
         }
       >
