@@ -105,13 +105,12 @@ export function DemoBar() {
   const loadDemoAttendee = useCallback(async () => {
     setDemoError(null);
     setLoadingDemo(true);
-    collapsePanel();
     try {
       await post<DemoLoadResponse>("/api/demo/load", {});
+      collapsePanel();
       window.location.reload();
     } catch (err) {
       setDemoError(err instanceof Error ? err.message : "Could not load demo attendee.");
-      setExpanded(true);
     } finally {
       setLoadingDemo(false);
     }
@@ -167,7 +166,7 @@ export function DemoBar() {
         <button
           ref={toggleRef}
           type="button"
-          className="flex w-full min-h-10 items-center gap-2 py-1 text-left text-sm font-semibold text-canvas"
+          className="flex w-full min-h-10 items-center gap-2 py-1 text-left text-sm font-semibold text-canvas focus:outline-none focus-visible:ring-2 focus-visible:ring-canvas focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
           aria-expanded={expanded}
           aria-controls={panelId}
           aria-label={accessibleLabel}
