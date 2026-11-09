@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { fixturePlan, fixtureProfile } from "../lib/fixtures";
 import {
+  alignBringBack,
   buildFallbackCase,
   buildFallbackCaseText,
+  defaultBringBack,
   filterResolvableSessionIds,
   orderedPlanSessionIds,
 } from "./case";
@@ -37,6 +39,32 @@ describe("buildFallbackCase", () => {
     expect(item.bring_back).toEqual(profile.goals);
     expect(item.text).toContain("Session 1");
     expect(item.text.toLowerCase()).toContain("ai unavailable");
+  });
+});
+
+describe("alignBringBack", () => {
+  const goals = ["Goal one.", "Goal two.", "Goal three.", "Goal four."];
+
+  it("keeps rephrased lines when the goal index is valid", () => {
+    expect(
+      alignBringBack(
+        [
+          { goal: 0, text: "Bring home a faster incident triage habit." },
+          { goal: 1, text: "Draft inference runbook notes." },
+        ],
+        goals,
+      ),
+    ).toEqual(["Bring home a faster incident triage habit.", "Draft inference runbook notes."]);
+  });
+
+  it("falls back to profile goals capped at three", () => {
+    expect(alignBringBack([{ goal: 9, text: "orphan" }], goals)).toEqual(goals.slice(0, 3));
+    expect(defaultBringBack(goals)).toEqual(goals.slice(0, 3));
+  });
+
+  it("caps model rephrases at three", () => {
+    const items = goals.map((_, index) => ({ goal: index, text: `Takeaway ${index}` }));
+    expect(alignBringBack(items, goals)).toHaveLength(3);
   });
 });
 

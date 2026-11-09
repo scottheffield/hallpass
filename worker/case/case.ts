@@ -26,18 +26,48 @@ export function filterResolvableSessionIds(ids: readonly string[], resolvable: R
   return ids.filter((id) => resolvable.has(id));
 }
 
-function alignBringBack(candidates: string[], goals: readonly string[]): string[] {
-  const set = new Set(goals);
+const BRING_BACK_MAX = 3;
+
+export interface BringBackItem {
+  goal: number;
+  text: string;
+}
+
+/** Verbatim profile goals when the model does not supply rephrases. */
+export function defaultBringBack(goals: readonly string[]): string[] {
+  return goals.slice(0, BRING_BACK_MAX);
+}
+
+/** Maps model rephrases to goals by 0-based index. Caps at three items. */
+export function alignBringBack(items: readonly BringBackItem[], goals: readonly string[]): string[] {
+  const seen = new Set<number>();
   const out: string[] = [];
-  const seen = new Set<string>();
-  for (const line of candidates) {
-    const trimmed = line.trim();
-    if (!trimmed || !set.has(trimmed) || seen.has(trimmed)) continue;
-    seen.add(trimmed);
-    out.push(trimmed);
+  for (const { goal, text } of items) {
+    const line = trimText(text, 400);
+    if (!Number.isInteger(goal) || goal < 0 || goal >= goals.length || seen.has(goal) || !line) continue;
+    seen.add(goal);
+    out.push(line);
   }
-  if (out.length === 0) return [...goals];
-  return out.slice(0, 3);
+  return (out.length > 0 ? out : defaultBringBack(goals)).slice(0, BRING_BACK_MAX);
+}
+
+function parseBringBackItems(raw: unknown): BringBackItem[] {
+  if (!Array.isArray(raw)) return [];
+  const out: BringBackItem[] = [];
+  for (const row of raw) {
+    if (!row || typeof row !== "object") continue;
+    const record = row as { goal?: unknown; text?: unknown };
+    if (typeof record.text !== "string") continue;
+    const goal =
+      typeof record.goal === "number"
+        ? record.goal
+        : typeof record.goal === "string" && /^\d+$/.test(record.goal)
+          ? Number(record.goal)
+          : NaN;
+    if (!Number.isInteger(goal)) continue;
+    out.push({ goal, text: record.text });
+  }
+  return out;
 }
 
 function trimText(value: unknown, maxLen: number): string {
@@ -95,7 +125,7 @@ export function buildFallbackCase(input: CaseBuildInput): CaseForAttending {
   const titles = sessions
     .map((id) => sessionTitleById.get(id))
     .filter((t): t is string => Boolean(t));
-  const bring_back = alignBringBack(profile.goals, profile.goals);
+  const bring_back = defaultBringBack(profile.goals);
   const text = buildFallbackCaseText(profile, titles, bring_back);
   return {
     attendee_id: attendeeId,
@@ -107,14 +137,25 @@ export function buildFallbackCase(input: CaseBuildInput): CaseForAttending {
 }
 
 interface ClaudeCaseDraft {
-  bring_back?: string[];
+  bring_back?: BringBackItem[];
   text?: string;
 }
 
 const CASE_SCHEMA = {
   type: "object",
   properties: {
-    bring_back: { type: "array", items: { type: "string" } },
+    bring_back: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          goal: { type: "integer" },
+          text: { type: "string" },
+        },
+        required: ["goal", "text"],
+        additionalProperties: false,
+      },
+    },
     text: { type: "string" },
   },
   required: ["bring_back", "text"],
@@ -127,10 +168,7 @@ function validateClaudeCase(
   sessions: string[],
   sessionTitleById: ReadonlyMap<string, string>,
 ): Pick<CaseForAttending, "bring_back" | "text"> | null {
-  const bring_back = alignBringBack(
-    Array.isArray(draft.bring_back) ? draft.bring_back.map((line) => trimText(line, 400)) : [],
-    profile.goals,
-  );
+  const bring_back = alignBringBack(parseBringBackItems(draft.bring_back), profile.goals);
   let text = trimText(draft.text, 1200);
   if (!text || wordCount(text) < 40) return null;
 
@@ -179,7 +217,7 @@ export async function generateCase(env: Env, attendeeId: string, profile: Profil
   const system = [
     "You write a plain case for attending a conference, for the attendee to share with their manager.",
     "Use only the problems, goals, and session list provided. Do not invent sessions or outcomes.",
-    "bring_back must rephrase the attendee goals as intended takeaways, not achievements.",
+    "bring_back is an array of { goal, text }: goal is the 0-based index into the Goals list; text rephrases that goal as an intended takeaway, not an achievement.",
     "text is one copyable paragraph, about 150 words, plain language, no hype.",
     "Reply with the JSON schema only.",
   ].join(" ");
@@ -188,7 +226,7 @@ export async function generateCase(env: Env, attendeeId: string, profile: Profil
     `Role: ${profile.role}`,
     `Why attending: ${profile.why_summary}`,
     `Problems:\n${profile.problems.map((p) => `- ${p}`).join("\n")}`,
-    `Goals (for bring_back):\n${profile.goals.map((g) => `- ${g}`).join("\n")}`,
+    `Goals (for bring_back indexes):\n${profile.goals.map((g, i) => `${i}. ${g}`).join("\n")}`,
     `Session ids and titles from the plan (must appear in text):\n${sessionLines.join("\n")}`,
   ].join("\n\n");
 
