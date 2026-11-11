@@ -12,8 +12,7 @@
     "run_worker_first": ["/api/*"]
   },
 
-  // Keyed by the per-browser demo attendee ID, so judges don't block each other.
-  // Raise before judging.
+  // Keyed by the per-browser demo attendee ID, so testers don't block each other.
   "ratelimits": [
     {
       "name": "API_LIMITER",
@@ -22,16 +21,18 @@
     }
   ],
 
-  // Production and preview URLs. Without these the first deploy has no URL.
-  "workers_dev": true,
-  "preview_urls": true,
+  // Public workers.dev and preview URLs are off. Set both to true (or add a route
+  // or custom domain) when you deploy your own copy, or the Worker has no URL.
+  "workers_dev": false,
+  "preview_urls": false,
 
-  // Traces and logs export to Dash0 through account-level Cloudflare destinations
-  // (dash0-traces, dash0-logs). Workers Logs keeps a copy for the Cloudflare dashboard.
+  // Traces and logs stay in Workers Logs. To export them to an OTLP backend such as
+  // Dash0, create destinations in your Cloudflare account and list them here, e.g.
+  // "traces": { "enabled": true, "destinations": ["<your-traces-destination>"] }.
   "observability": {
     "enabled": true,
-    "traces": { "enabled": true, "destinations": ["dash0-traces"] },
-    "logs": { "enabled": true, "invocation_logs": true, "destinations": ["dash0-logs"] }
+    "traces": { "enabled": true },
+    "logs": { "enabled": true, "invocation_logs": true }
   },
 
   // Non-secret config. Secrets (ANTHROPIC_API_KEY, ELASTIC_API_KEY, ELASTIC_URL)

@@ -23,17 +23,49 @@ Slice boundaries, the API contract, and the order of work are in [docs/BUILD-PLA
 | `shared/types.ts` | Data shapes shared by the app and the Worker |
 | `public/` | Static files: agenda, floor image, room hints |
 
+## Status
+
+Hallpass was a one-day hackathon project. There is no hosted instance. To try it, run it locally or deploy your own copy.
+
 ## Setup
 
-Requires Node 22 and a Cloudflare account.
+Requires Node 22. Deploying also needs a Cloudflare account.
 
 ```sh
 npm ci
-cp .dev.vars.example .dev.vars   # fill in your own keys
+cp .dev.vars.example .dev.vars   # fill in your own keys, or leave them empty
 npm run dev
 ```
 
-Open the local URL Vite prints. `/api/health` reports whether Claude and Elastic are configured, without showing keys.
+Open the local URL Vite prints. `/api/health` reports whether Claude and Elastic are configured, without showing keys. Add `?demo=1` to the app URL for demo mode.
+
+### Environment variables
+
+Secrets go in `.dev.vars` locally and `npx wrangler secret put <NAME>` for a deployed Worker. Every secret is optional: without Claude or Elastic the app still runs and labels the fallback it used.
+
+| Name | Kind | Needed for |
+| --- | --- | --- |
+| `ANTHROPIC_API_KEY` | Secret | Claude calls: intake interview, plans, re-plans, readouts, corner agent |
+| `ELASTIC_URL` | Secret | Elastic Cloud deployment URL (`https://...`) |
+| `ELASTIC_API_KEY` | Secret | Elastic API key with read/write on the Hallpass indexes |
+| `TRACE_CONTENT` | Secret | Optional. `on` adds prompts and model output to trace spans. Leave unset |
+| `CLAUDE_MODEL` | Var (`wrangler.jsonc`) | Model ID. Default `claude-opus-5-5` |
+| `ELASTIC_INDEX_PREFIX` | Var (`wrangler.jsonc`) | Prefix for writable indexes. Default `hallpass` |
+| `SESSIONS_INDEX` | Var (`wrangler.jsonc`) | Read-only agenda index. Default `hallpass-sessions` |
+
+The scripts in `scripts/` also read `ELASTIC_INDEX_PREFIX`, `ELASTIC_INFERENCE_ID` (default `.elser-2-elastic`) and `SEED_ALLOW_SHARED_PREFIX` from the environment.
+
+### Elastic (optional)
+
+With `ELASTIC_URL` and `ELASTIC_API_KEY` in `.dev.vars`:
+
+```sh
+node --env-file=.dev.vars scripts/elastic-setup.mjs    # create indexes, load the agenda
+node --env-file=.dev.vars scripts/search-check.mjs     # smoke-test session search
+node --env-file=.dev.vars scripts/seed-demo-attendees.mjs  # fictional attendees for Insights
+```
+
+Semantic search uses an ELSER inference endpoint. Set `ELASTIC_INFERENCE_ID` if yours has a different ID.
 
 ### Deploy
 
@@ -45,10 +77,14 @@ npx wrangler secret put ELASTIC_API_KEY
 npm run deploy
 ```
 
+`wrangler.jsonc` ships with `workers_dev` and `preview_urls` set to `false`. Set them to `true`, or add a route or custom domain, so your deployed Worker has a URL. Anyone with the URL can use your API keys through the app, so keep the rate limit in place and set a spend limit on your Anthropic key.
+
+Traces and logs go to Workers Logs. To export to an OTLP backend such as Dash0, create destinations in your Cloudflare account and add them under `observability` in `wrangler.jsonc`.
+
 ## Design rules
 
 - Attendee text travels in POST bodies, never URLs, because traces record URLs.
-- Traces and logs go to Dash0. Claude calls get a `claude.request` span with model, token counts and latency. Prompts and model output are added to that span only when the `TRACE_CONTENT` Worker secret is `on`, a demo switch that is off by default.
+- Traces and logs went to Dash0 during the hackathon. Claude calls get a `claude.request` span with model, token counts and latency. Prompts and model output are added to that span only when the `TRACE_CONTENT` Worker secret is `on`, a demo switch that is off by default.
 - Request bodies are read with a byte limit, and API calls are rate limited per browser.
 - Elastic is never called from the browser.
 - Model output is untrusted: no raw HTML, and session lists come from retrieved data, not model text.
