@@ -38,8 +38,8 @@ Intake must support both direct, focused users and users who want to engage and 
 
 ## Evidence on Hand
 
-- `C:/Users/scott/Results-Oriented/hackathon-plan/2026-11-06-hackathon-product-spec.md`
-- `C:/Users/scott/Results-Oriented/hackathon-plan/2026-11-06-kubecon-as-a-product.md`
+- Hackathon product spec, 2026-11-06 (private planning notes, not in this repo)
+- "KubeCon as a product" research, 2026-11-06 (private planning notes, not in this repo)
 
 These establish product intent and dated research. Any invented walkthrough attendee or session must be labeled illustrative, not represented as verified schedule data.
 

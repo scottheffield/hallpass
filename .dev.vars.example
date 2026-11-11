@@ -1,6 +1,16 @@
 # Copy to .dev.vars for local dev. Never commit real values.
+# All are optional. Without them the app runs with labeled fallbacks.
+
+# Claude (https://console.anthropic.com). Enables interviews, plans, re-plans, readouts.
 ANTHROPIC_API_KEY=
+
+# Elastic Cloud deployment URL and API key. Enables storage and semantic session search.
 ELASTIC_URL=
 ELASTIC_API_KEY=
-# Demo only. "on" sends prompts and model output to Dash0 in Claude spans.
+
+# Demo only. "on" adds prompts and model output to Claude trace spans. Leave empty.
 TRACE_CONTENT=
+
+# Scripts only (not read by the Worker). Use your own prefix when writing test data.
+# ELASTIC_INDEX_PREFIX=hallpass-dev
+# ELASTIC_INFERENCE_ID=.elser-2-elastic
