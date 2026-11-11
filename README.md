@@ -4,6 +4,10 @@
 
 Built at the Cloud Native Hackathon, Salt Lake City, 2026-11-09, for KubeCon + CloudNativeCon North America 2026.
 
+![Hallpass visual concept: the opening "Why are you here?" screen, Today with the next session and a planned break, and a check-in suggesting a better-fit session](docs/ux/hallpass-hello-badge-v3.png)
+
+*Visual concept with illustrative session data. More in [docs/ux](docs/ux/README.md).*
+
 Slice boundaries, the API contract, and the order of work are in [docs/BUILD-PLAN.md](docs/BUILD-PLAN.md).
 
 ## Stack
